@@ -2,7 +2,6 @@ import Menu from "@/components/Menu";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 
 
@@ -20,15 +19,11 @@ export default function DashboardLayout({
   return (
     <>
       <Navbar />
-      <div className="h-screen flex">
-      {/* LEFT */}
-      
+      <div className="h-screen flex">      
       <div className="w-[14%] md:w-[8%] lg:w-[16%] xl:w-[14%] border-r-1 border-[#e5e5e5]">
         <Menu />
       </div>
-      {/* RIGHT */}
-      <div className="w-[86%] md:w-[92%] lg:w-[84%] xl:w-[86%] bg-[#F7F8FA] overflow-scroll flex flex-col">
-      
+      <div className="w-[86%] md:w-[92%] lg:w-[84%] xl:w-[86%] bg-[#F7F8FA] overflow-scroll flex flex-col">      
         {children}
         <Toaster />
       </div>
