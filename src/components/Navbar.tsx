@@ -23,22 +23,23 @@ import {
 
 const Navbar = () => {
   return (
-    <div className="flex sticky z-10 py-4 px-6 justify-between items-center bg-[#f0f1f7] border-b-1 border-[#e5e5e5]">
+    <div className="flex sticky py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
       <div className="flex justify-center items-center ">
         <Image
-          src="/logo.png"
+          src="/daystar.png"
           alt="logo"
-          width={150}
-          height={40}
+          width={40}
+          height={20}
           className="object-cover"
         />
+        <p className="text-3xl text-white font-bold">requisite</p>
       </div>
       {/* ICONS AND USER */}
       <div className="flex justify-center items-center gap-4">
-        <div className="flex justify-center items-center gap-[5px]">
+        <div className="hidden lg:flex justify-center items-center gap-[5px]">
           <Dialog>
             <DialogTrigger asChild>
-              <Search color="#0F1E7A" className="cursor-pointer" />
+              <Search color="#FFF" className="cursor-pointer" />
             </DialogTrigger>
             <DialogContent className="flex flex-col w-[90vw] max-w-[1000px] bg-[#F3F3F3] p-10 border-none gap-6">
               <div className="flex gap-4 py-4 ">
@@ -107,12 +108,12 @@ const Navbar = () => {
             </DialogContent>
           </Dialog>
           <div>
-            <Settings color="#0F1E7A" />
+            <Settings color="#FFF" />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="relative cursor-pointer">
-                <Bell color="#0F1E7A" size={28} />
+                <Bell color="#FFF" size={28} />
                 <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
                   8
                 </span>

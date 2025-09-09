@@ -103,8 +103,8 @@ const TableContent = () => {
   ];
 
   return (
-    <div>
-      <Table>
+    <div className="w-full overflow-x-auto">
+      <Table className="min-w-[800px]">
         <TableHeader>
           <TableRow>
             <TableHead>Item Description</TableHead>

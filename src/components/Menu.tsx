@@ -26,7 +26,7 @@ const Menu = () => {
   const pathname = usePathname();
 
   return (
-    <div className="flex h-[100%] flex-col p-4 gap-2 bg-[#f0f1f7]">
+    <div className="flex h-[100%] flex-col py-4 gap-2 bg-[#0F1E7A]">
       {menuItems.map((item) => {
         const Icon = item.icon;
         const isActive = pathname === item.href;
@@ -35,11 +35,11 @@ const Menu = () => {
           <Link
             href={item.href}
             key={item.label}
-            className={`flex items-center justify-center lg:justify-start gap-3 text-md py-2 md:px-2 rounded-md transition-colors
+            className={`flex items-center justify-center lg:justify-start gap-3 text-md py-2 px-6 transition-colors
               ${
                 isActive
-                  ? "bg-[#0F1E7A] text-white"
-                  : "text-#4F7396 hover:bg-[#0F1E7A] hover:text-white"
+                  ? "bg-[#FFF] text-[0F1E7A]"
+                  : "text-[#FFF] hover:bg-[#FFF] hover:text-[#0F1E7A]"
               }`}
           >
             <Icon size={20} /> 
