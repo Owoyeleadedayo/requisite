@@ -128,12 +128,12 @@ const TableContent = () => {
               <TableCell>{item.price}</TableCell>
               <TableCell>{item.status}</TableCell>
               <TableCell className="flex gap-2">
-                <Link href={`/requisition?view=${item.id}`}>
+                <Link href={`/user/requisition?view=${item.id}`}>
                   <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
                     View
                   </Button>
                 </Link>
-                <Link href={`/requisition?edit=${item.id}`}>
+                <Link href={`/user/requisition?edit=${item.id}`}>
                   <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
                     Edit
                   </Button>
@@ -143,7 +143,7 @@ const TableContent = () => {
           ))}
         </TableBody>
       </Table>
-    </div>
+    </div> 
   );
 };
 
