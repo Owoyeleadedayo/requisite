@@ -24,9 +24,9 @@ import {
 const Navbar = () => {
   return (
     <div className="flex sticky py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
-      <div className="flex justify-center items-center ">
+      <div className="flex justify-center items-center gap-2">
         <Image
-          src="/daystar.png"
+          src="/daystar_logo.png"
           alt="logo"
           width={40}
           height={20}
