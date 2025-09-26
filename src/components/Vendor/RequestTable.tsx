@@ -16,25 +16,22 @@ const RequestTable = () => {
       id: "1",
       itemDescription: "New Microphones",
       qty: 12,
-      uom: 4,
       deadline: "08-May-2025",
-      category: "CONST",
+      status: "Approved",
     },
     {
       id: "2",
       itemDescription: "Projector Screens",
       qty: 5,
-      uom: 2,
       deadline: "12-May-2025",
-      category: "EQUIP",
+      status: "Approved",
     },
     {
       id: "3",
       itemDescription: "Office Chairs",
       qty: 30,
-      uom: 1,
       deadline: "15-May-2025",
-      category: "FURN",
+      status: "Rejected",
     },
     {
       id: "4",
@@ -42,7 +39,7 @@ const RequestTable = () => {
       qty: 10,
       uom: 1,
       deadline: "20-May-2025",
-      category: "IT",
+      status: "Active",
     },
     {
       id: "5",
@@ -50,47 +47,42 @@ const RequestTable = () => {
       qty: 200,
       uom: 50,
       deadline: "25-May-2025",
-      category: "OFFICE",
+      status: "Approved",
     },
     {
       id: "6",
       itemDescription: "Air Conditioners",
       qty: 6,
-      uom: 1,
       deadline: "30-May-2025",
-      category: "ELEC",
+      status: "Active",
     },
     {
       id: "7",
       itemDescription: "LED Monitors",
       qty: 15,
-      uom: 1,
       deadline: "02-Jun-2025",
-      category: "IT",
+      status: "IT",
     },
     {
       id: "8",
       itemDescription: "Conference Tables",
       qty: 3,
-      uom: 1,
       deadline: "05-Jun-2025",
-      category: "FURN",
+      status: "Rejected",
     },
     {
       id: "9",
       itemDescription: "Networking Cables",
       qty: 100,
-      uom: 20,
       deadline: "08-Jun-2025",
-      category: "IT",
+      status: "Active",
     },
     {
       id: "10",
       itemDescription: "Whiteboards",
       qty: 8,
-      uom: 2,
       deadline: "10-Jun-2025",
-      category: "EQUIP",
+      status: "Approved",
     },
   ];
   
@@ -102,9 +94,8 @@ const RequestTable = () => {
             <TableRow>
               <TableHead>Item Description</TableHead>
               <TableHead>QTY</TableHead>
-              <TableHead>UOM</TableHead>
               <TableHead>Deadline</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead>status</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -113,13 +104,14 @@ const RequestTable = () => {
               <TableRow key={index}> 
               <TableCell>{item.itemDescription}</TableCell>
               <TableCell>{item.qty}</TableCell>
-              <TableCell>{item.uom}</TableCell>
               <TableCell>{item.deadline}</TableCell>
-              <TableCell>{item.category}</TableCell>
+              <TableCell className={
+                item.status === "Approved" ? "text-[#26850B]" : item.status === "Active" ? "text-[#F6B40E]" : "text-[#DE1216]"
+              }>{item.status}</TableCell>
               <TableCell>
                 <Link href={"/vendor/requests?view=make-bid"}>
                 <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
-                  Make Bid
+                  Place Bid
                 </Button>
                 </Link>
               </TableCell>

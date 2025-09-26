@@ -1,11 +1,30 @@
+"use client"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BidTable from "@/components/Vendor/BidTable";
+import MakeBid from "@/components/Vendor/MakeBid";
+import ViewBid from "@/components/Vendor/ViewBid";
+import ViewRequest from "@/components/Vendor/ViewRequest";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import React from "react";
 
 const page = () => {
+  const searchParams = useSearchParams();
+  const view = searchParams.get("view");
+
+  if (view === "new") {
+    return <ViewRequest />;
+  }
+
+  if (view === "make-bid") {
+    return  <ViewBid />;
+  }
+
+  if (view === "view-bid") {
+    return <MakeBid />;
+  }
   return (
     <>
       <div className="flex flex-col py-4 px-4 md:px-6 gap-10">
@@ -26,7 +45,7 @@ const page = () => {
           </Button>
         </div>
         <div className="flex justify-between items-center">
-          <p className="text-2xl text-[#0F1E7A] font-medium ">Bid History</p>
+          <p className="text-2xl text-[#0F1E7A] font-medium ">Requests</p>
         </div>
         <BidTable />
       </div>

@@ -8,7 +8,7 @@ import { Card } from "../ui/card";
 const RequestsCard = () => {
   return (
     <>
-      <div className="grid grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Card className="flex flex-row w-full items-center bg-white gap-6 py-6 px-6 shadow-md">
           <div className="">
             <Image

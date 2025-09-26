@@ -1,5 +1,6 @@
+"use client"
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import {
   Table,
@@ -11,6 +12,7 @@ import {
 } from "../ui/table";
 
 const BidTable = () => {
+  const [visitedBids, setVisitedBids] = useState<string[]>([]);
   const itemsTable = [
     {
       id: "1",
@@ -114,6 +116,20 @@ const BidTable = () => {
     },
   ];
 
+  useEffect(() => {
+    const stored = localStorage.getItem("visitedBids");
+    if (stored) {
+      setVisitedBids(JSON.parse(stored));
+    }
+  }, []);
+
+  const handleVisit = (id: string) => {
+    const updated = [...new Set([...visitedBids, id])];
+    setVisitedBids(updated);
+    localStorage.setItem("visitedBids", JSON.stringify(updated));
+  };
+
+
   return (
     <>
       <div className="w-full overflow-x-auto">
@@ -122,7 +138,6 @@ const BidTable = () => {
             <TableRow>
               <TableHead>Item Description</TableHead>
               <TableHead>QTY</TableHead>
-              <TableHead>UOM</TableHead>
               <TableHead>Deadline</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Price</TableHead>
@@ -131,25 +146,44 @@ const BidTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody className="bg-white">
-            {itemsTable.map((item) => (
+          {itemsTable.map((item) => {
+            const hasVisited = visitedBids.includes(item.id);
+            return (
               <TableRow key={item.id}>
                 <TableCell>{item.itemDescription}</TableCell>
                 <TableCell>{item.qty}</TableCell>
-                <TableCell>{item.uom}</TableCell>
                 <TableCell>{item.deadline}</TableCell>
                 <TableCell>{item.category}</TableCell>
                 <TableCell>{item.price}</TableCell>
-                <TableCell>{item.status}</TableCell>
+                <TableCell
+                  className={
+                    item.status === "Approved"
+                      ? "text-[#26850B]"
+                      : item.status === "Pending"
+                      ? "text-[#F6B40E]"
+                      : "text-[#DE1216]"
+                  }
+                >
+                  {item.status}
+                </TableCell>
                 <TableCell>
-                  <Link href="/vendor/requests?view=view-bid">
+                  <Link
+                    href={
+                      hasVisited
+                        ? `/vendor/bids?view=make-bid&id=${item.id}`
+                        : `/vendor/bids?view=view-bid&id=${item.id}`
+                    }
+                    onClick={() => handleVisit(item.id)}
+                  >
                     <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
-                      View
+                      {hasVisited ? "View" : "Place Bid"}
                     </Button>
                   </Link>
                 </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
+            );
+          })}
+        </TableBody>
         </Table>
       </div>
     </>

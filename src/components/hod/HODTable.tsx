@@ -1,7 +1,5 @@
-import { MenubarMenu } from "@radix-ui/react-menubar";
-import { Ellipsis } from "lucide-react";
+import Link from "next/link";
 import { Button } from "../ui/button";
-import { Menubar, MenubarContent, MenubarItem, MenubarSeparator, MenubarTrigger } from "../ui/menubar";
 import {
   Table,
   TableBody,
@@ -21,8 +19,8 @@ const HODTable = () => {
       date: "08-May-2025",
       brand: "Dell",
       price: 100000,
-      status: "Pending HOD Approval",
-      document: null, // Placeholder for document
+      status: "Pending",
+      document: null, 
     },
     {
       id: "2",
@@ -43,7 +41,7 @@ const HODTable = () => {
       date: "15-May-2025",
       brand: "Epson",
       price: 120000,
-      status: "Pending Procurement",
+      status: "Pending",
       document: null,
     },
     {
@@ -65,7 +63,7 @@ const HODTable = () => {
       date: "20-May-2025",
       brand: "Lagos Furnitures",
       price: 200000,
-      status: "Pending HOD Approval",
+      status: "Pending",
       document: null,
     },
     {
@@ -87,7 +85,7 @@ const HODTable = () => {
       date: "26-May-2025",
       brand: "Samsung",
       price: 180000,
-      status: "Pending Installation",
+      status: "Pending",
       document: null,
     },
     {
@@ -110,7 +108,6 @@ const HODTable = () => {
             <TableRow>
               <TableHead>Item Description</TableHead>
               <TableHead>QTY</TableHead>
-              <TableHead>UOM</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Brand</TableHead>
               <TableHead>Price</TableHead>
@@ -123,26 +120,18 @@ const HODTable = () => {
               <TableRow key={item.id}>
                 <TableCell>{item.ItemDesc}</TableCell>
                 <TableCell>{item.qty}</TableCell>
-                <TableCell>{item.uom}</TableCell>
                 <TableCell>{item.date}</TableCell>
                 <TableCell>{item.brand}</TableCell>
                 <TableCell>{item.price}</TableCell>
-                <TableCell>{item.status}</TableCell>
+                <TableCell className={
+                  item.status === "Approved" ? "text-[#26850B]" : item.status === "Active" ? "text-[#F6B40E]" : "text-[#DE1216]"
+                }>{item.status}</TableCell>
                 <TableCell>
-                  <Menubar className="border-none">
-                    <MenubarMenu>
-                      <MenubarTrigger>
-                        <Ellipsis />
-                      </MenubarTrigger>
-                      <MenubarContent className="w-[20px] h-[80px] bg-white border-none">
-                        <MenubarItem className="hover:bg-[#e5e5e5]">
-                          View
-                        </MenubarItem>
-                        <MenubarSeparator className="bg-[#e5e5e5]" />
-                        <MenubarItem className="hover:bg-[#e5e5e5] text-red-500 font-medium">Decline</MenubarItem>
-                      </MenubarContent>
-                    </MenubarMenu>
-                  </Menubar>
+                <Link href={"/vendor/requests?view=make-bid"}>
+                <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
+                  View
+                </Button>
+                </Link>
                 </TableCell>
               </TableRow>
             ))}
