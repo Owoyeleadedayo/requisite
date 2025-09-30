@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-export default function HomeScreen() {
+export default function HomeScreens() {
   return (
     <div className="flex flex-col w-screen h-screen bg-[url('/back.png')] bg-[#0F1E7A] bg-center bg-cover bg-blend-soft-light justify-center items-center gap-3">
       <Image src="/daystar_logo.png" alt="daystar-logo" width={60} height={40} className="object-cover" />
