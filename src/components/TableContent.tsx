@@ -126,14 +126,24 @@ const TableContent = () => {
               <TableCell>{item.date}</TableCell>
               <TableCell>{item.brand}</TableCell>
               <TableCell>{item.price}</TableCell>
-              <TableCell>{item.status}</TableCell>
+              <TableCell
+                className={
+                  item.status === "Approved"
+                    ? "text-[#26850B]"
+                    : item.status === "Rejected"
+                    ? "text-[#ED3237]"
+                    : "text-[#F59313]"
+                }
+              >
+                {item.status}
+              </TableCell>
               <TableCell className="flex gap-2">
-                <Link href={`/user/requisition?view=${item.id}`}>
+                <Link href={`/user/requisition?newRequest=view`}>
                   <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
                     View
                   </Button>
                 </Link>
-                <Link href={`/user/requisition?edit=${item.id}`}>
+                <Link href={`/user/requisition?newRequest=edit`}>
                   <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
                     Edit
                   </Button>
@@ -143,7 +153,7 @@ const TableContent = () => {
           ))}
         </TableBody>
       </Table>
-    </div> 
+    </div>
   );
 };
 

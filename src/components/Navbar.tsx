@@ -23,7 +23,7 @@ import {
 
 const Navbar = () => {
   return (
-    <div className="flex sticky py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
+    <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
       <div className="flex justify-center items-center gap-2">
         <Image
           src="/daystar_logo.png"
@@ -35,8 +35,8 @@ const Navbar = () => {
         <p className="text-3xl text-white font-bold">requisite</p>
       </div>
       {/* ICONS AND USER */}
-      <div className="flex justify-center items-center gap-4">
-        <div className="hidden lg:flex justify-center items-center gap-[5px]">
+      <div className="flex justify-center items-center gap-6">
+        <div className="hidden lg:flex justify-center items-center gap-[14px]">
           <Dialog>
             <DialogTrigger asChild>
               <Search color="#FFF" className="cursor-pointer" />

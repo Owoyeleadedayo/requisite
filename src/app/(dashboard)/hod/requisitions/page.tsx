@@ -1,33 +1,38 @@
-"use client"
+"use client";
+import AcceptedRequest from "@/components/hod/AcceptedRequest";
+import DeniedRequest from "@/components/hod/DeniedRequest";
+import HODTable from "@/components/hod/HODTable";
+import NewRequest from "@/components/hod/NewRequest";
+import ViewRequest from "@/components/hod/ViewRequest";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import MakeBid from "@/components/Vendor/MakeBid";
-import RequestTable from "@/components/Vendor/RequestTable";
-import ViewBid from "@/components/Vendor/ViewBid";
-import ViewRequest from "@/components/Vendor/ViewRequest";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
 
 const page = () => {
   const searchParams = useSearchParams();
   const view = searchParams.get("view");
 
   if (view === "new") {
+    return <NewRequest />
+  }
+
+  if(view === "accepted"){
+    return <AcceptedRequest />;
+  }
+
+  if(view === "denied"){
+    return <DeniedRequest />
+  }
+  if(view === "pending"){
     return <ViewRequest />;
   }
 
-  if (view === "make-bid") {
-    return  <ViewBid />;
-  }
-
-  if (view === "view-bid") {
-    return <MakeBid />;
-  }
   return (
-    <>
-      <div className="flex flex-col py-4 px-4 md:px-6 gap-10">
+      <>
+        <div className="flex flex-col py-4 px-4 md:px-6 gap-4">
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           <div className="relative w-[100%]">
             <Input
@@ -44,19 +49,16 @@ const page = () => {
             advanced search
           </Button>
         </div>
-        <div className="flex justify-between items-center gap-4">
-            <p className="text-2xl text-[#0F1E7A] font-medium ">Open Requests</p>
-            <div>
-            <Link href={"/vendor/requests?view=new"}>
-              <Button className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer">
-                <Plus size={22} /> New Requests
-              </Button>
-            </Link>
+        <div className="flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <p className="text-2xl text-[#0F1E7A] font-medium ">
+              Request Summary
+            </p>
           </div>
+          <HODTable />
         </div>
-        <RequestTable />
-      </div>
-    </>
+        </div>
+      </>
   );
 };
 

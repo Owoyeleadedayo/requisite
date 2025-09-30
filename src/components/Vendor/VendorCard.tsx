@@ -38,7 +38,7 @@ const VendorCard = () => {
     return (
       <Card
         key={card.title}
-        className="flex flex-row justify-center items-center gap-3 px-6 py-4 shadow-md"
+        className="flex flex-col md:flex-row justify-center items-center gap-3 px-6 py-4 shadow-md"
         style={{ borderLeft: `4px solid ${card.color}` }}
       >
         <div

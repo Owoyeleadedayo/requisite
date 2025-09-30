@@ -8,7 +8,7 @@ const page = () => {
       <div className="flex flex-col py-4 px-4 md:px-6 gap-10">
         <div className="flex flex-col gap-4">
           <p className="text-3xl text-[#0F1E7A] font-normal">Summary</p>
-          <VendorCard />
+          <VendorCard /> 
         </div>
         <div className="flex flex-col gap-4">
           <p className="text-3xl text-[#0F1E7A] font-normal">Requests</p>
