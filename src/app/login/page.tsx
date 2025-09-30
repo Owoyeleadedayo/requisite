@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import React from "react";
 
-const page = () => {
+const LoginPage = () => {
   return (
     <>
       <div className="flex flex-col w-screen h-screen bg-[url('/back.png')] bg-[#e7e8f1]/80 bg-center bg-cover bg-blend-soft-light gap-3">
@@ -55,4 +55,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default LoginPage;

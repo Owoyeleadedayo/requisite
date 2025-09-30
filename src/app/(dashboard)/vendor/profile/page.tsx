@@ -3,7 +3,7 @@ import { Label } from "@radix-ui/react-label";
 import Image from "next/image";
 import React from "react";
 
-const page = () => {
+const ProfilePage = () => {
   return (
     <>
       <div className="flex flex-col py-4 px-4 md:px-6 gap-4">
@@ -74,4 +74,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default ProfilePage;
