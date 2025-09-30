@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 
-const page = () => {
+const Page = () => {
   const searchParams = useSearchParams();
   const view = searchParams.get("view");
 
@@ -62,4 +62,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

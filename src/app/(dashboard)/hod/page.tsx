@@ -7,7 +7,7 @@ import { Plus, Search } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
-const page = () => {
+const Page = () => {
   return (
     <>
       <div className="flex flex-col py-4 px-4 md:px-6 gap-4">
@@ -49,4 +49,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
