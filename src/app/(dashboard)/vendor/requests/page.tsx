@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 
-const page = () => {
+const RequestsPage = () => {
   const searchParams = useSearchParams();
   const view = searchParams.get("view");
 
@@ -60,4 +60,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default RequestsPage;

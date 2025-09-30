@@ -9,7 +9,7 @@ import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 
-const page = () => {
+const BidsPage = () => {
   const searchParams = useSearchParams();
   const view = searchParams.get("view");
 
@@ -52,4 +52,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default BidsPage;

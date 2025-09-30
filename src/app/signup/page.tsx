@@ -14,7 +14,7 @@ import { Upload } from "lucide-react";
 import Image from "next/image";
 import React, { useRef, useState } from "react";
 
-const page = () => {
+const SignUpPage = () => {
   const [fileName, setFileName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   return (
@@ -184,4 +184,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default SignUpPage;
