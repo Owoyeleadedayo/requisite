@@ -32,7 +32,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
 import Image from "next/image";
 import { styled } from "@mui/material/styles";
 import { Slider } from "@mui/material";

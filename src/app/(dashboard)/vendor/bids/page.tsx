@@ -5,8 +5,7 @@ import BidTable from "@/components/Vendor/BidTable";
 import MakeBid from "@/components/Vendor/MakeBid";
 import ViewBid from "@/components/Vendor/ViewBid";
 import ViewRequest from "@/components/Vendor/ViewRequest";
-import { Plus, Search } from "lucide-react";
-import Link from "next/link";
+import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 

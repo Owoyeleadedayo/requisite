@@ -54,6 +54,8 @@ const ViewRequest = () => {
   const handleChange = (event: Event, newValue: number[]) => {
     setValue(newValue);
   };
+
+  
   return (
     <div className="flex flex-col py-4 px-4 md:px-6 gap-4">
       <p className="text-2xl text-[#0F1E7A] font-medium">View Request</p>

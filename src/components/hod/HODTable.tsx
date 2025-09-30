@@ -124,12 +124,14 @@ const HODTable = () => {
                 <TableCell>{item.brand}</TableCell>
                 <TableCell>{item.price}</TableCell>
                 <TableCell className={
-                  item.status === "Approved" ? "text-[#26850B]" : item.status === "Active" ? "text-[#F6B40E]" : "text-[#DE1216]"
+                  item.status === "Approved" ? "text-[#26850B]" : item.status === "Pending" ? "text-[#F6B40E]" : "text-[#DE1216]"
                 }>{item.status}</TableCell>
                 <TableCell>
-                <Link href={"/vendor/requests?view=make-bid"}>
+                <Link href={
+                  item.status === "Pending" ? "/hod/requisitions?view=pending" : item.status === "Rejected" ? "/hod/requisitions?view=denied" : "/hod/requisitions?view=accepted"
+                }>
                 <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
-                  View
+                  View 
                 </Button>
                 </Link>
                 </TableCell>

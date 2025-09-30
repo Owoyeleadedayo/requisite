@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { SquarePen, LayoutGrid, User, Gavel, ClipboardPenLine, MapPin, Package, FileCog, Archive } from "lucide-react";
+import { SquarePen, LayoutGrid, User, Gavel, Package, FileCog } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -25,7 +25,7 @@ const menuItems: Record<string, MenuItem[]> = {
   hod: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hod" },
     { icon: FileCog, label: "Requisitions", href: "/hod/requisitions" },
-    { icon: Package, label: "My Request", href: "/hod/orders" },
+    { icon: Package, label: "My Request", href: "/hod/myrequests" },
     { icon: User, label: "Profile", href: "/vendor/profile" },
   ],
 };
@@ -39,20 +39,19 @@ const Menu = ({ role = "hod" }: MenuProps) => {
   const items = menuItems[role] || [];
 
   return (
-    <div className="flex h-full flex-col py-4 gap-2 bg-[#0F1E7A] left-0 bottom-0 sticky">
+    <div className="flex flex-col py-4 gap-2 h-full">
       {items.map((item) => {
         const Icon = item.icon;
-
         const isActive =
-        item.href === `/${role}`
-          ? pathname === item.href
-          : pathname === item.href || pathname.startsWith(item.href + "/");
+          item.href === `/${role}`
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(item.href + "/");
 
         return (
           <Link
             href={item.href}
             key={item.label}
-            className={`flex items-center justify-center lg:justify-start gap-3 text-md py-2 px-4 md:px-6  transition-colors
+            className={`flex items-center justify-center lg:justify-start gap-3 text-md py-2 px-4 md:px-6 transition-colors
               ${
                 isActive
                   ? "bg-[#FFF] text-[#0F1E7A]"
