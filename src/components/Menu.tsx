@@ -28,15 +28,18 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: Package, label: "My Request", href: "/hod/myrequests" },
     { icon: User, label: "Profile", href: "/vendor/profile" },
   ],
+    hhra: [
+    { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
+    { icon: FileCog, label: "Requests", href: "/hhra/requests" },
+    { icon: Package, label: "Vendors", href: "/hhra/vendors" },
+    { icon: User, label: "Profile", href: "/hhra/profile" },
+  ],
 };
 
-type MenuProps = {
-  role?: keyof typeof menuItems;
-};
-
-const Menu = ({ role = "hod" }: MenuProps) => {
+const Menu = () => {
   const pathname = usePathname();
-  const items = menuItems[role] || [];
+  const role = pathname.split('/')[1] as keyof typeof menuItems;
+  const items = menuItems[role] || menuItems.hod;
 
   return (
     <div className="flex flex-col py-4 gap-2 h-full">
