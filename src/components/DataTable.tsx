@@ -43,7 +43,6 @@ export default function DataTable<T extends { id?: string | number }>({
         <div className="w-full">
             <div className="overflow-x-auto rounded-md">
                 <Table>
-                    {/* Table Header */}
                     <TableHeader>
                         <TableRow>
                             {columns.map((col) => (
@@ -54,7 +53,6 @@ export default function DataTable<T extends { id?: string | number }>({
                         </TableRow>
                     </TableHeader>
 
-                    {/* Table Body */}
                     <TableBody className="bg-white">
                         {paginatedData.length === 0 ? (
                             <TableRow>
@@ -85,7 +83,6 @@ export default function DataTable<T extends { id?: string | number }>({
                 </Table>
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex justify-start mt-4">
                     <Pagination className="!justify-end">
