@@ -37,7 +37,8 @@ export default function Home() {
         const data = await response.json();
 
         if (data.success) {
-          localStorage.setItem("authData", JSON.stringify(data));
+          localStorage.setItem("authData", JSON.stringify(data.data));
+          toast.success(data.message);
 
           const role = data.data.user.role;
           switch (role) {

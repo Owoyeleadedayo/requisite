@@ -1,12 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, Upload, Ellipsis, Send } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import TableContent from "@/components/TableContent";
 import {
   Select,
@@ -20,139 +18,12 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import Image from "next/image";
 import ViewRequest from "@/components/user/ViewRequest";
 import NewRequest from "@/components/user/NewRequest";
 import EditRequest from "@/components/user/EditRequest";
-
-const tableItems = [
-  {
-    id: "1",
-    ItemDesc: "Laptop XPS 13",
-    qty: 12,
-    uom: "pcs",
-    date: "08-May-2025",
-    brand: "Dell",
-    price: 100000,
-    status: "Pending HOD Approval",
-    department: "IT",
-    message: "High-performance laptops for development team",
-    category: "apple",
-    document: null,
-    notes: "",
-  },
-  {
-    id: "2",
-    ItemDesc: "Office Chair",
-    qty: 20,
-    uom: "pcs",
-    date: "12-May-2025",
-    brand: "Ikea",
-    price: 45000,
-    status: "Approved",
-    department: "Facilities",
-    message: "Ergonomic chairs for office",
-    category: "banana",
-    document: null,
-    notes: "",
-  },
-  {
-    id: "3",
-    ItemDesc: "Projector",
-    qty: 5,
-    uom: "pcs",
-    date: "15-May-2025",
-    brand: "Epson",
-    price: 120000,
-    status: "Pending Procurement",
-    department: "Training",
-    message: "Projectors for training sessions",
-    category: "blueberry",
-    document: null,
-    notes: "",
-  },
-  {
-    id: "4",
-    ItemDesc: "Printer Toner",
-    qty: 30,
-    uom: "packs",
-    date: "18-May-2025",
-    brand: "HP",
-    price: 15000,
-    status: "Rejected",
-    department: "Admin",
-    message: "Toner for office printers",
-    category: "grapes",
-    document: null,
-    notes: "",
-  },
-  {
-    id: "5",
-    ItemDesc: "Conference Table",
-    qty: 2,
-    uom: "pcs",
-    date: "20-May-2025",
-    brand: "Lagos Furnitures",
-    price: 200000,
-    status: "Pending HOD Approval",
-    department: "Facilities",
-    message: "Tables for meeting rooms",
-    category: "pineapple",
-    document: null,
-    notes: "",
-  },
-  {
-    id: "6",
-    ItemDesc: "External Hard Drive",
-    qty: 15,
-    uom: "pcs",
-    date: "23-May-2025",
-    brand: "Seagate",
-    price: 25000,
-    status: "Approved",
-    department: "IT",
-    message: "Storage for backups",
-    category: "apple",
-    document: null,
-    notes: "",
-  },
-  {
-    id: "7",
-    ItemDesc: "Air Conditioner",
-    qty: 4,
-    uom: "units",
-    date: "26-May-2025",
-    brand: "Samsung",
-    price: 180000,
-    status: "Pending Installation",
-    department: "Facilities",
-    message: "AC units for new office",
-    category: "banana",
-    document: null,
-    notes: "",
-  },
-  {
-    id: "8",
-    ItemDesc: "Desk Lamp",
-    qty: 50,
-    uom: "pcs",
-    date: "29-May-2025",
-    brand: "Philips",
-    price: 8000,
-    status: "Approved",
-    department: "Admin",
-    message: "Lamps for workstations",
-    category: "grapes",
-    document: null,
-    notes: "",
-  },
-];
 
 export default function RequisitionsPage() {
   const searchParams = useSearchParams();
@@ -214,15 +85,40 @@ export default function RequisitionsPage() {
                       <Label className="text-md font-medium">Category</Label>
                       <Select>
                         <SelectTrigger className="bg-white w-[200px] border-1 border-white">
-                          <SelectValue placeholder="Select Category"  />
+                          <SelectValue placeholder="Select Category" />
                         </SelectTrigger>
                         <SelectContent className="bg-white">
                           <SelectGroup>
-                            <SelectItem value="apple" className="hover:bg-[#e5e5e5]">Apple</SelectItem>
-                            <SelectItem value="banana" className="hover:bg-[#e5e5e5]">Banana</SelectItem>
-                            <SelectItem value="blueberry" className="hover:bg-[#e5e5e5]">Blueberry</SelectItem>
-                            <SelectItem value="grapes" className="hover:bg-[#e5e5e5]">Grapes</SelectItem>
-                            <SelectItem value="pineapple" className="hover:bg-[#e5e5e5]">Pineapple</SelectItem>
+                            <SelectItem
+                              value="apple"
+                              className="hover:bg-[#e5e5e5]"
+                            >
+                              Apple
+                            </SelectItem>
+                            <SelectItem
+                              value="banana"
+                              className="hover:bg-[#e5e5e5]"
+                            >
+                              Banana
+                            </SelectItem>
+                            <SelectItem
+                              value="blueberry"
+                              className="hover:bg-[#e5e5e5]"
+                            >
+                              Blueberry
+                            </SelectItem>
+                            <SelectItem
+                              value="grapes"
+                              className="hover:bg-[#e5e5e5]"
+                            >
+                              Grapes
+                            </SelectItem>
+                            <SelectItem
+                              value="pineapple"
+                              className="hover:bg-[#e5e5e5]"
+                            >
+                              Pineapple
+                            </SelectItem>
                           </SelectGroup>
                         </SelectContent>
                       </Select>
