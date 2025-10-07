@@ -97,7 +97,7 @@ export default function CreateNewRequest() {
   };
 
   return (
-    <div className="w-full lg:w-1/2 flex flex-col px-4 py-8">
+    <div className="w-full lg:w-1/2 flex flex-col px-4 py-8 pb-16">
       <div className="w-full lg:max-w-xl flex items-center mb-4 ">
         <Link
           href="/user/requisition"
@@ -176,7 +176,7 @@ export default function CreateNewRequest() {
               step={1}
               value={urgency}
               onValueChange={setUrgency}
-              className="my-2"
+              className="my-2 [&>span:first-child]:h-2 [&>span:first-child]:bg-gray-200"
             />
             <div className="flex justify-between text-sm text-gray-700">
               <span

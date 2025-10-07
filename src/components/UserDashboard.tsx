@@ -10,7 +10,7 @@ import InpageSearch from "@/components/InpageSearch";
 import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken } from "@/lib/auth";
+import { getToken, getUser, getUserId } from "@/lib/auth";
 
 interface UserDashboardProps {
   page?: "userDashboard" | "userRequisition";
@@ -108,14 +108,14 @@ const columns: Column<RequisitionShape>[] = [
           asChild
           className="bg-blue-900 hover:bg-blue-800 text-white px-4"
         >
-          <Link href={`"/user/requisition/"${row._id}`}>View</Link>
+          <Link href={`/user/requisition/${row._id}`}>View</Link>
         </Button>
 
         <Button
           asChild
           className="bg-blue-900 hover:bg-blue-800 text-white px-4"
         >
-          <Link href={`/user/requisition/${row._id}/edit`}>Edit</Link>
+          <Link href={`/user/requisition/${row._id}?mode=edit`}>Edit</Link>
         </Button>
       </div>
     ),
@@ -134,6 +134,8 @@ export default function UserDashboard({
     rejected: 0,
   });
 
+  // const user = getUser();
+  const userId = getUserId();
   const token = getToken();
 
   const dashboardCardItems = [
