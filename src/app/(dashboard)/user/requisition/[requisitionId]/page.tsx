@@ -26,6 +26,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import Comments from "@/components/Comments";
 
 interface RequestData {
   _id: string;
@@ -203,8 +204,8 @@ export default function ViewEditRequest() {
     );
 
   return (
-    <div className="w-full lg:w-1/2 flex flex-col px-4 py-8 pb-16">
-      <div className="w-full flex items-center mb-4">
+    <div className="pt-8 pb-16 px-4 lg:px-12">
+      <div className="w-full flex items-center mb-12">
         <Link
           href="/user/requisition"
           className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-3"
@@ -217,217 +218,223 @@ export default function ViewEditRequest() {
         {isEditMode ? "Update Request" : "View Request"}
       </h1>
 
-      <div className="w-full max-w-xl space-y-5">
-        <div className="space-y-2">
-          <Label>Request Title</Label>
-          <Input
-            value={formData.title}
-            onChange={(e) => handleChange("title", e.target.value)}
-            readOnly={!isEditMode}
-            className="!p-4 rounded-xl border shadow-sm"
-          />
-        </div>
+      <div className="w-full flex flex-col lg:flex-row gap-6">
+        <div className="w-full lg:w-1/2 flex flex-col  pb-16">
+          <div className="w-full max-w-xl space-y-5">
+            <div className="space-y-2">
+              <Label>Request Title</Label>
+              <Input
+                value={formData.title}
+                onChange={(e) => handleChange("title", e.target.value)}
+                readOnly={!isEditMode}
+                className="!p-4 rounded-xl border shadow-sm"
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label>Item Description</Label>
-          <Textarea
-            value={formData.description}
-            onChange={(e) => handleChange("description", e.target.value)}
-            readOnly={!isEditMode}
-            className="min-h-[100px] rounded-xl border shadow-sm"
-          />
-        </div>
+            <div className="space-y-2">
+              <Label>Item Description</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+                readOnly={!isEditMode}
+                className="min-h-[100px] rounded-xl border shadow-sm"
+              />
+            </div>
 
-        <div className="space-y-2">
-          <Label>Category</Label>
-          {isEditMode ? (
-            <Select
-              value={formData.category}
-              onValueChange={(value) => handleChange("category", value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="product">Product</SelectItem>
-                <SelectItem value="service">Service</SelectItem>
-              </SelectContent>
-            </Select>
-          ) : (
-            <Input
-              value={formData.category}
-              readOnly
-              className="!p-4 rounded-xl border shadow-sm"
-            />
-          )}
-        </div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              {isEditMode ? (
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => handleChange("category", value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="product">Product</SelectItem>
+                    <SelectItem value="service">Service</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input
+                  value={formData.category}
+                  readOnly
+                  className="!p-4 rounded-xl border shadow-sm"
+                />
+              )}
+            </div>
 
-        <div className="space-y-2">
-          <Label>Urgency</Label>
-          <div className="p-3 rounded-xl border shadow-sm">
-            <Slider
-              min={0}
-              max={2}
-              step={1}
-              value={urgency}
-              onValueChange={isEditMode ? setUrgency : undefined}
-              disabled={!isEditMode}
-              className="my-2 [&>span:first-child]:h-2 [&>span:first-child]:bg-gray-200"
-            />
-            <div className="flex justify-between text-sm text-gray-700">
-              <span
-                className={
-                  urgency[0] === 0 ? "font-semibold text-[#0d1b5e]" : ""
+            <div className="space-y-2">
+              <Label>Urgency</Label>
+              <div className="p-3 rounded-xl border shadow-sm">
+                <Slider
+                  min={0}
+                  max={2}
+                  step={1}
+                  value={urgency}
+                  onValueChange={isEditMode ? setUrgency : undefined}
+                  disabled={!isEditMode}
+                  className="my-2 [&>span:first-child]:h-2 [&>span:first-child]:bg-gray-200"
+                />
+                <div className="flex justify-between text-sm text-gray-700">
+                  <span
+                    className={
+                      urgency[0] === 0 ? "font-semibold text-[#0d1b5e]" : ""
+                    }
+                  >
+                    Low
+                  </span>
+                  <span
+                    className={
+                      urgency[0] === 1 ? "font-semibold text-[#0d1b5e]" : ""
+                    }
+                  >
+                    Medium
+                  </span>
+                  <span
+                    className={
+                      urgency[0] === 2 ? "font-semibold text-[#0d1b5e]" : ""
+                    }
+                  >
+                    High
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Justification</Label>
+              <Textarea
+                value={formData.justification}
+                onChange={(e) => handleChange("justification", e.target.value)}
+                readOnly={!isEditMode}
+                className="min-h-[120px] rounded-xl border shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Attach Image</Label>
+              <div className="flex items-center gap-2 border p-3 rounded-xl shadow-sm py-2">
+                <Upload className="h-5 w-5 text-gray-500" />
+                <Input
+                  type="file"
+                  accept=".png,.jpg,.jpeg"
+                  disabled={!isEditMode}
+                  className="border-none shadow-none focus-visible:ring-0 p-0 text-sm"
+                />
+              </div>
+              <p className="text-xs text-gray-500">
+                Upload image most preferably in PNG, JPEG format.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Units</Label>
+              <Input
+                type="number"
+                value={formData.quantityNeeded}
+                onChange={(e) =>
+                  handleChange("quantityNeeded", parseInt(e.target.value))
                 }
-              >
-                Low
-              </span>
-              <span
-                className={
-                  urgency[0] === 1 ? "font-semibold text-[#0d1b5e]" : ""
+                readOnly={!isEditMode}
+                className="!p-4 rounded-xl border shadow-sm"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Unit Price (₦)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.estimatedUnitPrice}
+                onChange={(e) =>
+                  handleChange("estimatedUnitPrice", parseFloat(e.target.value))
                 }
-              >
-                Medium
-              </span>
-              <span
-                className={
-                  urgency[0] === 2 ? "font-semibold text-[#0d1b5e]" : ""
-                }
-              >
-                High
-              </span>
+                readOnly={!isEditMode}
+                className="!p-4 rounded-xl border shadow-sm"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-6">
+              {isEditMode ? (
+                <>
+                  <Button
+                    onClick={() => setIsEditMode(false)}
+                    variant="outline"
+                    className="flex-1 py-6"
+                  >
+                    Cancel Edit
+                  </Button>
+                  <Button
+                    disabled={loading}
+                    onClick={handleSave}
+                    className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
+                  >
+                    {loading ? "Saving..." : "Save"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => router.push("/user/requisition")}
+                    className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    onClick={() => setIsEditMode(true)}
+                    className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
+                  >
+                    Edit
+                  </Button>
+                </>
+              )}
+              <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+                <DialogTrigger className="bg-white max-w-2xl" asChild>
+                  <Button
+                    variant="outline"
+                    className="border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
+                  >
+                    Cancel Request
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl bg-white">
+                  <DialogHeader>
+                    <DialogTitle>Cancel Request</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Reason for cancellation</Label>
+                      <Textarea
+                        value={cancelReason}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        placeholder="Please provide a reason for cancelling this request"
+                        className="mt-2"
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowCancelModal(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleCancel}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Confirm Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Justification</Label>
-          <Textarea
-            value={formData.justification}
-            onChange={(e) => handleChange("justification", e.target.value)}
-            readOnly={!isEditMode}
-            className="min-h-[120px] rounded-xl border shadow-sm"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Attach Image</Label>
-          <div className="flex items-center gap-2 border p-3 rounded-xl shadow-sm py-2">
-            <Upload className="h-5 w-5 text-gray-500" />
-            <Input
-              type="file"
-              accept=".png,.jpg,.jpeg"
-              disabled={!isEditMode}
-              className="border-none shadow-none focus-visible:ring-0 p-0 text-sm"
-            />
-          </div>
-          <p className="text-xs text-gray-500">
-            Upload image most preferably in PNG, JPEG format.
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Units</Label>
-          <Input
-            type="number"
-            value={formData.quantityNeeded}
-            onChange={(e) =>
-              handleChange("quantityNeeded", parseInt(e.target.value))
-            }
-            readOnly={!isEditMode}
-            className="!p-4 rounded-xl border shadow-sm"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Unit Price (₦)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={formData.estimatedUnitPrice}
-            onChange={(e) =>
-              handleChange("estimatedUnitPrice", parseFloat(e.target.value))
-            }
-            readOnly={!isEditMode}
-            className="!p-4 rounded-xl border shadow-sm"
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-3 pt-6">
-          {isEditMode ? (
-            <>
-              <Button
-                onClick={() => setIsEditMode(false)}
-                variant="outline"
-                className="flex-1 py-6"
-              >
-                Cancel Edit
-              </Button>
-              <Button
-                disabled={loading}
-                onClick={handleSave}
-                className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-              >
-                {loading ? "Saving..." : "Save"}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                onClick={() => router.push("/user/requisition")}
-                className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
-              >
-                Close
-              </Button>
-              <Button
-                onClick={() => setIsEditMode(true)}
-                className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-              >
-                Edit
-              </Button>
-            </>
-          )}
-          <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
-            <DialogTrigger className="bg-white max-w-2xl" asChild>
-              <Button
-                variant="outline"
-                className="border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
-              >
-                Cancel Request
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-white">
-              <DialogHeader>
-                <DialogTitle>Cancel Request</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label>Reason for cancellation</Label>
-                  <Textarea
-                    value={cancelReason}
-                    onChange={(e) => setCancelReason(e.target.value)}
-                    placeholder="Please provide a reason for cancelling this request"
-                    className="mt-2"
-                  />
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowCancelModal(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleCancel}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Confirm Cancel
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <Comments />
       </div>
     </div>
   );

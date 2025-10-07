@@ -9,7 +9,7 @@ export default function RequisitionsPage() {
   return (
     <>
       <div className="flex flex-col py-4 px-4 md:px-6 gap-4">
-        <InpageSearch size="large" className="w-full md:w-1/2" />
+        {/* <InpageSearch size="large" className="w-full md:w-1/2" /> */}
 
         <div className="flex justify-between items-center py-4 gap-2">
           <p className="text-md md:text-2xl text-[#0F1E7A] font-medium leading-5">

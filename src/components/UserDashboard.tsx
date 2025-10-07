@@ -259,7 +259,7 @@ export default function UserDashboard({
         </Button>
       </div>
 
-      <InpageSearch size="large" className="mb-7" />
+      {/* <InpageSearch size="large" className="mb-7" /> */}
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
