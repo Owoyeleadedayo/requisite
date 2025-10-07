@@ -1,4 +1,6 @@
-
 @import "tw-animate-css";
 @import "tailwindcss";
 
+:root {
+  --primary-color: #0f1e7a;
+}

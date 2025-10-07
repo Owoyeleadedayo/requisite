@@ -25,24 +25,24 @@ const menuItems: Record<string, MenuItem[]> = {
   user: [
     { icon: LayoutGrid, label: "Dashboard", href: "/user" },
     { icon: SquarePen, label: "Requisition", href: "/user/requisition" },
-    { icon: User, label: "Profile", href: "/user/profile" },
+    // { icon: User, label: "Profile", href: "/user/profile" },
   ],
   vendor: [
     { icon: LayoutGrid, label: "Dashboard", href: "/vendor" },
     { icon: Gavel, label: "Bids", href: "/vendor/bids" },
-    { icon: User, label: "Profile", href: "/vendor/profile" },
+    // { icon: User, label: "Profile", href: "/vendor/profile" },
   ],
   hod: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hod" },
     { icon: FileCog, label: "Requisitions", href: "/hod/requisitions" },
     { icon: Package, label: "My Request", href: "/hod/myrequests" },
-    { icon: User, label: "Profile", href: "/vendor/profile" },
+    // { icon: User, label: "Profile", href: "/vendor/profile" },
   ],
   hhra: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
     { icon: FileCog, label: "Requests", href: "/hhra/requests" },
     { icon: Package, label: "Vendors", href: "/hhra/vendors" },
-    { icon: User, label: "Profile", href: "/hhra/profile" },
+    // { icon: User, label: "Profile", href: "/hhra/profile" },
   ],
 };
 
