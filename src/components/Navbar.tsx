@@ -16,6 +16,7 @@ import { Button } from "./ui/button";
 import { getUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/lib/config";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import {
   DropdownMenu,
@@ -40,10 +41,21 @@ const Navbar = () => {
   const router = useRouter();
   const user = getUser();
 
-  const handleLogout = () => {
-    localStorage.removeItem("authData");
-    toast.success("Logged out successfully");
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "GET",
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success(data.message);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("authData");
+      router.push("/");
+    }
   };
   return (
     <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
@@ -133,9 +145,11 @@ const Navbar = () => {
               </div>
             </DialogContent>
           </Dialog>
+
           <div>
             <Settings color="#FFF" />
           </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="relative cursor-pointer">
@@ -220,6 +234,7 @@ const Navbar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Image
@@ -270,7 +285,7 @@ const Navbar = () => {
             <div className="p-4 mx-auto w-full flex items-center justify-center">
               <Button
                 onClick={handleLogout}
-                className="w-auto bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                className="w-auto bg-[var(--primary-color)] hover:bg-red-500 text-white cursor-pointer"
               >
                 <div className="flex justify-center items-center gap-2">
                   <LogOut size={20} />
