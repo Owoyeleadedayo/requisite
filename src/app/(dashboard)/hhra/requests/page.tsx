@@ -45,7 +45,7 @@ const Page = () => {
   return (
     <>
       <div className="flex flex-col px-4 md:px-8 gap-4 pb-16">
-        <InpageSearch />
+        {/* <InpageSearch className="mt-20 mb-11" /> */}
 
         <div className="">
           <div className="flex justify-between items-center mb-12">

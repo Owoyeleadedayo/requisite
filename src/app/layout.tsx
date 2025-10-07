@@ -1,7 +1,14 @@
-import { Toaster } from "@/components/ui/sonner";
-import type { Metadata } from "next";
-import { Montserrat } from "next/font/google"; 
 import "./globals.css";
+import type { Metadata } from "next";
+import { Montserrat } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
+import {
+  CircleX,
+  InfoIcon,
+  Loader2,
+  ThumbsUp,
+  TriangleAlert,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Requisite App",
@@ -10,8 +17,8 @@ export const metadata: Metadata = {
 
 const montserrat = Montserrat({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"], 
-  variable: "--font-montserrat",        
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-montserrat",
 });
 
 export default function RootLayout({
@@ -23,7 +30,37 @@ export default function RootLayout({
     <html lang="en">
       <body className={montserrat.className}>
         {children}
-        <Toaster />
+        <Toaster
+          closeButton
+          icons={{
+            success: <ThumbsUp size={16} />,
+            info: <InfoIcon size={16} />,
+            warning: <TriangleAlert size={16} />,
+            error: <CircleX size={16} />,
+            loading: <Loader2 size={16} className="animate-spin" />,
+          }}
+          position="top-right"
+          toastOptions={{
+            style: {
+              color: "#ffffff",
+              // color: "#0F1E7A",
+              // backgroundColor: '#0F1E7A',
+              // border: "1px solid #0F1E7A",
+              // fontFamily: 'Montserrat, sans-serif',
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+              fontFamily: `var(--font-montserrat), ${montserrat.style.fontFamily}, sans-serif`,
+            },
+
+            classNames: {
+              description: "text-sm",
+              title: "text-base font-normal",
+              error: "!border-red-500 !bg-red-300 !text-red-900",
+              info: "!border-[#0F1E7A] !bg-blue-300 !text-[#0F1E7A]",
+              success: "!border-green-500 !bg-green-300 !text-green-900",
+              warning: "!border-yellow-500 !bg-orange-300 !text-yellow-900",
+            },
+          }}
+        />
       </body>
     </html>
   );

@@ -1,6 +1,22 @@
-import { Bell, Search, Settings } from "lucide-react";
+"use client";
+
+import {
+  Bell,
+  CircleUser,
+  Crown,
+  Gem,
+  LogOut,
+  Mail,
+  Phone,
+  Search,
+  Settings,
+} from "lucide-react";
 import Image from "next/image";
 import { Button } from "./ui/button";
+import { getUser } from "@/lib/auth";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { API_BASE_URL } from "@/lib/config";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import {
   DropdownMenu,
@@ -22,6 +38,25 @@ import {
 } from "./ui/select";
 
 const Navbar = () => {
+  const router = useRouter();
+  const user = getUser();
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "GET",
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success(data.message);
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("authData");
+      router.push("/");
+    }
+  };
   return (
     <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
       <div className="flex justify-center items-center gap-2">
@@ -99,17 +134,22 @@ const Navbar = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
               </div>
               <div className="flex justify-end gap-4">
-                <Button className="text-md font-medium border border-[#000]">Cancel</Button>
-                <Button className="bg-[#0F1E7A] text-md text-white font-medium">Apply</Button>
+                <Button className="text-md font-medium border border-[#000]">
+                  Cancel
+                </Button>
+                <Button className="bg-[#0F1E7A] text-md text-white font-medium">
+                  Apply
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
+
           <div>
             <Settings color="#FFF" />
           </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="relative cursor-pointer">
@@ -175,7 +215,7 @@ const Navbar = () => {
                 <DropdownMenuItem className="flex flex-col items-start py-3 hover:bg-gray-100 cursor-pointer">
                   <p className="text-sm font-medium">Meeting Reminder</p>
                   <p className="text-xs font-normal">
-                    Don’t forget the weekly staff meeting at 10 AM
+                    Don&apos;t forget the weekly staff meeting at 10 AM
                   </p>
                   <div className="flex justify-between w-full mt-1">
                     <p className="text-xs font-normal">3 days ago</p>
@@ -194,13 +234,68 @@ const Navbar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <Image
-          src="/avatar.png"
-          alt=""
-          width={36}
-          height={36}
-          className="rounded-full"
-        />
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Image
+              src="/avatar.png"
+              alt=""
+              width={36}
+              height={36}
+              className="rounded-full cursor-pointer"
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-[287px] bg-white border-none mr-4">
+            <DropdownMenuLabel className="!p-0">
+              <div className="flex flex-col items-start gap-2">
+                <div className="text-sm text-[var(--primary-color)] pt-5 px-5">
+                  <p className="font-semibold flex items-center gap-2 mb-4">
+                    <span className="">
+                      <CircleUser size={25} />
+                    </span>
+                    <span>
+                      {user?.firstName} {user?.lastName}
+                    </span>
+                  </p>
+
+                  <p className="font-semibold flex items-center gap-2 mb-4">
+                    <span className="">
+                      <Mail size={25} />
+                    </span>
+                    <span>{user?.email}</span>
+                  </p>
+
+                  <p className="font-semibold flex items-center gap-2 mb-4">
+                    <span className="">
+                      <Crown size={25} />
+                    </span>
+                    <span>{user?.designation}</span>
+                  </p>
+
+                  <p className="font-semibold flex items-center gap-2 mb-4">
+                    <span className="">
+                      <Gem size={25} />
+                    </span>
+                    <span>{user?.department?.name || ""}</span>
+                  </p>
+                </div>
+              </div>
+            </DropdownMenuLabel>
+            <div className="border-b border-gray-200 mx-4" />
+            <div className="p-4 mx-auto w-full flex items-center justify-center">
+              <Button
+                onClick={handleLogout}
+                className="w-auto bg-[var(--primary-color)] hover:bg-red-500 text-white cursor-pointer"
+              >
+                <div className="flex justify-center items-center gap-2">
+                  <LogOut size={20} />
+
+                  <span>Logout</span>
+                </div>
+              </Button>
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
