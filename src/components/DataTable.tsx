@@ -23,8 +23,8 @@ export type Column<T> = {
 };
 
 interface DataTableProps<T> {
-  columns: Column<T>[];
-  data: T[];
+  columns: any[]; //eslint-disable-line @typescript-eslint/no-explicit-any
+  data: any[]; //eslint-disable-line @typescript-eslint/no-explicit-any
   itemsPerPage?: number;
 }
 

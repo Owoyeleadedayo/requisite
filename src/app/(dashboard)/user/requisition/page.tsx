@@ -1,10 +1,5 @@
-import { Suspense } from "react";
-import RequisitionsPage from "./requisitionPage";
+import UserDashboard from "@/components/UserDashboard";
 
-export default function Page() {
-  return (
-    <Suspense fallback={<div>Loading requisitions...</div>}>
-      <RequisitionsPage />
-    </Suspense>
-  );
+export default function UserPage() {
+  return <UserDashboard page="userRequisition" />;
 }
