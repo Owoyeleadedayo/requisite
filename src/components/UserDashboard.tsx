@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Plus } from "lucide-react";
@@ -127,12 +127,17 @@ export default function UserDashboard({
 }: UserDashboardProps = {}) {
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [dashboardStats, setDashboardStats] = useState({
     total: 0,
     pending: 0,
     approved: 0,
     rejected: 0,
   });
+
+  const itemsPerPage: number = 10;
 
   // const user = getUser();
   const userId = getUserId();
@@ -169,13 +174,13 @@ export default function UserDashboard({
     },
   ];
 
-  useEffect(() => {
-    const fetchRequisitions = async () => {
+  const fetchRequisitions = useCallback(
+    async (pageNum: number = 1) => {
       setLoading(true);
 
       try {
         const response = await fetch(
-          `${API_BASE_URL}/users/${userId}/requisitions`,
+          `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -187,19 +192,30 @@ export default function UserDashboard({
 
         if (data.success) {
           setRequisitions(data.data);
+          setCurrentPage(data.currentPage);
+          setTotalPages(data.totalPages);
+          setTotalCount(data.total);
 
-          const stats = data.data.reduce(
-            (acc: any, req: RequisitionShape) => {
-              //eslint-disable-line @typescript-eslint/no-explicit-any
-              acc.total++;
-              if (req.status === "draft" || req.status === "pending")
-                acc.pending++;
-              else if (req.status === "departmentApproved") acc.approved++;
-              else if (req.status === "cancelled") acc.rejected++;
-              return acc;
-            },
-            { total: 0, pending: 0, approved: 0, rejected: 0 }
-          );
+          // Calculate stats from total count (you might want a separate endpoint for this)
+          const stats = {
+            total: data.total,
+            pending: 0,
+            approved: 0,
+            rejected: 0,
+          };
+
+          // Calculate stats from current page data (limited view)
+          data.data.forEach((req: RequisitionShape) => {
+            if (
+              req.status === "draft" ||
+              req.status === "pending" ||
+              req.status === "submitted"
+            )
+              stats.pending++;
+            else if (req.status === "departmentApproved") stats.approved++;
+            else if (req.status === "cancelled") stats.rejected++;
+          });
+
           setDashboardStats(stats);
         }
       } catch (error) {
@@ -207,10 +223,19 @@ export default function UserDashboard({
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [userId, token]
+  );
 
-    fetchRequisitions();
-  }, [userId, token]);
+  useEffect(() => {
+    if (userId && token) {
+      fetchRequisitions(1);
+    }
+  }, [userId, token, fetchRequisitions]);
+
+  const handlePageChange = (page: number) => {
+    fetchRequisitions(page);
+  };
 
   return (
     <div className="flex flex-col gap-4 p-6 lg:p-12 !pb-16">
@@ -267,7 +292,14 @@ export default function UserDashboard({
           <span className="ml-2 text-gray-600">Loading requisitions...</span>
         </div>
       ) : (
-        <DataTable columns={columns} data={requisitions} />
+        <DataTable
+          columns={columns}
+          data={requisitions}
+          totalPages={totalPages}
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          loading={loading}
+        />
       )}
     </div>
   );

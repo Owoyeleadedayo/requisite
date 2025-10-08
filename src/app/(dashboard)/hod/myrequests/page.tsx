@@ -27,9 +27,7 @@ const Page = () => {
         </div>
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center">
-            <p className="text-2xl text-[#0F1E7A] font-medium ">
-              My Requests
-            </p>
+            <p className="text-2xl text-[#0F1E7A] font-medium ">My Requests</p>
             <Link href="/hod/requisitions?view=new">
               <Button className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer">
                 <Plus size={22} /> New Request
