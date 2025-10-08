@@ -96,7 +96,8 @@ export default function ViewEditRequest() {
         if (data.success) {
           const req = data.data;
           setFormData(req);
-          setUrgency([reversePriorityMap[req.priority]]);
+          const priority = req.priority as RequestData["priority"];
+          setUrgency([reversePriorityMap[priority]]);
         } else setNotFound(true);
       } catch (error) {
         console.error(error);
@@ -106,7 +107,7 @@ export default function ViewEditRequest() {
     fetchRequest();
   }, [requisitionId, token]);
 
-  const handleChange = (field: keyof RequestData, value: any) => {
+  const handleChange = (field: keyof RequestData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -434,7 +435,10 @@ export default function ViewEditRequest() {
           </div>
         </div>
 
-        <Comments />
+        <Comments
+          entityId={requisitionId as string}
+          entityType="requisitions"
+        />
       </div>
     </div>
   );

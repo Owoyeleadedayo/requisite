@@ -58,6 +58,7 @@ export default function RootLayout({
               info: "!border-[#0F1E7A] !bg-blue-300 !text-[#0F1E7A]",
               success: "!border-green-500 !bg-green-300 !text-green-900",
               warning: "!border-yellow-500 !bg-orange-300 !text-yellow-900",
+              loading: "!border-gray-500 !bg-gray-200 !text-gray-800",
             },
           }}
         />
