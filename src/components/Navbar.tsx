@@ -1,5 +1,6 @@
-import { Bell, Search, Settings } from "lucide-react";
+import { Bell, Search, SquareMenu } from "lucide-react";
 import Image from "next/image";
+import Menu from "./Menu";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import {
@@ -20,11 +21,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTrigger,
+} from "./ui/sheet";
 
 const Navbar = () => {
   return (
     <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
-      <div className="flex justify-center items-center gap-2">
+      <div className="hidden md:flex justify-center items-center gap-2">
         <Image
           src="/daystar_logo.png"
           alt="logo"
@@ -34,9 +42,27 @@ const Navbar = () => {
         />
         <p className="text-3xl text-white font-bold">requisite</p>
       </div>
+
+      <div className="flex md:hidden">
+        <Sheet>
+          <SheetTrigger>
+            <SquareMenu color="white" />
+          </SheetTrigger>
+
+          <SheetContent
+            side="left"
+            className="bg-[#0F1E7A] text-white pt-10 w-[260px] flex flex-col"
+          >
+            <div className="flex-1 overflow-y-auto">
+              <Menu showText={true} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+
       {/* ICONS AND USER */}
       <div className="flex justify-center items-center gap-6">
-        <div className="hidden lg:flex justify-center items-center gap-[14px]">
+        <div className="flex justify-center items-center gap-[14px]">
           <Dialog>
             <DialogTrigger asChild>
               <Search color="#FFF" className="cursor-pointer" />
@@ -99,17 +125,17 @@ const Navbar = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
               </div>
               <div className="flex justify-end gap-4">
-                <Button className="text-md font-medium border border-[#000]">Cancel</Button>
-                <Button className="bg-[#0F1E7A] text-md text-white font-medium">Apply</Button>
+                <Button className="text-md font-medium border border-[#000]">
+                  Cancel
+                </Button>
+                <Button className="bg-[#0F1E7A] text-md text-white font-medium">
+                  Apply
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
-          <div>
-            <Settings color="#FFF" />
-          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="relative cursor-pointer">

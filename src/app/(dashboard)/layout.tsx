@@ -21,11 +21,11 @@ export default function DashboardLayout({
 
       <div className="flex flex-1 pt-[64px]"> 
         
-        <div className="fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[14%] md:w-[8%] lg:w-[16%] xl:w-[14%] border-r border-[#e5e5e5] bg-[#0F1E7A]">
-          <Menu />
+        <div className="fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[0%] md:w-[8%] lg:w-[16%] xl:w-[14%] border-r border-[#e5e5e5] bg-[#0F1E7A]">
+          <Menu showText={false} />
         </div>
 
-        <div className="ml-[14%] md:ml-[8%] lg:ml-[16%] xl:ml-[14%] w-full bg-[#F7F8FA] overflow-y-auto">
+        <div className="ml-[0%] md:ml-[8%] lg:ml-[16%] xl:ml-[14%] w-full bg-[#F7F8FA] overflow-y-auto">
           {children}
           <Toaster />
         </div>
