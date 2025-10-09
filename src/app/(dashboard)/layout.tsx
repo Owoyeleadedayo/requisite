@@ -1,7 +1,6 @@
 import Menu from "@/components/Menu";
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
-// import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Dashboard - Requisite App",
@@ -26,7 +25,6 @@ export default function DashboardLayout({
 
         <div className="ml-[14%] md:ml-[8%] lg:ml-[16%] xl:ml-[14%] w-full bg-[#F7F8FA] overflow-y-auto">
           {children}
-          {/* <Toaster /> */}
         </div>
       </div>
     </div>
