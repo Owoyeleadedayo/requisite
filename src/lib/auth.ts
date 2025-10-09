@@ -17,6 +17,7 @@ type AuthData = {
 };
 
 export const getAuthData = (): AuthData | null => {
+  if (typeof window === "undefined") return null;
   const authDataString = localStorage.getItem("authData");
   const parsed = authDataString ? JSON.parse(authDataString) : null;
   return parsed;

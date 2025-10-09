@@ -2,11 +2,11 @@
 
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import VendorLogin from "@/components/VendorLogin";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -89,4 +89,15 @@ export default function Home() {
   }
 
   return null;
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="flex flex-col items-center justify-center min-h-screen py-2">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F1E7A]"></div>
+      <p className="mt-4 text-gray-600">Loading...</p>
+    </div>}>
+      <HomeContent />
+    </Suspense>
+  );
 }
