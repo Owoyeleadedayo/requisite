@@ -58,11 +58,12 @@ const Menu = ({ role = "hhra", showText = true }: MenuProps) => {
           <Link
             href={item.href}
             key={item.label}
-            className={`flex items-center gap-3 text-md py-3 px-8 mx-4 rounded-md border transition-colors duration-200 ${
-              isActive
-                ? "bg-white text-[#0F1E7A] font-semibold"
-                : "text-white hover:bg-[#FFFFFF33] hover:text-white"
-            }`}
+            className={`flex items-center justify-center lg:justify-start gap-3 text-md py-2 px-6 transition-colors
+              ${
+                isActive
+                  ? "bg-[#FFF] text-[0F1E7A]"
+                  : "text-[#FFF] hover:bg-[#FFF] hover:text-[#0F1E7A]"
+              }`}
           >
             <Icon className="w-5 h-5" />
             {showText && <p className="text-base">{item.label}</p>}
