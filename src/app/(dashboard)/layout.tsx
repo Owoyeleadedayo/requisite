@@ -1,4 +1,7 @@
 import Menu from "@/components/Menu";
+import { Toaster } from "@/components/ui/sonner";
+import { SquareMenu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 
@@ -13,20 +16,41 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="h-screen flex flex-col">
-      <div className="fixed top-0 left-0 w-full z-10">
-        <Navbar />
-      </div>
-
-      <div className="flex flex-1 pt-[64px]">
-        <div className="fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[14%] md:w-[8%] lg:w-[16%] xl:w-[14%] border-r border-[#e5e5e5] bg-[#0F1E7A]">
-          <Menu />
+    <>
+      <div className="h-screen flex flex-col">
+        <div className="fixed top-0 left-0 w-full z-10">
+          <Navbar />
         </div>
 
-        <div className="ml-[14%] md:ml-[8%] lg:ml-[16%] xl:ml-[14%] w-full bg-[#F7F8FA] overflow-y-auto">
-          {children}
+        <div className="flex flex-1 pt-[64px]">
+          <div className="hidden md:flex fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[14%] border-r border-[#e5e5e5] bg-[#0F1E7A]">
+            <Menu />
+          </div>
+
+          <div className="flex md:hidden fixed top-[22px] left-[16px] z-20">
+            <Sheet>
+              <SheetTrigger>
+                <SquareMenu color="white" size={28} />
+              </SheetTrigger>
+
+              <SheetContent
+                side="left"
+                className="!bg-[#0F1E7A] !text-white pt-10 w-[260px] flex flex-col"
+              >
+                <div className="flex-1 overflow-y-auto">
+                  <Menu />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          <div className="ml-0 md:ml-[14%] w-full bg-[#F7F8FA] overflow-y-auto">
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+
+      <Toaster />
+    </>
   );
 }

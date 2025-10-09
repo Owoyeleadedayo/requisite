@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client"
 
 import React from "react";
@@ -77,10 +78,16 @@ const columns: Column<Item>[] = [
     ),
   },
 ];
+=======
+import CardContent from "@/components/hhra/CardContent";
+import HRTable from "@/components/hhra/HRTable";
+import React from "react";
+>>>>>>> vendorPage
 
 const Page = () => {
   return (
     <>
+<<<<<<< HEAD
       <div className="flex flex-col pb-16 px-4 md:px-6 gap-4">
         <p className="text-3xl text-[#0F1E7A] font-semibold mt-18">Summary</p>
 
@@ -107,6 +114,18 @@ const Page = () => {
           </div>
 
           <DataTable columns={columns} data={tableData} />
+=======
+      <div className="flex flex-col py-4 px-4 md:px-6 gap-4">
+        <div className="flex flex-col gap-4">
+          <p className="text-3xl text-[#0F1E7A] font-normal">Summary</p>
+          <CardContent />
+        </div>
+        <div className="flex flex-col gap-4">
+          <p className="text-2xl text-[#0F1E7A] font-medium ">
+            Requests
+          </p>
+          <HRTable />
+>>>>>>> vendorPage
         </div>
       </div>
     </>
