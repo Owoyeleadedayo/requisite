@@ -18,7 +18,7 @@ import { ArrowLeft, Loader2, Upload } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken } from "@/lib/auth";
+import { getToken, getUser } from "@/lib/auth";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Comments from "@/components/Comments";
+import Image from "next/image";
 
 interface RequestData {
   _id: string;
@@ -39,6 +40,12 @@ interface RequestData {
   image: string;
   priority: "low" | "medium" | "high";
   attachment?: string;
+  requester: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  status: string;
 }
 
 export default function ViewEditRequest() {
@@ -65,11 +72,24 @@ export default function ViewEditRequest() {
     image: "",
     priority: "medium",
     attachment: "",
+    requester: {
+      _id: "",
+      firstName: "",
+      lastName: "",
+    },
+    status: "",
   });
 
   const [urgency, setUrgency] = useState([1]);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [showDenialModal, setShowDenialModal] = useState(false);
+  const [approvalComment, setApprovalComment] = useState("");
+  const [denialReason, setDenialReason] = useState("");
+  const [approvalLoading, setApprovalLoading] = useState(false);
+
+  const user = getUser();
 
   const priorityMap: Record<number, RequestData["priority"]> = {
     0: "low",
@@ -174,6 +194,75 @@ export default function ViewEditRequest() {
     }
   };
 
+  const handleApproval = async () => {
+    setApprovalLoading(true);
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/requisitions/${requisitionId}/department-approval`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            status: "approved",
+            comments: approvalComment.trim() || "Approved for procurement",
+          }),
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Request approved successfully");
+        setFormData(data.data);
+        setShowApprovalModal(false);
+      } else {
+        toast.error(data.message || "Failed to approve request");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error approving request");
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
+
+  const handleDenial = async () => {
+    if (!denialReason.trim()) {
+      toast.error("Please provide a reason for denial");
+      return;
+    }
+
+    setApprovalLoading(true);
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/requisitions/${requisitionId}/cancel`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ reason: denialReason }),
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Request denied successfully");
+        setFormData(data.data);
+        setShowDenialModal(false);
+      } else {
+        toast.error(data.message || "Failed to deny request");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Error denying request");
+    } finally {
+      setApprovalLoading(false);
+      setDenialReason("");
+    }
+  };
+
   if (notFound)
     return (
       <div className="w-full flex flex-col justify-center items-center h-[80vh] text-center">
@@ -220,8 +309,36 @@ export default function ViewEditRequest() {
       </h1>
 
       <div className="w-full flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-1/2 flex flex-col  pb-16">
-          <div className="w-full max-w-xl space-y-5">
+        <div className="w-full lg:w-1/2 flex flex-col pb-16">
+          <div className="request relative w-full max-w-xl space-y-5">
+            <div className="status-badge absolute top-0 right-0 z-[5]">
+              <span
+                className={`p-5 text-sm font-semibold text-white ${
+                  formData.status === "submitted"
+                    ? "bg-orange-500"
+                    : formData.status === "departmentApproved"
+                    ? "bg-green-500"
+                    : formData.status === "cancelled"
+                    ? "bg-red-500"
+                    : "bg-gray-500"
+                }`}
+              >
+                {formData.status}
+              </span>
+            </div>
+
+            <div className="w-full space-y-2">
+              <div className="relative w-full h-[300px] rounded-xl overflow-hidden bg-gray-100">
+                <Image
+                  fill
+                  alt="Request Image"
+                  // src={formData.image÷}
+                  src={"/request-image.png"}
+                  className="object-contain"
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>Request Title</Label>
               <Input
@@ -378,59 +495,160 @@ export default function ViewEditRequest() {
               ) : (
                 <>
                   <Button
+                    asChild
                     onClick={() => router.push("/hod/requisitions")}
-                    className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
+                    className="bg-gray-600 hover:bg-[#0b154b] cursor-pointer text-white flex-1 py-6"
                   >
-                    Close
+                    <div className="flex items-center gap-1">
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      <span>Close</span>
+                    </div>
                   </Button>
-                  <Button
-                    onClick={() => setIsEditMode(true)}
-                    className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-                  >
-                    Edit
-                  </Button>
+                  {user?.id === formData.requester._id && (
+                    <Button
+                      onClick={() => setIsEditMode(true)}
+                      className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {formData.status === "submitted" && (
+                    <>
+                      <Dialog
+                        open={showApprovalModal}
+                        onOpenChange={setShowApprovalModal}
+                      >
+                        <DialogTrigger asChild>
+                          <Button className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6">
+                            Approve
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl bg-white">
+                          <DialogHeader>
+                            <DialogTitle>Approve Request</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label>Approval Comment</Label>
+                              <Textarea
+                                value={approvalComment}
+                                onChange={(e) =>
+                                  setApprovalComment(e.target.value)
+                                }
+                                placeholder="Add a comment for approval"
+                                className="mt-2"
+                              />
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowApprovalModal(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                onClick={handleApproval}
+                                disabled={approvalLoading}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                {approvalLoading ? "Approving..." : "Approve"}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                      <Dialog
+                        open={showDenialModal}
+                        onOpenChange={setShowDenialModal}
+                      >
+                        <DialogTrigger asChild>
+                          <Button className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6">
+                            Deny
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl bg-white">
+                          <DialogHeader>
+                            <DialogTitle>Deny Request</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label>Reason for Denial</Label>
+                              <Textarea
+                                value={denialReason}
+                                onChange={(e) =>
+                                  setDenialReason(e.target.value)
+                                }
+                                placeholder="Please provide a reason for denying this request"
+                                className="mt-2"
+                              />
+                            </div>
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowDenialModal(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                onClick={handleDenial}
+                                disabled={approvalLoading}
+                                className="bg-red-600 hover:bg-red-700 text-white"
+                              >
+                                {approvalLoading ? "Denying..." : "Deny"}
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </>
+                  )}
                 </>
               )}
-              <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
-                <DialogTrigger className="bg-white max-w-2xl" asChild>
-                  <Button
-                    variant="outline"
-                    className="border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
-                  >
-                    Cancel Request
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl bg-white">
-                  <DialogHeader>
-                    <DialogTitle>Cancel Request</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Reason for cancellation</Label>
-                      <Textarea
-                        value={cancelReason}
-                        onChange={(e) => setCancelReason(e.target.value)}
-                        placeholder="Please provide a reason for cancelling this request"
-                        className="mt-2"
-                      />
+              {user?.id === formData.requester._id && (
+                <Dialog
+                  open={showCancelModal}
+                  onOpenChange={setShowCancelModal}
+                >
+                  <DialogTrigger className="bg-white max-w-2xl" asChild>
+                    <Button
+                      variant="outline"
+                      className="border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
+                    >
+                      Cancel Request
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl bg-white">
+                    <DialogHeader>
+                      <DialogTitle>Cancel Request</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Reason for cancellation</Label>
+                        <Textarea
+                          value={cancelReason}
+                          onChange={(e) => setCancelReason(e.target.value)}
+                          placeholder="Please provide a reason for cancelling this request"
+                          className="mt-2"
+                        />
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowCancelModal(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleCancel}
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                          Confirm Cancel
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowCancelModal(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleCancel}
-                        className="bg-red-600 hover:bg-red-700 text-white"
-                      >
-                        Confirm Cancel
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </div>
         </div>

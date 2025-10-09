@@ -32,6 +32,7 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
   const [loading, setLoading] = useState(false);
   const [editingComment, setEditingComment] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
+  const [originalEditText, setOriginalEditText] = useState("");
   const [showMenu, setShowMenu] = useState<string | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [commentLoading, setCommentLoading] = useState(false);
@@ -124,6 +125,12 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
 
   const editComment = async (commentId: string) => {
     if (!editText.trim()) return;
+    if (editText === originalEditText) {
+      setEditingComment(null);
+      setEditText("");
+      setOriginalEditText("");
+      return;
+    }
     setEditLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/comments/${commentId}`, {
@@ -138,6 +145,7 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
       if (data.success) {
         setEditingComment(null);
         setEditText("");
+        setOriginalEditText("");
         fetchComments();
         toast.success("Comment updated successfully");
       }
@@ -163,7 +171,9 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
       const data = await response.json();
       if (data.success) {
         fetchComments();
-        toast.success("Comment deleted successfully", { id: `delete-${commentId}` });
+        toast.success("Comment deleted successfully", {
+          id: `delete-${commentId}`,
+        });
       } else {
         toast.error("Failed to delete comment", { id: `delete-${commentId}` });
       }
@@ -209,7 +219,7 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 addComment();
               }
@@ -223,7 +233,10 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
             {commentLoading ? (
               <Loader2 size={20} className="animate-spin text-[#0F1E7A]" />
             ) : (
-              <Send color={newComment.trim() ? "#0F1E7A" : "#9F9F9F"} size={20} />
+              <Send
+                color={newComment.trim() ? "#0F1E7A" : "#9F9F9F"}
+                size={20}
+              />
             )}
           </div>
         </div>
@@ -263,6 +276,7 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
                           onClick={() => {
                             setEditingComment(comment._id);
                             setEditText(comment.text);
+                            setOriginalEditText(comment.text);
                             setShowMenu(null);
                           }}
                           className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-100 w-full text-left"
@@ -289,7 +303,7 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         editComment(comment._id);
                       }
@@ -311,6 +325,7 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
                       onClick={() => {
                         setEditingComment(null);
                         setEditText("");
+                        setOriginalEditText("");
                       }}
                       className="text-xs bg-gray-500 text-white px-2 py-1 rounded"
                     >
@@ -322,14 +337,14 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
                 <p className="text-sm font-normal mb-2">{comment.text}</p>
               )}
 
-              <p
-                className="text-sm font-normal text-[#0F1E7A] cursor-pointer mb-2"
+              <span
+                className="text-sm font-normal text-[#0F1E7A] hover:underline cursor-pointer mb-2"
                 onClick={() =>
                   setReplyingTo(replyingTo === comment._id ? null : comment._id)
                 }
               >
                 Reply
-              </p>
+              </span>
 
               {replyingTo === comment._id && (
                 <div className="relative mb-4">
@@ -338,7 +353,7 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         addReply(comment._id);
                       }
@@ -351,7 +366,10 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
                     onClick={() => addReply(comment._id)}
                   >
                     {replyLoading ? (
-                      <Loader2 size={16} className="animate-spin text-[#0F1E7A]" />
+                      <Loader2
+                        size={16}
+                        className="animate-spin text-[#0F1E7A]"
+                      />
                     ) : (
                       <Send
                         color={replyText.trim() ? "#0F1E7A" : "#9F9F9F"}
