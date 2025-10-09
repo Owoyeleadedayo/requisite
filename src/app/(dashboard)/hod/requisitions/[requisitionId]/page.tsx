@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import ViewEditRequest from "@/components/ViewEditRequest";
+import ViewEditRequest from "@/components/Requests/ViewEditRequest/ViewEditRequest";
 
 export default function HODViewEditRequest() {
   const params = useParams();

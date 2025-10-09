@@ -1,4 +1,4 @@
-import CreateNewRequest from "@/components/CreateNewRequest";
+import CreateNewRequest from "@/components/Requests/CreateNewRequest/CreateNewRequest";
 
 export default function CreateNewRequisitionPage() {
   return (
