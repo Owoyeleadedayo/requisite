@@ -1,10 +1,10 @@
-"use client"
-import { Bell, CircleUser, Crown, Gem, LogOut, Mail, Search, SquareMenu } from "lucide-react";
+"use client";
+
 import Image from "next/image";
-import Menu from "./Menu";
+import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { getUser } from "@/lib/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
 import AdvancedSearchModal from "./AdvancedSearchModal";
 import {
@@ -16,28 +16,29 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTrigger,
-} from "./ui/sheet";
-import { Input } from "@mui/material";
-import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
-import { Label } from "@radix-ui/react-label";
-import { toast } from "sonner";
+  Bell,
+  CircleUser,
+  Crown,
+  Gem,
+  LogOut,
+  Mail,
+  Menu as MenuIcon,
+  Search,
+  Settings,
+} from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import Menu from "./Menu";
+import { useState } from "react";
 
 const Navbar = () => {
   const router = useRouter();
+  const pathname = usePathname();
   const user = getUser();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  
+  // Get current role from URL or user data
+  const currentRole = pathname.split('/')[1] || user?.role || 'user';
+  const notificationsPath = `/${currentRole}/notifications`;
 
   const handleLogout = async () => {
     try {
@@ -55,9 +56,26 @@ const Navbar = () => {
       router.push("/");
     }
   };
+
   return (
-    <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-end md:justify-between items-end md:items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
-      <div className="hidden md:flex justify-center items-center gap-2">
+    <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
+      <div className="flex justify-center items-center gap-2">
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+          <SheetTrigger className="md:hidden mr-2">
+            <MenuIcon color="white" size={24} />
+          </SheetTrigger>
+          <SheetContent
+            side="left"
+            className="!bg-[#0F1E7A] !text-white pt-10 w-[260px] flex flex-col"
+          >
+            <div className="flex-1 overflow-y-auto">
+              <Menu onLinkClick={() => {
+                console.log('Closing sheet');
+                setIsSheetOpen(false);
+              }} />
+            </div>
+          </SheetContent>
+        </Sheet>
         <Image
           src="/daystar_logo.png"
           alt="logo"
@@ -65,13 +83,18 @@ const Navbar = () => {
           height={20}
           className="object-cover"
         />
-        <p className="text-3xl text-white font-bold">requisite</p>
+        <p className="text-2xl lg:text-3xl text-white font-bold">requisite</p>
       </div>
-      {/* ICONS AND USER */}
+      
       <div className="flex justify-center items-center gap-6">
         <div className="flex justify-center items-center gap-[14px]">
           <AdvancedSearchModal
-            trigger={<Search color="#FFF" className="cursor-pointer w-5 h-5 sm:w-6 sm:h-6" />}
+            trigger={
+              <Search
+                color="#FFF"
+                className="cursor-pointer w-5 h-5 sm:w-6 sm:h-6"
+              />
+            }
             onSearch={(query) => console.log("Search:", query)}
           />
 
@@ -79,82 +102,6 @@ const Navbar = () => {
             <Settings color="#FFF" className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
 
-
-      <div className="flex justify-center items-center gap-6">
-        <div className="flex justify-center items-center gap-[14px]">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Search color="#FFF" className="cursor-pointer" />
-            </DialogTrigger>
-            <DialogContent className="flex flex-col w-[90vw] max-w-[1000px] bg-[#F3F3F3] p-10 border-none gap-6">
-              <div className="flex gap-4 py-4 ">
-                <div className="relative w-[100%]">
-                  <Input
-                    type="text"
-                    placeholder="Search Item"
-                    className="bg-[#FFFFFF] pl-4 pr-4 py-2 w-full h-12 rounded-md shadow-md"
-                  />
-                  <Search
-                    color="black"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                  />
-                </div>
-                <Button className="h-12 px-6 py-4 bg-[#0F1E7A] text-md text-white cursor-pointer capitalize">
-                  advanced search
-                </Button>
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label className="text-md font-normal">Category</Label>
-                <Select>
-                  <SelectTrigger className="bg-[#FFFFFF] w-[250px] border-white">
-                    <SelectValue
-                      className="text-[#767676] text-md font-light"
-                      placeholder="Select Category"
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="apple">Apple</SelectItem>
-                      <SelectItem value="banana">Banana</SelectItem>
-                      <SelectItem value="blueberry">Blueberry</SelectItem>
-                      <SelectItem value="grapes">Grapes</SelectItem>
-                      <SelectItem value="pineapple">Pineapple</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex flex-col gap-1">
-                  <Label className="text-md font-normal">Select Date</Label>
-                  <Select>
-                    <SelectTrigger className="bg-[#FFFFFF] w-[250px] border-white">
-                      <SelectValue
-                        className="text-[#767676] text-md font-light"
-                        placeholder="Custom Date"
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="apple">Apple</SelectItem>
-                        <SelectItem value="banana">Banana</SelectItem>
-                        <SelectItem value="blueberry">Blueberry</SelectItem>
-                        <SelectItem value="grapes">Grapes</SelectItem>
-                        <SelectItem value="pineapple">Pineapple</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-4">
-                <Button className="text-md font-medium border border-[#000]">
-                  Cancel
-                </Button>
-                <Button className="bg-[#0F1E7A] text-md text-white font-medium">
-                  Apply
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="relative cursor-pointer">
@@ -182,9 +129,9 @@ const Navbar = () => {
                   </p>
                   <div className="flex justify-between w-full mt-1">
                     <p className="text-xs font-normal">6 hours 33 mins ago</p>
-                    <p 
+                    <p
                       className="text-xs font-light underline cursor-pointer"
-                      onClick={() => router.push('/notifications')}
+                      onClick={() => router.push(notificationsPath)}
                     >
                       View full notification
                     </p>
@@ -199,9 +146,9 @@ const Navbar = () => {
                   </p>
                   <div className="flex justify-between w-full mt-1">
                     <p className="text-xs font-normal">1 day ago</p>
-                    <p 
+                    <p
                       className="text-xs font-light underline cursor-pointer"
-                      onClick={() => router.push('/notifications')}
+                      onClick={() => router.push(notificationsPath)}
                     >
                       View full notification
                     </p>
@@ -216,9 +163,9 @@ const Navbar = () => {
                   </p>
                   <div className="flex justify-between w-full mt-1">
                     <p className="text-xs font-normal">2 days ago</p>
-                    <p 
+                    <p
                       className="text-xs font-light underline cursor-pointer"
-                      onClick={() => router.push('/notifications')}
+                      onClick={() => router.push(notificationsPath)}
                     >
                       View full notification
                     </p>
@@ -233,18 +180,18 @@ const Navbar = () => {
                   </p>
                   <div className="flex justify-between w-full mt-1">
                     <p className="text-xs font-normal">3 days ago</p>
-                    <p 
+                    <p
                       className="text-xs font-light underline cursor-pointer"
-                      onClick={() => router.push('/notifications')}
+                      onClick={() => router.push(notificationsPath)}
                     >
                       View full notification
                     </p>
                   </div>
                 </DropdownMenuItem>
                 <div className="border-b-1 border-[#e5e5e5]" />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   className="flex justify-center items-center py-4 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => router.push('/notifications')}
+                  onClick={() => router.push(notificationsPath)}
                 >
                   <p className="text-xs font-light underline cursor-pointer">
                     View all notifications
@@ -309,7 +256,6 @@ const Navbar = () => {
               >
                 <div className="flex justify-center items-center gap-2">
                   <LogOut size={20} />
-
                   <span>Logout</span>
                 </div>
               </Button>

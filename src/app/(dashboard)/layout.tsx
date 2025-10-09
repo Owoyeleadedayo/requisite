@@ -1,6 +1,6 @@
 import Menu from "@/components/Menu";
 import { Toaster } from "@/components/ui/sonner";
-import { SquareMenu } from "lucide-react";
+import { Menu as MenuIcon } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
@@ -30,7 +30,7 @@ export default function DashboardLayout({
           <div className="flex md:hidden fixed top-[22px] left-[16px] z-20">
             <Sheet>
               <SheetTrigger>
-                <SquareMenu color="white" size={28} />
+                <MenuIcon color="white" size={28} />
               </SheetTrigger>
 
               <SheetContent

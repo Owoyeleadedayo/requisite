@@ -1,5 +1,5 @@
 import NotificationsPage from "@/components/NotificationsPage";
 
-export default function Notifications() {
+export default function UserNotifications() {
   return <NotificationsPage />;
 }
