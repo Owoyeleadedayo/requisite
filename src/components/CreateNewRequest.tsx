@@ -20,7 +20,11 @@ import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken } from "@/lib/auth";
 
-export default function CreateNewRequest() {
+interface CreateNewRequestProps {
+  page: "user" | "hod";
+}
+
+export default function CreateNewRequest({ page }: CreateNewRequestProps) {
   const router = useRouter();
   const [urgency, setUrgency] = useState([1]);
   const [loading, setLoading] = useState(false);
@@ -65,25 +69,31 @@ export default function CreateNewRequest() {
       const createData = await createResponse.json();
 
       if (createData.success) {
-        // Submit requisition
-        const submitResponse = await fetch(
-          `${API_BASE_URL}/requisitions/${createData.data._id}/submit`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        const submitData = await submitResponse.json();
-
-        if (submitData.success) {
-          toast.success("Requisition created and submitted successfully!");
-          router.push("/user/requisition/");
+        if (page === "hod") {
+          // For HOD: Requisition is already approved in response
+          toast.success("Requisition created and approved successfully!");
+          router.push("/hod/my-requests/");
         } else {
-          toast.error("Failed to submit requisition");
+          // For user: Submit requisition
+          const submitResponse = await fetch(
+            `${API_BASE_URL}/requisitions/${createData.data._id}/submit`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          const submitData = await submitResponse.json();
+
+          if (submitData.success) {
+            toast.success("Requisition created and submitted successfully!");
+            router.push("/user/requisition/");
+          } else {
+            toast.error("Failed to submit requisition");
+          }
         }
       } else {
         toast.error("Failed to create requisition");
@@ -100,7 +110,13 @@ export default function CreateNewRequest() {
     <div className="w-full lg:w-1/2 flex flex-col px-4 py-8 pb-16">
       <div className="w-full lg:max-w-xl flex items-center mb-4 ">
         <Link
-          href="/user/requisition"
+          href={
+            page === "hod"
+              ? "/hod/my-requests"
+              : page === "user"
+              ? "/user/requisition"
+              : ""
+          }
           className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-3"
         >
           <ArrowLeft className="h-5 w-5" />

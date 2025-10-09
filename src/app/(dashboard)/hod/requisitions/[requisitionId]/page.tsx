@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import ViewEditRequest from "@/components/ViewEditRequest";
 
-export default function UserViewEditRequest() {
+export default function HODViewEditRequest() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { requisitionId } = params;
@@ -16,7 +16,7 @@ export default function UserViewEditRequest() {
   return (
     <ViewEditRequest
       requisitionId={requisitionId as string}
-      userType="user"
+      userType="hod"
       isEditMode={isEditMode}
       onEditModeChange={setIsEditMode}
     />

@@ -117,7 +117,7 @@ export default function HDODashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/user/requisition/${row._id}`}>View</Link>
+            <Link href={`/hod/requisitions/${row._id}`}>View</Link>
           </Button>
 
           {(page === "hodRequests" || row.requester._id === userId) && (
@@ -125,7 +125,7 @@ export default function HDODashboard({
               asChild
               className="bg-blue-900 hover:bg-blue-800 text-white px-4"
             >
-              <Link href={`/user/requisition/${row._id}?mode=edit`}>Edit</Link>
+              <Link href={`/hod/requisitions/${row._id}?mode=edit`}>Edit</Link>
             </Button>
           )}
         </div>
@@ -303,14 +303,16 @@ export default function HDODashboard({
             : ""}
         </p>
 
-        {page ! == "hodRequisitions" && (<Button
-          asChild
-          className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
-        >
-          <Link href="/hod/requisition/create-new">
-            <Plus size={22} /> New Request
-          </Link>
-        </Button>)}
+        {page !== "hodRequisitions" && (
+          <Button
+            asChild
+            className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
+          >
+            <Link href="/hod/my-requests/create-new">
+              <Plus size={22} /> New Request
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* <InpageSearch size="large" className="mb-7" /> */}
