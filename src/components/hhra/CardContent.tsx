@@ -37,7 +37,7 @@ const CardContent = () => {
   ]
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6">
   {cardItems.map((card) => {
     const Icon = card.icon;
     return (

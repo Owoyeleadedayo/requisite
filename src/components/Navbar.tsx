@@ -31,7 +31,7 @@ import {
 
 const Navbar = () => {
   return (
-    <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
+    <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-end md:justify-between items-end md:items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
       <div className="hidden md:flex justify-center items-center gap-2">
         <Image
           src="/daystar_logo.png"
@@ -43,24 +43,7 @@ const Navbar = () => {
         <p className="text-3xl text-white font-bold">requisite</p>
       </div>
 
-      <div className="flex md:hidden">
-        <Sheet>
-          <SheetTrigger>
-            <SquareMenu color="white" />
-          </SheetTrigger>
 
-          <SheetContent
-            side="left"
-            className="bg-[#0F1E7A] text-white pt-10 w-[260px] flex flex-col"
-          >
-            <div className="flex-1 overflow-y-auto">
-              <Menu showText={true} />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      {/* ICONS AND USER */}
       <div className="flex justify-center items-center gap-6">
         <div className="flex justify-center items-center gap-[14px]">
           <Dialog>

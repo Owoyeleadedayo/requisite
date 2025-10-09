@@ -38,7 +38,7 @@ const menuItems: Record<string, MenuItem[]> = {
 
 type MenuProps = {
   role?: keyof typeof menuItems;
-  showText?: boolean; 
+  showText?: boolean;
 };
 
 const Menu = ({ role = "hhra", showText = true }: MenuProps) => {
@@ -58,14 +58,11 @@ const Menu = ({ role = "hhra", showText = true }: MenuProps) => {
           <Link
             href={item.href}
             key={item.label}
-            className={`flex items-center ${
-              showText ? "gap-3 px-6" : "justify-center"
-            } text-md py-3 rounded-md transition-colors duration-200
-              ${
-                isActive
-                  ? "bg-white text-[#0F1E7A] font-semibold"
-                  : "text-white hover:bg-[#FFFFFF33] hover:text-white"
-              }`}
+            className={`flex items-center gap-3 text-md py-3 px-8 mx-4 rounded-md border transition-colors duration-200 ${
+              isActive
+                ? "bg-white text-[#0F1E7A] font-semibold"
+                : "text-white hover:bg-[#FFFFFF33] hover:text-white"
+            }`}
           >
             <Icon className="w-5 h-5" />
             {showText && <p className="text-base">{item.label}</p>}
