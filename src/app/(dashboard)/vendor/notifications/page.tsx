@@ -1,5 +1,5 @@
 import NotificationsPage from "@/components/NotificationsPage";
 
-export default function HODNotifications() {
+export default function VendorNotifications() {
   return <NotificationsPage />;
 }

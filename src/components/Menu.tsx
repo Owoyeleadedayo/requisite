@@ -1,6 +1,7 @@
 "use client";
 
 import { API_BASE_URL } from "@/lib/config";
+import { getUser } from "@/lib/auth";
 import {
   SquarePen,
   LayoutGrid,
@@ -34,26 +35,33 @@ const menuItems: Record<string, MenuItem[]> = {
   hod: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hod" },
     { icon: FileCog, label: "Requisitions", href: "/hod/requisitions" },
-    { icon: Package, label: "My Request", href: "/hod/myrequests" },
-    { icon: User, label: "Profile", href: "/hod/profile" },
+    { icon: Package, label: "My Request", href: "/hod/my-requests" },
+    // { icon: User, label: "Profile", href: "/hod/profile" },
   ],
   hhra: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
     { icon: FileCog, label: "Request", href: "/hhra/request" },
     { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
-    { icon: User, label: "Profile", href: "/hhra/profile" },
+    // { icon: User, label: "Profile", href: "/hhra/profile" },
   ],
 };
 
 type MenuProps = {
   showText?: boolean;
+  onLinkClick?: () => void;
 };
 
-const Menu = ({ showText = true }: MenuProps) => {
+const Menu = ({ showText = true, onLinkClick }: MenuProps) => {
   const pathname = usePathname();
   const router = useRouter();
+  const user = getUser();
 
-  const role = pathname.split("/")[1] as keyof typeof menuItems;
+  // Get role from URL first, fallback to user's role if on shared routes
+  let role = pathname.split("/")[1] as keyof typeof menuItems;
+  if (!menuItems[role] && user?.role) {
+    role = user.role as keyof typeof menuItems;
+  }
+  
   const items = menuItems[role] || [];
 
   const handleLogout = async () => {
@@ -88,9 +96,13 @@ const Menu = ({ showText = true }: MenuProps) => {
           <Link
             key={item.label}
             href={item.href}
-            className={`flex items-center ${
+            onClick={() => {
+              console.log('Link clicked, calling onLinkClick');
+              onLinkClick?.();
+            }}
+            className={`flex items-center w-full ${
               showText ? "gap-3 px-6 justify-start" : "justify-center"
-            } text-md py-2 mx-2 rounded-md transition-colors duration-200 ${
+            } text-md py-2 mx-2 transition-colors duration-200 ${
               isActive
                 ? "bg-white text-[#0F1E7A] font-semibold"
                 : "text-white hover:bg-white hover:text-[#0F1E7A]"
