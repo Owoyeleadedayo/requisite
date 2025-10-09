@@ -50,7 +50,7 @@ interface RequestData {
 
 interface ViewEditRequestProps {
   requisitionId: string;
-  userType: "user" | "hod";
+  userType: "user" | "hod" | "hhra" | "procurementManager";
   isEditMode: boolean;
   onEditModeChange: (mode: boolean) => void;
 }
@@ -97,7 +97,8 @@ export default function ViewEditRequest({
     2: "high",
   };
 
-  const backPath = userType === "hod" ? "/hod/requisitions" : "/user/requisition";
+  const backPath =
+    userType === "hod" ? "/hod/requisitions" : "/user/requisition";
 
   useEffect(() => {
     const reversePriorityMap: Record<RequestData["priority"], number> = {
@@ -499,16 +500,14 @@ export default function ViewEditRequest({
                 <>
                   <Button
                     onClick={() => router.push(backPath)}
-                    className={`${
-                      userType === "hod"
-                        ? "bg-gray-600 hover:bg-[#0b154b]"
-                        : "bg-red-600 hover:bg-red-700"
-                    } text-white flex-1 py-6`}
+                    className="bg-gray-600 hover:bg-[#0b154b] text-white flex-1 py-6"
                   >
-                    {userType === "hod" && <ArrowLeft className="h-4 w-4 mr-2" />}
+                    <ArrowLeft className="h-4 w-4 mr-2" />
                     Close
                   </Button>
-                  {(userType === "user" || user?.id === formData.requester?._id) && (
+
+                  {(userType === "user" ||
+                    user?.id === formData.requester?._id) && (
                     <Button
                       onClick={() => onEditModeChange(true)}
                       className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
@@ -608,7 +607,8 @@ export default function ViewEditRequest({
                   )}
                 </>
               )}
-              {(userType === "user" || user?.id === formData.requester?._id) && (
+              {(userType === "user" ||
+                user?.id === formData.requester?._id) && (
                 <Dialog
                   open={showCancelModal}
                   onOpenChange={setShowCancelModal}
@@ -657,10 +657,8 @@ export default function ViewEditRequest({
           </div>
         </div>
 
-        <Comments
-          entityId={requisitionId}
-          entityType="requisitions"
-        />
+        {/* To decide on who can make comments on bids  */}
+        <Comments entityId={requisitionId} entityType="requisitions" />
       </div>
     </div>
   );
