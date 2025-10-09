@@ -1,3 +1,4 @@
+"use client"
 import { Bell, CircleUser, Crown, Gem, LogOut, Mail, Search, SquareMenu } from "lucide-react";
 import Image from "next/image";
 import Menu from "./Menu";
