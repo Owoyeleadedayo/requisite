@@ -309,7 +309,8 @@ export default function HDODashboard({
             className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
           >
             <Link href="/hod/my-requests/create-new">
-              <Plus size={22} /> New Request
+              <Plus size={22} />{" "}
+              <span className="hidden lg:flex">New Request</span>
             </Link>
           </Button>
         )}

@@ -67,6 +67,17 @@ const Navbar = () => {
         />
         <p className="text-3xl text-white font-bold">requisite</p>
       </div>
+      {/* ICONS AND USER */}
+      <div className="flex justify-center items-center gap-6">
+        <div className="flex justify-center items-center gap-[14px]">
+          <AdvancedSearchModal
+            trigger={<Search color="#FFF" className="cursor-pointer w-5 h-5 sm:w-6 sm:h-6" />}
+            onSearch={(query) => console.log("Search:", query)}
+          />
+
+          <div>
+            <Settings color="#FFF" className="w-5 h-5 sm:w-6 sm:h-6" />
+          </div>
 
 
       <div className="flex justify-center items-center gap-6">
@@ -147,8 +158,8 @@ const Navbar = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="relative cursor-pointer">
-                <Bell color="#FFF" size={28} />
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
+                <Bell color="#FFF" className="w-5 h-5 sm:w-7 sm:h-7" />
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
                   8
                 </span>
               </div>
@@ -171,7 +182,10 @@ const Navbar = () => {
                   </p>
                   <div className="flex justify-between w-full mt-1">
                     <p className="text-xs font-normal">6 hours 33 mins ago</p>
-                    <p className="text-xs font-light underline cursor-pointer">
+                    <p 
+                      className="text-xs font-light underline cursor-pointer"
+                      onClick={() => router.push('/notifications')}
+                    >
                       View full notification
                     </p>
                   </div>
@@ -185,7 +199,10 @@ const Navbar = () => {
                   </p>
                   <div className="flex justify-between w-full mt-1">
                     <p className="text-xs font-normal">1 day ago</p>
-                    <p className="text-xs font-light underline cursor-pointer">
+                    <p 
+                      className="text-xs font-light underline cursor-pointer"
+                      onClick={() => router.push('/notifications')}
+                    >
                       View full notification
                     </p>
                   </div>
@@ -199,7 +216,10 @@ const Navbar = () => {
                   </p>
                   <div className="flex justify-between w-full mt-1">
                     <p className="text-xs font-normal">2 days ago</p>
-                    <p className="text-xs font-light underline cursor-pointer">
+                    <p 
+                      className="text-xs font-light underline cursor-pointer"
+                      onClick={() => router.push('/notifications')}
+                    >
                       View full notification
                     </p>
                   </div>
@@ -213,15 +233,21 @@ const Navbar = () => {
                   </p>
                   <div className="flex justify-between w-full mt-1">
                     <p className="text-xs font-normal">3 days ago</p>
-                    <p className="text-xs font-light underline cursor-pointer">
+                    <p 
+                      className="text-xs font-light underline cursor-pointer"
+                      onClick={() => router.push('/notifications')}
+                    >
                       View full notification
                     </p>
                   </div>
                 </DropdownMenuItem>
                 <div className="border-b-1 border-[#e5e5e5]" />
-                <DropdownMenuItem className="flex justify-center items-center py-4 hover:bg-gray-100 cursor-pointer">
+                <DropdownMenuItem 
+                  className="flex justify-center items-center py-4 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => router.push('/notifications')}
+                >
                   <p className="text-xs font-light underline cursor-pointer">
-                    View full notification
+                    View all notifications
                   </p>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -234,9 +260,9 @@ const Navbar = () => {
             <Image
               src="/avatar.png"
               alt=""
-              width={36}
-              height={36}
-              className="rounded-full cursor-pointer"
+              width={28}
+              height={28}
+              className="rounded-full cursor-pointer sm:w-9 sm:h-9"
             />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[287px] bg-white border-none mr-4">
