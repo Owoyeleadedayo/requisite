@@ -46,7 +46,7 @@ const Menu = ({ role = "hhra", showText = true }: MenuProps) => {
   const items = menuItems[role] || [];
 
   return (
-    <div className="flex flex-col py-6 gap-1 h-full">
+    <div className="flex flex-col py-6 gap-2 w-full h-full">
       {items.map((item) => {
         const Icon = item.icon;
         const isActive =
@@ -58,11 +58,13 @@ const Menu = ({ role = "hhra", showText = true }: MenuProps) => {
           <Link
             href={item.href}
             key={item.label}
-            className={`flex items-center justify-center lg:justify-start gap-3 text-md py-2 px-6 transition-colors
+            className={`flex items-center ${
+              showText ? "gap-3 px-6 justify-start" : "justify-center"
+            } text-md py-2 mx-2 rounded-md transition-colors duration-200
               ${
                 isActive
-                  ? "bg-[#FFF] text-[0F1E7A]"
-                  : "text-[#FFF] hover:bg-[#FFF] hover:text-[#0F1E7A]"
+                  ? "bg-white text-[#0F1E7A] font-semibold"
+                  : "text-white hover:bg-white hover:text-[#0F1E7A]"
               }`}
           >
             <Icon className="w-5 h-5" />

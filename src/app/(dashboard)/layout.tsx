@@ -22,7 +22,7 @@ export default function DashboardLayout({
       </div>
 
       <div className="flex flex-1 pt-[64px]">
-        <div className="hidden md:flex fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[16%] border-r border-[#e5e5e5] bg-[#0F1E7A]">
+        <div className="hidden md:flex fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[14%] border-r border-[#e5e5e5] bg-[#0F1E7A]">
           <Menu showText={true} />
         </div>
 
@@ -34,7 +34,7 @@ export default function DashboardLayout({
 
             <SheetContent
               side="left"
-              className="bg-[#0F1E7A] text-white pt-10 w-[260px] flex flex-col"
+              className="!bg-[#0F1E7A] !text-white pt-10 w-[260px] flex flex-col"
             >
               <div className="flex-1 overflow-y-auto">
                 <Menu showText={true} />
@@ -43,7 +43,7 @@ export default function DashboardLayout({
           </Sheet>
         </div>
 
-        <div className="ml-0 md:ml-[16%] w-full bg-[#F7F8FA] overflow-y-auto">
+        <div className="ml-0 md:ml-[14%] w-full bg-[#F7F8FA] overflow-y-auto">
           {children}
           <Toaster />
         </div>
