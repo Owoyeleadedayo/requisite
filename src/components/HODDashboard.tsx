@@ -9,10 +9,10 @@ import { NumericFormat } from "react-number-format";
 import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken, getUserId } from "@/lib/auth";
+import { getToken, getUserId, getAuthData } from "@/lib/auth";
 
-interface UserDashboardProps {
-  page?: "userDashboard" | "userRequisition";
+interface HDODashboardProps {
+  page?: "hodDashboard" | "hodRequisitions" | "hodRequests";
 }
 
 type RequisitionShape = {
@@ -25,7 +25,12 @@ type RequisitionShape = {
   estimatedUnitPrice: number;
   priority: string;
   justification: string;
-  requester: string;
+  requester: {
+    _id: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+  };
   department: {
     _id: string;
     name: string;
@@ -53,77 +58,80 @@ type RequisitionShape = {
   __v: number;
 };
 
-const columns: Column<RequisitionShape>[] = [
-  { key: "title", label: "Title" },
-  { key: "quantityNeeded", label: "QTY" },
-  { key: "category", label: "Category" },
-  {
-    key: "createdAt",
-    label: "Date",
-    render: (value) => {
-      const date = new Date(value);
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = date.toLocaleString("default", { month: "long" });
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
+export default function HDODashboard({
+  page = "hodDashboard",
+}: HDODashboardProps = {}) {
+  const columns: Column<RequisitionShape>[] = [
+    { key: "title", label: "Title" },
+    { key: "quantityNeeded", label: "QTY" },
+    { key: "category", label: "Category" },
+    {
+      key: "createdAt",
+      label: "Date",
+      render: (value) => {
+        const date = new Date(value);
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = date.toLocaleString("default", { month: "long" });
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      },
     },
-  },
-  {
-    key: "estimatedUnitPrice",
-    label: "Price",
-    render: (value) => (
-      <NumericFormat
-        prefix="₦ "
-        value={value}
-        decimalScale={2}
-        fixedDecimalScale
-        displayType="text"
-        thousandSeparator=","
-      />
-    ),
-  },
-  {
-    key: "status",
-    label: "Status",
-    render: (value) => {
-      const statusColors: Record<string, string> = {
-        draft: "text-gray-500",
-        departmentApproved: "text-green-500",
-        cancelled: "text-red-500",
-        pending: "text-orange-500",
-      };
-      return (
-        <span className={statusColors[value] ?? "text-gray-500"}>{value}</span>
-      );
+    {
+      key: "estimatedUnitPrice",
+      label: "Price",
+      render: (value) => (
+        <NumericFormat
+          prefix="₦ "
+          value={value}
+          decimalScale={2}
+          fixedDecimalScale
+          displayType="text"
+          thousandSeparator=","
+        />
+      ),
     },
-  },
-  { key: "requisitionNumber", label: "Req. Number" },
-  {
-    key: "_id",
-    label: "Action",
-    render: (_, row) => (
-      <div className="flex gap-2 items-center">
-        <Button
-          asChild
-          className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-        >
-          <Link href={`/user/requisition/${row._id}`}>View</Link>
-        </Button>
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => {
+        const statusColors: Record<string, string> = {
+          draft: "text-gray-500",
+          departmentApproved: "text-green-500",
+          cancelled: "text-red-500",
+          pending: "text-orange-500",
+        };
+        return (
+          <span className={statusColors[value] ?? "text-gray-500"}>
+            {value}
+          </span>
+        );
+      },
+    },
+    { key: "requisitionNumber", label: "Req. Number" },
+    {
+      key: "_id",
+      label: "Action",
+      render: (_, row) => (
+        <div className="flex gap-2 items-center">
+          <Button
+            asChild
+            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+          >
+            <Link href={`/user/requisition/${row._id}`}>View</Link>
+          </Button>
 
-        <Button
-          asChild
-          className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-        >
-          <Link href={`/user/requisition/${row._id}?mode=edit`}>Edit</Link>
-        </Button>
-      </div>
-    ),
-  },
-];
-
-export default function UserDashboard({
-  page = "userDashboard",
-}: UserDashboardProps = {}) {
+          {(page === "hodRequests" || row.requester._id === userId) && (
+            <Button
+              asChild
+              className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+            >
+              <Link href={`/user/requisition/${row._id}?mode=edit`}>Edit</Link>
+            </Button>
+          )}
+        </div>
+      ),
+    },
+  ];
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -141,6 +149,9 @@ export default function UserDashboard({
   // const user = getUser();
   const userId = getUserId();
   const token = getToken();
+  const authdata = getAuthData();
+  const departmentId = authdata?.user?.department?._id;
+  console.log("departmentId: ", departmentId);
 
   const dashboardCardItems = [
     {
@@ -178,26 +189,38 @@ export default function UserDashboard({
       setLoading(true);
 
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        const endpoint =
+          page === "hodDashboard" || page === "hodRequisitions"
+            ? `${API_BASE_URL}/departments/${departmentId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
+            : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
+
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
         const data = await response.json();
 
         if (data.success) {
           setRequisitions(data.data);
-          setCurrentPage(data.currentPage);
-          setTotalPages(data.totalPages);
-          setTotalCount(data.total);
 
-          // Calculate stats from total count (you might want a separate endpoint for this)
+          // Handle both pagination formats
+          if (data.pagination) {
+            // New format with pagination object
+            setCurrentPage(data.pagination.page);
+            setTotalPages(data.pagination.pages);
+            setTotalCount(data.pagination.total);
+          } else {
+            // Old format with direct properties
+            setCurrentPage(data.currentPage);
+            setTotalPages(data.totalPages);
+            setTotalCount(data.total);
+          }
+
+          // Calculate stats from total count
           const stats = {
-            total: data.total,
+            total: data.pagination?.total || data.total,
             pending: 0,
             approved: 0,
             rejected: 0,
@@ -223,7 +246,7 @@ export default function UserDashboard({
         setLoading(false);
       }
     },
-    [userId, token]
+    [userId, token, page, departmentId]
   );
 
   useEffect(() => {
@@ -238,7 +261,7 @@ export default function UserDashboard({
 
   return (
     <div className="flex flex-col gap-4 p-6 lg:p-12 !pb-16">
-      {page === "userDashboard" && (
+      {page === "hodDashboard" && (
         <div className="flex flex-col gap-4">
           <p className="text-2xl text-[#0F1E7A] font-semibold font-normal">
             Summary
@@ -271,16 +294,23 @@ export default function UserDashboard({
 
       <div className="flex justify-between items-center py-4">
         <p className="text-md md:text-2xl text-[#0F1E7A] font-semibold leading-5">
-          Requests
+          {page === "hodRequests"
+            ? "My Requests"
+            : page === "hodRequisitions"
+            ? "Requests"
+            : page === "hodDashboard"
+            ? "Requests summary"
+            : ""}
         </p>
-        <Button
+
+        {page ! == "hodRequisitions" && (<Button
           asChild
           className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
         >
-          <Link href="/user/requisition/create-new">
+          <Link href="/hod/requisition/create-new">
             <Plus size={22} /> New Request
           </Link>
-        </Button>
+        </Button>)}
       </div>
 
       {/* <InpageSearch size="large" className="mb-7" /> */}

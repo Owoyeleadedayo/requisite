@@ -35,7 +35,7 @@ const menuItems: Record<string, MenuItem[]> = {
   hod: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hod" },
     { icon: FileCog, label: "Requisitions", href: "/hod/requisitions" },
-    { icon: Package, label: "My Request", href: "/hod/myrequests" },
+    { icon: Package, label: "My Request", href: "/hod/my-requests" },
     // { icon: User, label: "Profile", href: "/vendor/profile" },
   ],
   hhra: [
