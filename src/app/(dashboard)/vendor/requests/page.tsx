@@ -59,7 +59,6 @@ const RequestsPageContent = () => {
   );
 };
 
-// ✅ Wrap content in Suspense to avoid build errors
 const RequestsPage = () => (
   <Suspense fallback={<div>Loading requests...</div>}>
     <RequestsPageContent />

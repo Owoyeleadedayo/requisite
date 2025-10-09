@@ -1,7 +1,7 @@
-"use client";
-
+"use client"
+import { Bell, CircleUser, Crown, Gem, LogOut, Mail, Search, SquareMenu } from "lucide-react";
 import Image from "next/image";
-import { toast } from "sonner";
+import Menu from "./Menu";
 import { Button } from "./ui/button";
 import { getUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -16,15 +16,24 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import {
-  Bell,
-  CircleUser,
-  Crown,
-  Gem,
-  LogOut,
-  Mail,
-  Search,
-  Settings,
-} from "lucide-react";
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTrigger,
+} from "./ui/sheet";
+import { Input } from "@mui/material";
+import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
+import { Label } from "@radix-ui/react-label";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const router = useRouter();
@@ -47,8 +56,8 @@ const Navbar = () => {
     }
   };
   return (
-    <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-between items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
-      <div className="flex justify-center items-center gap-2">
+    <div className="flex sticky top-0 z-10 py-4 px-4 md:px-6 lg:px-6 xl:px-6  justify-end md:justify-between items-end md:items-center bg-[#0F1E7A] border-b-1 border-[#FFF]">
+      <div className="hidden md:flex justify-center items-center gap-2">
         <Image
           src="/daystar_logo.png"
           alt="logo"
@@ -70,6 +79,82 @@ const Navbar = () => {
             <Settings color="#FFF" className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
 
+
+      <div className="flex justify-center items-center gap-6">
+        <div className="flex justify-center items-center gap-[14px]">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Search color="#FFF" className="cursor-pointer" />
+            </DialogTrigger>
+            <DialogContent className="flex flex-col w-[90vw] max-w-[1000px] bg-[#F3F3F3] p-10 border-none gap-6">
+              <div className="flex gap-4 py-4 ">
+                <div className="relative w-[100%]">
+                  <Input
+                    type="text"
+                    placeholder="Search Item"
+                    className="bg-[#FFFFFF] pl-4 pr-4 py-2 w-full h-12 rounded-md shadow-md"
+                  />
+                  <Search
+                    color="black"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                  />
+                </div>
+                <Button className="h-12 px-6 py-4 bg-[#0F1E7A] text-md text-white cursor-pointer capitalize">
+                  advanced search
+                </Button>
+              </div>
+              <div className="flex flex-col gap-1">
+                <Label className="text-md font-normal">Category</Label>
+                <Select>
+                  <SelectTrigger className="bg-[#FFFFFF] w-[250px] border-white">
+                    <SelectValue
+                      className="text-[#767676] text-md font-light"
+                      placeholder="Select Category"
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="apple">Apple</SelectItem>
+                      <SelectItem value="banana">Banana</SelectItem>
+                      <SelectItem value="blueberry">Blueberry</SelectItem>
+                      <SelectItem value="grapes">Grapes</SelectItem>
+                      <SelectItem value="pineapple">Pineapple</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex gap-4">
+                <div className="flex flex-col gap-1">
+                  <Label className="text-md font-normal">Select Date</Label>
+                  <Select>
+                    <SelectTrigger className="bg-[#FFFFFF] w-[250px] border-white">
+                      <SelectValue
+                        className="text-[#767676] text-md font-light"
+                        placeholder="Custom Date"
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="apple">Apple</SelectItem>
+                        <SelectItem value="banana">Banana</SelectItem>
+                        <SelectItem value="blueberry">Blueberry</SelectItem>
+                        <SelectItem value="grapes">Grapes</SelectItem>
+                        <SelectItem value="pineapple">Pineapple</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-4">
+                <Button className="text-md font-medium border border-[#000]">
+                  Cancel
+                </Button>
+                <Button className="bg-[#0F1E7A] text-md text-white font-medium">
+                  Apply
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="relative cursor-pointer">
