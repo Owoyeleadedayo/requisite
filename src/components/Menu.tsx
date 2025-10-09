@@ -48,10 +48,9 @@ const menuItems: Record<string, MenuItem[]> = {
 
 type MenuProps = {
   showText?: boolean;
-  onLinkClick?: () => void;
 };
 
-const Menu = ({ showText = true, onLinkClick }: MenuProps) => {
+const Menu = ({ showText = true }: MenuProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const user = getUser();
@@ -96,10 +95,6 @@ const Menu = ({ showText = true, onLinkClick }: MenuProps) => {
           <Link
             key={item.label}
             href={item.href}
-            onClick={() => {
-              console.log('Link clicked, calling onLinkClick');
-              onLinkClick?.();
-            }}
             className={`flex items-center w-full ${
               showText ? "gap-3 px-6 justify-start" : "justify-center"
             } text-md py-2 mx-2 transition-colors duration-200 ${

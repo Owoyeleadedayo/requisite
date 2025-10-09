@@ -69,10 +69,7 @@ const Navbar = () => {
             className="!bg-[#0F1E7A] !text-white pt-10 w-[260px] flex flex-col"
           >
             <div className="flex-1 overflow-y-auto">
-              <Menu onLinkClick={() => {
-                console.log('Closing sheet');
-                setIsSheetOpen(false);
-              }} />
+              <Menu />
             </div>
           </SheetContent>
         </Sheet>
