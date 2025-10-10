@@ -1,9 +1,8 @@
 import Menu from "@/components/Menu";
-import { Toaster } from "@/components/ui/sonner";
-import { Menu as MenuIcon } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
+import { Menu as MenuIcon } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export const metadata: Metadata = {
   title: "Dashboard - Requisite App",
@@ -49,8 +48,6 @@ export default function DashboardLayout({
           </div>
         </div>
       </div>
-
-      <Toaster />
     </>
   );
 }

@@ -27,8 +27,8 @@ type RequisitionShape = {
   justification: string;
   requester: {
     _id: string;
-    firstname: string;
-    lastname: string;
+    firstName: string;
+    lastName: string;
     email: string;
   };
   department: {
@@ -107,7 +107,19 @@ export default function HDODashboard({
         );
       },
     },
-    { key: "requisitionNumber", label: "Req. Number" },
+    {
+      key: "requester",
+      label: page === "hodRequests" ? "Requisition Number" : "Requester",
+      render: (_, row) => {
+        if (page === "hodRequests") {
+          return row.requisitionNumber;
+        }
+        const currentUser = authdata?.user;
+        return currentUser?.id === row.requester._id 
+               ? "You" 
+               : `${row.requester.firstName} ${row.requester.lastName}`;
+      },
+    },
     {
       key: "_id",
       label: "Action",

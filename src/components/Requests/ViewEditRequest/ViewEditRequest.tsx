@@ -37,6 +37,7 @@ interface RequestData {
   quantityNeeded: number;
   estimatedUnitPrice: number;
   justification: string;
+  requisitionNumber: string;
   image: string;
   priority: "low" | "medium" | "high";
   attachment?: string;
@@ -75,6 +76,7 @@ export default function ViewEditRequest({
     quantityNeeded: 0,
     estimatedUnitPrice: 0,
     justification: "",
+    requisitionNumber: "",
     image: "",
     priority: "medium",
     attachment: "",
@@ -308,12 +310,13 @@ export default function ViewEditRequest({
       </div>
 
       <h1 className="text-2xl lg:text-3xl font-bold text-[#0F1E7A] mb-6">
-        {isEditMode ? "Update Request" : "View Request"}
+        {isEditMode ? "Update Request" : "View Request"} -{" "}
+        {formData.requisitionNumber}
       </h1>
 
-      <div className="w-full flex flex-col lg:flex-row gap-6">
+      <div className="w-full flex flex-col lg:flex-row gap-6 container">
         <div className="w-full lg:w-1/2 flex flex-col pb-16">
-          <div className="request relative w-full max-w-xl space-y-5">
+          <div className="request relative w-full space-y-5">
             {formData.status && (
               <div className="status-badge absolute top-0 right-0 z-[5]">
                 <span
@@ -337,10 +340,18 @@ export default function ViewEditRequest({
                 <Image
                   fill
                   alt="Request Image"
-                  src={"/request-image.png"}
+                  src={formData.image || "/request-image.png"}
                   className="object-contain"
                 />
               </div>
+              {formData.requester && (
+                <p className="text-sm text-gray-600 font-semibold text-end my-4">
+                  Requested by:{" "}
+                  {user?.id === formData.requester._id
+                    ? "You"
+                    : `${formData.requester.firstName} ${formData.requester.lastName}`}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -349,7 +360,7 @@ export default function ViewEditRequest({
                 value={formData.title}
                 onChange={(e) => handleChange("title", e.target.value)}
                 readOnly={!isEditMode}
-                className="!p-4 rounded-xl border shadow-sm"
+                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
@@ -359,7 +370,7 @@ export default function ViewEditRequest({
                 value={formData.description}
                 onChange={(e) => handleChange("description", e.target.value)}
                 readOnly={!isEditMode}
-                className="min-h-[100px] rounded-xl border shadow-sm"
+                className="min-h-[100px] rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
@@ -382,14 +393,14 @@ export default function ViewEditRequest({
                 <Input
                   value={formData.category}
                   readOnly
-                  className="!p-4 rounded-xl border shadow-sm"
+                  className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
                 />
               )}
             </div>
 
             <div className="space-y-2">
               <Label>Urgency</Label>
-              <div className="p-3 rounded-xl border shadow-sm">
+              <div className="p-3 rounded-xl border border-[#9f9f9f] shadow-sm">
                 <Slider
                   min={0}
                   max={2}
@@ -431,13 +442,13 @@ export default function ViewEditRequest({
                 value={formData.justification}
                 onChange={(e) => handleChange("justification", e.target.value)}
                 readOnly={!isEditMode}
-                className="min-h-[120px] rounded-xl border shadow-sm"
+                className="min-h-[120px] rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
             <div className="space-y-2">
               <Label>Attach Image</Label>
-              <div className="flex items-center gap-2 border p-3 rounded-xl shadow-sm py-2">
+              <div className="flex items-center gap-2 border border-[#9f9f9f] p-3 rounded-xl shadow-sm py-2">
                 <Upload className="h-5 w-5 text-gray-500" />
                 <Input
                   type="file"
@@ -460,7 +471,7 @@ export default function ViewEditRequest({
                   handleChange("quantityNeeded", parseInt(e.target.value))
                 }
                 readOnly={!isEditMode}
-                className="!p-4 rounded-xl border shadow-sm"
+                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
@@ -474,7 +485,7 @@ export default function ViewEditRequest({
                   handleChange("estimatedUnitPrice", parseFloat(e.target.value))
                 }
                 readOnly={!isEditMode}
-                className="!p-4 rounded-xl border shadow-sm"
+                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
