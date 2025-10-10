@@ -35,9 +35,11 @@ const Navbar = () => {
   const pathname = usePathname();
   const user = getUser();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  
+
+  const capitalize = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+
   // Get current role from URL or user data
-  const currentRole = pathname.split('/')[1] || user?.role || 'user';
+  const currentRole = pathname.split("/")[1] || user?.role || "user";
   const notificationsPath = `/${currentRole}/notifications`;
 
   const handleLogout = async () => {
@@ -82,7 +84,7 @@ const Navbar = () => {
         />
         <p className="text-2xl lg:text-3xl text-white font-bold">requisite</p>
       </div>
-      
+
       <div className="flex justify-center items-center gap-6">
         <div className="flex justify-center items-center gap-[14px]">
           <AdvancedSearchModal
@@ -218,7 +220,7 @@ const Navbar = () => {
                       <CircleUser size={25} />
                     </span>
                     <span>
-                      {user?.firstName} {user?.lastName}
+                      {capitalize(user?.firstName || "")} {capitalize(user?.lastName || "")}
                     </span>
                   </p>
 
@@ -226,22 +228,24 @@ const Navbar = () => {
                     <span className="">
                       <Mail size={25} />
                     </span>
-                    <span>{user?.email}</span>
+                    <span>{capitalize(user?.email || "")}</span>
                   </p>
 
                   <p className="font-semibold flex items-center gap-2 mb-4">
                     <span className="">
                       <Crown size={25} />
                     </span>
-                    <span>{user?.designation}</span>
+                    <span>{capitalize(user?.designation || user?.role || "")}</span>
                   </p>
 
-                  <p className="font-semibold flex items-center gap-2 mb-4">
-                    <span className="">
-                      <Gem size={25} />
-                    </span>
-                    <span>{user?.department?.name || ""}</span>
-                  </p>
+                  {user?.role !== "vendor" && (
+                    <p className="font-semibold flex items-center gap-2 mb-4">
+                      <span className="">
+                        <Gem size={25} />
+                      </span>
+                      <span>{capitalize(user?.department?.name || "")}</span>
+                    </p>
+                  )}
                 </div>
               </div>
             </DropdownMenuLabel>
