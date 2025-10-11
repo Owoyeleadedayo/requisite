@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import BusinessCategorySelector from "@/components/BusinessCategorySelector";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -56,24 +57,10 @@ export default function SignupForm() {
     cac: null as File | null,
   });
 
-  const categories = [
-    { value: "product", label: "Product" },
-    { value: "service", label: "Service" },
-  ];
-
-  const handleCategoryChange = (categoryValue: string, checked: boolean) => {
+  const handleCategoryChange = (categories: string[]) => {
     setFormData((prev) => ({
       ...prev,
-      category: checked
-        ? [...prev.category, categoryValue]
-        : prev.category.filter((cat) => cat !== categoryValue),
-    }));
-  };
-
-  const removeCategory = (categoryValue: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      category: prev.category.filter((cat) => cat !== categoryValue),
+      category: categories,
     }));
   };
 
@@ -412,72 +399,10 @@ export default function SignupForm() {
           </div>
 
           <div className="mt-8">
-            <Label>Business Categories</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="mt-2 w-full min-h-[48px] flex items-center justify-between bg-white border border-[#121212] rounded-lg p-3 cursor-pointer">
-                  <div className="flex flex-wrap gap-2 flex-1">
-                    {formData.category.length > 0 ? (
-                      formData.category.map((categoryValue) => {
-                        const category = categories.find(
-                          (cat) => cat.value === categoryValue
-                        );
-                        return (
-                          <span
-                            key={categoryValue}
-                            className="inline-flex items-center gap-1 bg-[#0A1A6B] text-white text-sm px-2 py-1 rounded"
-                          >
-                            {category?.label}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeCategory(categoryValue);
-                              }}
-                              className="hover:bg-white/20 rounded-full p-0.5"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </span>
-                        );
-                      })
-                    ) : (
-                      <span className="text-muted-foreground">
-                        Select categories
-                      </span>
-                    )}
-                  </div>
-                  <ChevronDown className="h-4 w-4 opacity-50 ml-2" />
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-4 bg-white" align="start">
-                <div className="space-y-3">
-                  {categories.map((category) => (
-                    <div
-                      key={category.value}
-                      className="flex items-center space-x-2"
-                    >
-                      <Checkbox
-                        id={category.value}
-                        checked={formData.category.includes(category.value)}
-                        onCheckedChange={(checked) =>
-                          handleCategoryChange(
-                            category.value,
-                            checked as boolean
-                          )
-                        }
-                      />
-                      <Label
-                        htmlFor={category.value}
-                        className="text-sm font-normal cursor-pointer"
-                      >
-                        {category.label}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
+            <BusinessCategorySelector
+              selectedCategories={formData.category}
+              onCategoryChange={handleCategoryChange}
+            />
           </div>
         </div>
       </div>

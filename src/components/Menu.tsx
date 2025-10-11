@@ -31,6 +31,7 @@ const menuItems: Record<string, MenuItem[]> = {
   vendor: [
     { icon: LayoutGrid, label: "Dashboard", href: "/vendor" },
     { icon: Gavel, label: "Bids", href: "/vendor/bids" },
+    { icon: User, label: "Profile", href: "/vendor/profile" },
   ],
   hod: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hod" },
@@ -60,7 +61,7 @@ const Menu = ({ showText = true }: MenuProps) => {
   if (!menuItems[role] && user?.role) {
     role = user.role as keyof typeof menuItems;
   }
-  
+
   const items = menuItems[role] || [];
 
   const handleLogout = async () => {
