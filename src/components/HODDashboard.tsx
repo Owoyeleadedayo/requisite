@@ -115,9 +115,9 @@ export default function HDODashboard({
           return row.requisitionNumber;
         }
         const currentUser = authdata?.user;
-        return currentUser?.id === row.requester._id 
-               ? "You" 
-               : `${row.requester.firstName} ${row.requester.lastName}`;
+        return currentUser?.id === row.requester._id
+          ? "You"
+          : `${row.requester.firstName} ${row.requester.lastName}`;
       },
     },
     {

@@ -45,6 +45,13 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
     // { icon: User, label: "Profile", href: "/hhra/profile" },
   ],
+  pm: [
+    { icon: LayoutGrid, label: "Dashboard", href: "/pm" },
+    { icon: FileCog, label: "Requests", href: "/pm/requests" },
+    { icon: Gavel, label: "Bids", href: "/pm/bids" },
+    { icon: Package, label: "My Request", href: "/pm/my-request" },
+    { icon: ShoppingCart, label: "Vendors", href: "/pm/vendors" },
+  ],
 };
 
 type MenuProps = {
