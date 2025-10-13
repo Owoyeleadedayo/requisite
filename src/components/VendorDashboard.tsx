@@ -10,9 +10,11 @@ import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
+import RequestsCard from "./Vendor/RequestsCard";
+import { vendorRequestsData } from "@/data/mock/tableData";
 
-interface HDODashboardProps {
-  page?: "hodDashboard" | "hodRequisitions" | "hodRequests";
+interface VendorDashboardProps {
+  page?: "vendorDashboard" | "vendorBids";
 }
 
 type RequisitionShape = {
@@ -58,9 +60,9 @@ type RequisitionShape = {
   __v: number;
 };
 
-export default function HDODashboard({
-  page = "hodDashboard",
-}: HDODashboardProps = {}) {
+export default function VendorDashboard({
+  page = "vendorDashboard",
+}: VendorDashboardProps = {}) {
   const columns: Column<RequisitionShape>[] = [
     { key: "title", label: "Title" },
     { key: "quantityNeeded", label: "QTY" },
@@ -107,19 +109,19 @@ export default function HDODashboard({
         );
       },
     },
-    {
-      key: "requester",
-      label: page === "hodRequests" ? "Requisition Number" : "Requester",
-      render: (_, row) => {
-        if (page === "hodRequests") {
-          return row.requisitionNumber;
-        }
-        const currentUser = authdata?.user;
-        return currentUser?.id === row.requester._id
-          ? "You"
-          : `${row.requester.firstName} ${row.requester.lastName}`;
-      },
-    },
+    // {
+    //   key: "requester",
+    //   label: page === "hodRequests" ? "Requisition Number" : "Requester",
+    //   render: (_, row) => {
+    //     if (page === "hodRequests") {
+    //       return row.requisitionNumber;
+    //     }
+    //     const currentUser = authdata?.user;
+    //     return currentUser?.id === row.requester._id
+    //       ? "You"
+    //       : `${row.requester.firstName} ${row.requester.lastName}`;
+    //   },
+    // },
     {
       key: "_id",
       label: "Action",
@@ -132,14 +134,14 @@ export default function HDODashboard({
             <Link href={`/hod/requisitions/${row._id}`}>View</Link>
           </Button>
 
-          {(page === "hodRequests" || row.requester._id === userId) && (
-            <Button
-              asChild
-              className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-            >
-              <Link href={`/hod/requisitions/${row._id}?mode=edit`}>Edit</Link>
-            </Button>
-          )}
+          {/* {(page === "hodRequests" || row.requester._id === userId) && ( */}
+          <Button
+            asChild
+            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+          >
+            <Link href={`/hod/requisitions/${row._id}?mode=edit`}>Edit</Link>
+          </Button>
+          {/* )} */}
         </div>
       ),
     },
@@ -168,29 +170,29 @@ export default function HDODashboard({
   const dashboardCardItems = [
     {
       key: 1,
-      imgSrc: "/requisition-requests.svg",
-      title: "Total Requests",
+      imgSrc: "/open-requests.svg",
+      title: "Open Requests",
       color: "#0F1E7A",
       value: dashboardStats.total,
     },
     {
       key: 2,
-      imgSrc: "/pending-requests.svg",
-      title: "Pending Requests",
-      color: "#F59313",
+      imgSrc: "/active-bids.svg",
+      title: "Active Bids",
+      color: "#F6B40E",
       value: dashboardStats.pending,
     },
     {
       key: 3,
-      imgSrc: "/approved-requests.svg",
-      title: "Approved Requests",
+      imgSrc: "/completed-bids.svg",
+      title: "Approved Bids",
       color: "#26850B",
       value: dashboardStats.approved,
     },
     {
       key: 4,
-      imgSrc: "/rejected-requests.svg",
-      title: "Rejected Requests",
+      imgSrc: "/rejected-bids.svg",
+      title: "Rejected Bids",
       color: "#DE1216",
       value: dashboardStats.rejected,
     },
@@ -201,10 +203,13 @@ export default function HDODashboard({
       setLoading(true);
 
       try {
+        // To reconcile actual api endpoint and creds
         const endpoint =
-          page === "hodDashboard" || page === "hodRequisitions"
-            ? `${API_BASE_URL}/departments/${departmentId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
-            : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
+          // page === "vendorDashboard" || page === "hodRequisitions"
+          //   ? `${API_BASE_URL}/departments/${departmentId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
+          //   : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
+
+          `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
 
         const response = await fetch(endpoint, {
           headers: {
@@ -258,7 +263,7 @@ export default function HDODashboard({
         setLoading(false);
       }
     },
-    [userId, token, page, departmentId]
+    [userId, token]
   );
 
   useEffect(() => {
@@ -273,8 +278,8 @@ export default function HDODashboard({
 
   return (
     <div className="flex flex-col gap-4 p-6 lg:p-12 !pb-16">
-      {page === "hodDashboard" && (
-        <div className="flex flex-col gap-4">
+      {page === "vendorDashboard" && (
+        <div className="flex flex-col gap-4 mb-8">
           <p className="text-2xl text-[#0F1E7A] font-semibold font-normal">
             Summary
           </p>
@@ -304,31 +309,9 @@ export default function HDODashboard({
         </div>
       )}
 
-      <div className="flex justify-between items-center py-4">
-        <p className="text-md md:text-2xl text-[#0F1E7A] font-semibold leading-5">
-          {page === "hodRequests"
-            ? "My Requests"
-            : page === "hodRequisitions"
-            ? "Requests"
-            : page === "hodDashboard"
-            ? "Requests summary"
-            : ""}
-        </p>
-
-        {page !== "hodRequisitions" && (
-          <Button
-            asChild
-            className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
-          >
-            <Link href="/hod/my-requests/create-new">
-              <Plus size={22} />{" "}
-              <span className="hidden lg:flex">New Request</span>
-            </Link>
-          </Button>
-        )}
-      </div>
-
-      {/* <InpageSearch size="large" className="mb-7" /> */}
+      <p className="text-2xl text-[#0F1E7A] font-semibold leading-5">
+        Requests
+      </p>
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
@@ -336,14 +319,20 @@ export default function HDODashboard({
           <span className="ml-2 text-gray-600">Loading requisitions...</span>
         </div>
       ) : (
-        <DataTable
-          columns={columns}
-          data={requisitions}
-          totalPages={totalPages}
-          currentPage={currentPage}
-          onPageChange={handlePageChange}
-          loading={loading}
-        />
+        <>
+          {page === "vendorBids" ? (
+            <DataTable
+              columns={columns}
+              data={requisitions}
+              totalPages={totalPages}
+              currentPage={currentPage}
+              onPageChange={handlePageChange}
+              loading={loading}
+            />
+          ) : (
+            <RequestsCard data={vendorRequestsData} />
+          )}
+        </>
       )}
     </div>
   );

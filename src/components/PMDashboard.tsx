@@ -11,8 +11,8 @@ import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
 
-interface HDODashboardProps {
-  page?: "hodDashboard" | "hodRequisitions" | "hodRequests";
+interface ProcurementManagerDashboardProps {
+  page?: "procurementDashboard" | "procurementRequisitions" | "procurementBids";
 }
 
 type RequisitionShape = {
@@ -58,9 +58,9 @@ type RequisitionShape = {
   __v: number;
 };
 
-export default function HDODashboard({
-  page = "hodDashboard",
-}: HDODashboardProps = {}) {
+export default function PMDashboard({
+  page = "procurementDashboard",
+}: ProcurementManagerDashboardProps = {}) {
   const columns: Column<RequisitionShape>[] = [
     { key: "title", label: "Title" },
     { key: "quantityNeeded", label: "QTY" },
@@ -97,8 +97,10 @@ export default function HDODashboard({
         const statusColors: Record<string, string> = {
           draft: "text-gray-500",
           departmentApproved: "text-green-500",
+          procurementApproved: "text-blue-500",
           cancelled: "text-red-500",
           pending: "text-orange-500",
+          bidding: "text-purple-500",
         };
         return (
           <span className={statusColors[value] ?? "text-gray-500"}>
@@ -108,17 +110,9 @@ export default function HDODashboard({
       },
     },
     {
-      key: "requester",
-      label: page === "hodRequests" ? "Requisition Number" : "Requester",
-      render: (_, row) => {
-        if (page === "hodRequests") {
-          return row.requisitionNumber;
-        }
-        const currentUser = authdata?.user;
-        return currentUser?.id === row.requester._id
-          ? "You"
-          : `${row.requester.firstName} ${row.requester.lastName}`;
-      },
+      key: "department",
+      label: "Department",
+      render: (value) => value.name,
     },
     {
       key: "_id",
@@ -129,21 +123,19 @@ export default function HDODashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/hod/requisitions/${row._id}`}>View</Link>
+            <Link href={`/procurement/requisitions/${row._id}`}>View</Link>
           </Button>
-
-          {(page === "hodRequests" || row.requester._id === userId) && (
-            <Button
-              asChild
-              className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-            >
-              <Link href={`/hod/requisitions/${row._id}?mode=edit`}>Edit</Link>
-            </Button>
-          )}
+          <Button
+            asChild
+            className="bg-green-600 hover:bg-green-700 text-white px-4"
+          >
+            <Link href={`/procurement/bids/${row._id}`}>Manage Bids</Link>
+          </Button>
         </div>
       ),
     },
   ];
+
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -153,46 +145,43 @@ export default function HDODashboard({
     total: 0,
     pending: 0,
     approved: 0,
-    rejected: 0,
+    bidding: 0,
   });
 
   const itemsPerPage: number = 10;
 
-  // const user = getUser();
   const userId = getUserId();
   const token = getToken();
   const authdata = getAuthData();
-  const departmentId = authdata?.user?.department?._id;
-  console.log("departmentId: ", departmentId);
 
   const dashboardCardItems = [
     {
       key: 1,
       imgSrc: "/requisition-requests.svg",
-      title: "Total Requests",
+      title: "Vendor Application",
       color: "#0F1E7A",
       value: dashboardStats.total,
     },
     {
       key: 2,
       imgSrc: "/pending-requests.svg",
-      title: "Pending Requests",
+      title: "Bids Created",
       color: "#F59313",
       value: dashboardStats.pending,
     },
     {
       key: 3,
       imgSrc: "/approved-requests.svg",
-      title: "Approved Requests",
+      title: "Requisitions Requested",
       color: "#26850B",
       value: dashboardStats.approved,
     },
     {
       key: 4,
       imgSrc: "/rejected-requests.svg",
-      title: "Rejected Requests",
-      color: "#DE1216",
-      value: dashboardStats.rejected,
+      title: "Active Bidding",
+      color: "#8B5CF6",
+      value: dashboardStats.bidding,
     },
   ];
 
@@ -201,10 +190,7 @@ export default function HDODashboard({
       setLoading(true);
 
       try {
-        const endpoint =
-          page === "hodDashboard" || page === "hodRequisitions"
-            ? `${API_BASE_URL}/departments/${departmentId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
-            : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
+        const endpoint = `${API_BASE_URL}/procurement/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
 
         const response = await fetch(endpoint, {
           headers: {
@@ -217,37 +203,27 @@ export default function HDODashboard({
         if (data.success) {
           setRequisitions(data.data);
 
-          // Handle both pagination formats
           if (data.pagination) {
-            // New format with pagination object
             setCurrentPage(data.pagination.page);
             setTotalPages(data.pagination.pages);
             setTotalCount(data.pagination.total);
           } else {
-            // Old format with direct properties
             setCurrentPage(data.currentPage);
             setTotalPages(data.totalPages);
             setTotalCount(data.total);
           }
 
-          // Calculate stats from total count
           const stats = {
             total: data.pagination?.total || data.total,
             pending: 0,
             approved: 0,
-            rejected: 0,
+            bidding: 0,
           };
 
-          // Calculate stats from current page data (limited view)
           data.data.forEach((req: RequisitionShape) => {
-            if (
-              req.status === "draft" ||
-              req.status === "pending" ||
-              req.status === "submitted"
-            )
-              stats.pending++;
-            else if (req.status === "departmentApproved") stats.approved++;
-            else if (req.status === "cancelled") stats.rejected++;
+            if (req.status === "departmentApproved") stats.pending++;
+            else if (req.status === "procurementApproved") stats.approved++;
+            else if (req.status === "bidding") stats.bidding++;
           });
 
           setDashboardStats(stats);
@@ -258,14 +234,14 @@ export default function HDODashboard({
         setLoading(false);
       }
     },
-    [userId, token, page, departmentId]
+    [token]
   );
 
   useEffect(() => {
-    if (userId && token) {
+    if (token) {
       fetchRequisitions(1);
     }
-  }, [userId, token, fetchRequisitions]);
+  }, [token, fetchRequisitions]);
 
   const handlePageChange = (page: number) => {
     fetchRequisitions(page);
@@ -273,7 +249,7 @@ export default function HDODashboard({
 
   return (
     <div className="flex flex-col gap-4 p-6 lg:p-12 !pb-16">
-      {page === "hodDashboard" && (
+      {page === "procurementDashboard" && (
         <div className="flex flex-col gap-4">
           <p className="text-2xl text-[#0F1E7A] font-semibold font-normal">
             Summary
@@ -306,29 +282,13 @@ export default function HDODashboard({
 
       <div className="flex justify-between items-center py-4">
         <p className="text-md md:text-2xl text-[#0F1E7A] font-semibold leading-5">
-          {page === "hodRequests"
-            ? "My Requests"
-            : page === "hodRequisitions"
-            ? "Requests"
-            : page === "hodDashboard"
-            ? "Requests summary"
-            : ""}
+          {page === "procurementBids"
+            ? "Bid Management"
+            : page === "procurementRequisitions"
+            ? "All Requisitions"
+            : "Requisitions Overview"}
         </p>
-
-        {page !== "hodRequisitions" && (
-          <Button
-            asChild
-            className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
-          >
-            <Link href="/hod/my-requests/create-new">
-              <Plus size={22} />{" "}
-              <span className="hidden lg:flex">New Request</span>
-            </Link>
-          </Button>
-        )}
       </div>
-
-      {/* <InpageSearch size="large" className="mb-7" /> */}
 
       {loading ? (
         <div className="flex items-center justify-center py-8">

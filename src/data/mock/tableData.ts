@@ -466,6 +466,262 @@ export const data: Item[] = [
   },
 ];
 
+export type VendorRequestData = {
+  id: number;
+  name: string;
+  model: string;
+  units: number;
+  status: "active" | "approved" | "reviewing" | "rejected";
+  statusLabel: string;
+  statusColor: string;
+  actionText: string;
+  timeText: string;
+  departments: string[];
+  category: string;
+  price: string;
+  deadline: string;
+};
+
+export const vendorRequestsData: VendorRequestData[] = [
+  {
+    id: 1,
+    name: "Alienware",
+    model: "Alienware Aurora R12 RTX",
+    units: 20,
+    status: "active",
+    statusLabel: "Active Bids",
+    statusColor: "#F6B40E",
+    actionText: "Place Bid",
+    timeText: "Ending in 10 days",
+    departments: ["IT Dept", "General"],
+    category: "IT",
+    price: "800,000",
+    deadline: "2025-06-15",
+  },
+  {
+    id: 2,
+    name: "Dell XPS",
+    model: "Dell XPS 8950 Desktop",
+    units: 15,
+    status: "approved",
+    statusLabel: "Approved Bids",
+    statusColor: "#22C55E",
+    actionText: "Bid Completed",
+    timeText: "Ended Already!",
+    departments: ["IT Dept"],
+    category: "IT",
+    price: "600,000",
+    deadline: "2025-05-20",
+  },
+  {
+    id: 3,
+    name: "HP Pavilion",
+    model: "HP Pavilion Gaming Desktop",
+    units: 25,
+    status: "reviewing",
+    statusLabel: "Reviewing Bid",
+    statusColor: "#94A3B8",
+    actionText: "Bid Placed",
+    timeText: "Ending in 5 days",
+    departments: ["IT Dept", "Finance"],
+    category: "IT",
+    price: "750,000",
+    deadline: "2025-06-10",
+  },
+  {
+    id: 4,
+    name: "Lenovo Legion",
+    model: "Lenovo Legion Tower 5i",
+    units: 30,
+    status: "rejected",
+    statusLabel: "Rejected Bids",
+    statusColor: "#EF4444",
+    actionText: "Bid Rejected",
+    timeText: "Ended Already!",
+    departments: ["IT Dept"],
+    category: "IT",
+    price: "900,000",
+    deadline: "2025-05-25",
+  },
+  {
+    id: 5,
+    name: "ASUS ROG",
+    model: "ASUS ROG Strix GA15",
+    units: 10,
+    status: "active",
+    statusLabel: "Active Bids",
+    statusColor: "#F6B40E",
+    actionText: "Place Bid",
+    timeText: "Ending in 15 days",
+    departments: ["IT Dept"],
+    category: "IT",
+    price: "550,000",
+    deadline: "2025-06-20",
+  },
+  {
+    id: 6,
+    name: "Office Chairs",
+    model: "Ergonomic Executive Chair",
+    units: 50,
+    status: "active",
+    statusLabel: "Active Bids",
+    statusColor: "#F6B40E",
+    actionText: "Place Bid",
+    timeText: "Ending in 8 days",
+    departments: ["Admin", "HR"],
+    category: "OFF",
+    price: "250,000",
+    deadline: "2025-06-13",
+  },
+  {
+    id: 7,
+    name: "Printers",
+    model: "HP LaserJet Pro M404n",
+    units: 12,
+    status: "approved",
+    statusLabel: "Approved Bids",
+    statusColor: "#22C55E",
+    actionText: "Bid Completed",
+    timeText: "Ended Already!",
+    departments: ["IT Dept", "Admin"],
+    category: "IT",
+    price: "180,000",
+    deadline: "2025-05-30",
+  },
+  {
+    id: 8,
+    name: "Projectors",
+    model: "Epson PowerLite 1781W",
+    units: 8,
+    status: "reviewing",
+    statusLabel: "Reviewing Bid",
+    statusColor: "#94A3B8",
+    actionText: "Bid Placed",
+    timeText: "Ending in 12 days",
+    departments: ["IT Dept", "Training"],
+    category: "IT",
+    price: "320,000",
+    deadline: "2025-06-17",
+  },
+  {
+    id: 9,
+    name: "Conference Tables",
+    model: "Executive Meeting Table",
+    units: 6,
+    status: "active",
+    statusLabel: "Active Bids",
+    statusColor: "#F6B40E",
+    actionText: "Place Bid",
+    timeText: "Ending in 20 days",
+    departments: ["Admin", "Executive"],
+    category: "OFF",
+    price: "480,000",
+    deadline: "2025-06-25",
+  },
+  {
+    id: 10,
+    name: "Monitors",
+    model: "Dell UltraSharp U2720Q",
+    units: 35,
+    status: "rejected",
+    statusLabel: "Rejected Bids",
+    statusColor: "#EF4444",
+    actionText: "Bid Rejected",
+    timeText: "Ended Already!",
+    departments: ["IT Dept"],
+    category: "IT",
+    price: "420,000",
+    deadline: "2025-05-28",
+  },
+];
+
+// Generate more data for pagination testing
+for (let i = 11; i <= 100; i++) {
+  const products = [
+    { name: "MacBook Pro", model: "MacBook Pro 16-inch M3", category: "IT" },
+    {
+      name: "Surface Laptop",
+      model: "Microsoft Surface Laptop 5",
+      category: "IT",
+    },
+    { name: "ThinkPad", model: "Lenovo ThinkPad X1 Carbon", category: "IT" },
+    { name: "Gaming Chair", model: "Herman Miller Aeron", category: "OFF" },
+    {
+      name: "Standing Desk",
+      model: "Uplift V2 Standing Desk",
+      category: "OFF",
+    },
+    { name: "Webcam", model: "Logitech Brio 4K", category: "IT" },
+    { name: "Headphones", model: "Sony WH-1000XM5", category: "IT" },
+    { name: "Keyboard", model: "Mechanical RGB Keyboard", category: "IT" },
+    { name: "Mouse", model: "Logitech MX Master 3S", category: "IT" },
+    { name: "Tablet", model: "iPad Pro 12.9-inch", category: "IT" },
+  ];
+
+  const statuses = [
+    {
+      type: "active",
+      label: "Active Bids",
+      color: "#F6B40E",
+      action: "Place Bid",
+      timeText: `Ending in ${Math.floor(Math.random() * 20) + 1} days`,
+    },
+    {
+      type: "approved",
+      label: "Approved Bids",
+      color: "#22C55E",
+      action: "Bid Completed",
+      timeText: "Ended Already!",
+    },
+    {
+      type: "reviewing",
+      label: "Reviewing Bid",
+      color: "#94A3B8",
+      action: "Bid Placed",
+      timeText: `Ending in ${Math.floor(Math.random() * 15) + 1} days`,
+    },
+    {
+      type: "rejected",
+      label: "Rejected Bids",
+      color: "#EF4444",
+      action: "Bid Rejected",
+      timeText: "Ended Already!",
+    },
+  ];
+
+  const departments = [
+    ["IT Dept"],
+    ["IT Dept", "Finance"],
+    ["Admin", "HR"],
+    ["IT Dept", "General"],
+    ["Executive", "Admin"],
+    ["Training", "IT Dept"],
+  ];
+
+  const product = products[(i - 11) % products.length];
+  const status = statuses[(i - 11) % statuses.length];
+  const dept = departments[(i - 11) % departments.length];
+
+  vendorRequestsData.push({
+    id: i,
+    name: product.name,
+    model: product.model,
+    units: Math.floor(Math.random() * 50) + 5,
+    status: status.type as "active" | "approved" | "reviewing" | "rejected",
+    statusLabel: status.label,
+    statusColor: status.color,
+    actionText: status.action,
+    timeText: status.timeText,
+    departments: dept,
+    category: product.category,
+    price: `${(Math.floor(Math.random() * 900) + 100).toLocaleString()},000`,
+    deadline: `2025-${String(Math.floor(Math.random() * 6) + 6).padStart(
+      2,
+      "0"
+    )}-${String(Math.floor(Math.random() * 28) + 1).padStart(2, "0")}`,
+  });
+}
+
 export const userTableData: UserTableData[] = [
   {
     id: 1,

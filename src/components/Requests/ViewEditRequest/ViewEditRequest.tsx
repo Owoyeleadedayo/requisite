@@ -51,7 +51,7 @@ interface RequestData {
 
 interface ViewEditRequestProps {
   requisitionId: string;
-  userType: "user" | "hod" | "hhra" | "procurementManager";
+  userType: "user" | "hod" | "hhra" | "procurementManager" | "vendor";
   isEditMode: boolean;
   onEditModeChange: (mode: boolean) => void;
 }

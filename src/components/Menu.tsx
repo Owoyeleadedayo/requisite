@@ -31,6 +31,7 @@ const menuItems: Record<string, MenuItem[]> = {
   vendor: [
     { icon: LayoutGrid, label: "Dashboard", href: "/vendor" },
     { icon: Gavel, label: "Bids", href: "/vendor/bids" },
+    { icon: User, label: "Profile", href: "/vendor/profile" },
   ],
   hod: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hod" },
@@ -43,6 +44,13 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: FileCog, label: "Request", href: "/hhra/request" },
     { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
     // { icon: User, label: "Profile", href: "/hhra/profile" },
+  ],
+  pm: [
+    { icon: LayoutGrid, label: "Dashboard", href: "/pm" },
+    { icon: FileCog, label: "Requests", href: "/pm/requests" },
+    { icon: Gavel, label: "Bids", href: "/pm/bids" },
+    { icon: Package, label: "My Request", href: "/pm/my-request" },
+    { icon: ShoppingCart, label: "Vendors", href: "/pm/vendors" },
   ],
 };
 
@@ -60,7 +68,7 @@ const Menu = ({ showText = true }: MenuProps) => {
   if (!menuItems[role] && user?.role) {
     role = user.role as keyof typeof menuItems;
   }
-  
+
   const items = menuItems[role] || [];
 
   const handleLogout = async () => {
