@@ -12,7 +12,11 @@ import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
 
 interface ProcurementManagerDashboardProps {
-  page?: "procurementDashboard" | "procurementRequisitions" | "procurementBids";
+  page?:
+    | "procurementDashboard"
+    | "procurementRequisitions"
+    | "pmRequests"
+    | "procurementBids";
 }
 
 type RequisitionShape = {
@@ -58,84 +62,82 @@ type RequisitionShape = {
   __v: number;
 };
 
+const columns: Column<RequisitionShape>[] = [
+  { key: "title", label: "Title" },
+  { key: "quantityNeeded", label: "QTY" },
+  { key: "category", label: "Category" },
+  {
+    key: "createdAt",
+    label: "Date",
+    render: (value) => {
+      const date = new Date(value);
+      const day = date.getDate().toString().padStart(2, "0");
+      const month = date.toLocaleString("default", { month: "long" });
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    },
+  },
+  {
+    key: "estimatedUnitPrice",
+    label: "Price",
+    render: (value) => (
+      <NumericFormat
+        prefix="₦ "
+        value={value}
+        decimalScale={2}
+        fixedDecimalScale
+        displayType="text"
+        thousandSeparator=","
+      />
+    ),
+  },
+  {
+    key: "status",
+    label: "Status",
+    render: (value) => {
+      const statusColors: Record<string, string> = {
+        draft: "text-gray-500",
+        departmentApproved: "text-green-500",
+        procurementApproved: "text-blue-500",
+        cancelled: "text-red-500",
+        pending: "text-orange-500",
+        bidding: "text-purple-500",
+      };
+      return (
+        <span className={statusColors[value] ?? "text-gray-500"}>{value}</span>
+      );
+    },
+  },
+  {
+    key: "department",
+    label: "Department",
+    render: (value) => value.name,
+  },
+  {
+    key: "_id",
+    label: "Action",
+    render: (_, row) => (
+      <div className="flex gap-2 items-center">
+        <Button
+          asChild
+          className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+        >
+          <Link href={`/pm/requests/${row._id}`}>View</Link>
+        </Button>
+        {/* <Button
+          asChild
+          className="bg-green-600 hover:bg-green-700 text-white px-4"
+        >
+          <Link href={`/procurement/bids/${row._id}`}>Manage Bids</Link>
+        </Button> */}
+      </div>
+    ),
+  },
+];
+
 export default function PMDashboard({
   page = "procurementDashboard",
 }: ProcurementManagerDashboardProps = {}) {
-  const columns: Column<RequisitionShape>[] = [
-    { key: "title", label: "Title" },
-    { key: "quantityNeeded", label: "QTY" },
-    { key: "category", label: "Category" },
-    {
-      key: "createdAt",
-      label: "Date",
-      render: (value) => {
-        const date = new Date(value);
-        const day = date.getDate().toString().padStart(2, "0");
-        const month = date.toLocaleString("default", { month: "long" });
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-      },
-    },
-    {
-      key: "estimatedUnitPrice",
-      label: "Price",
-      render: (value) => (
-        <NumericFormat
-          prefix="₦ "
-          value={value}
-          decimalScale={2}
-          fixedDecimalScale
-          displayType="text"
-          thousandSeparator=","
-        />
-      ),
-    },
-    {
-      key: "status",
-      label: "Status",
-      render: (value) => {
-        const statusColors: Record<string, string> = {
-          draft: "text-gray-500",
-          departmentApproved: "text-green-500",
-          procurementApproved: "text-blue-500",
-          cancelled: "text-red-500",
-          pending: "text-orange-500",
-          bidding: "text-purple-500",
-        };
-        return (
-          <span className={statusColors[value] ?? "text-gray-500"}>
-            {value}
-          </span>
-        );
-      },
-    },
-    {
-      key: "department",
-      label: "Department",
-      render: (value) => value.name,
-    },
-    {
-      key: "_id",
-      label: "Action",
-      render: (_, row) => (
-        <div className="flex gap-2 items-center">
-          <Button
-            asChild
-            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-          >
-            <Link href={`/procurement/requisitions/${row._id}`}>View</Link>
-          </Button>
-          <Button
-            asChild
-            className="bg-green-600 hover:bg-green-700 text-white px-4"
-          >
-            <Link href={`/procurement/bids/${row._id}`}>Manage Bids</Link>
-          </Button>
-        </div>
-      ),
-    },
-  ];
-
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -157,30 +159,30 @@ export default function PMDashboard({
   const dashboardCardItems = [
     {
       key: 1,
-      imgSrc: "/requisition-requests.svg",
+      imgSrc: "/vendor-application.svg",
       title: "Vendor Application",
       color: "#0F1E7A",
       value: dashboardStats.total,
     },
     {
       key: 2,
-      imgSrc: "/pending-requests.svg",
+      imgSrc: "/current-bids.svg",
       title: "Bids Created",
-      color: "#F59313",
+      color: "#0F1E7A",
       value: dashboardStats.pending,
     },
     {
       key: 3,
-      imgSrc: "/approved-requests.svg",
-      title: "Requisitions Requested",
-      color: "#26850B",
+      imgSrc: "/requisition-requests.svg",
+      title: "Requisitions Requests",
+      color: "#0F1E7A",
       value: dashboardStats.approved,
     },
     {
       key: 4,
-      imgSrc: "/rejected-requests.svg",
-      title: "Active Bidding",
-      color: "#8B5CF6",
+      imgSrc: "/pm-requests.svg",
+      title: "My Requests",
+      color: "#0F1E7A",
       value: dashboardStats.bidding,
     },
   ];
@@ -190,7 +192,7 @@ export default function PMDashboard({
       setLoading(true);
 
       try {
-        const endpoint = `${API_BASE_URL}/procurement/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
+        const endpoint = `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
 
         const response = await fetch(endpoint, {
           headers: {
@@ -284,10 +286,22 @@ export default function PMDashboard({
         <p className="text-md md:text-2xl text-[#0F1E7A] font-semibold leading-5">
           {page === "procurementBids"
             ? "Bid Management"
-            : page === "procurementRequisitions"
-            ? "All Requisitions"
-            : "Requisitions Overview"}
+            : page === "pmRequests"
+            ? "My Requests"
+            : "Requests"}
         </p>
+
+        {page !== "procurementRequisitions" && (
+          <Button
+            asChild
+            className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
+          >
+            <Link href="/pm/my-request/create-new">
+              <Plus size={22} />{" "}
+              <span className="hidden lg:flex">New Request</span>
+            </Link>
+          </Button>
+        )}
       </div>
 
       {loading ? (
