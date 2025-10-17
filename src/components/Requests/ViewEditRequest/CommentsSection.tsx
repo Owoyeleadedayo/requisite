@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Textarea } from "./ui/textarea";
+import { Textarea } from "../../ui/textarea";
 import { Ellipsis, Send, Edit, Trash2, Loader2 } from "lucide-react";
 import { getToken, getUser } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/config";

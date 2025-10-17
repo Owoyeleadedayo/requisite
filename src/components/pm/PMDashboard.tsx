@@ -192,7 +192,10 @@ export default function PMDashboard({
       setLoading(true);
 
       try {
-        const endpoint = `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
+        const endpoint =
+          page === "procurementDashboard" || page === "procurementRequisitions"
+            ? `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
+            : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
 
         const response = await fetch(endpoint, {
           headers: {
@@ -236,7 +239,7 @@ export default function PMDashboard({
         setLoading(false);
       }
     },
-    [token]
+    [token, page, userId]
   );
 
   useEffect(() => {
