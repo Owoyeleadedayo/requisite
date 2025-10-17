@@ -1,5 +1,12 @@
-import React, { useState, useRef } from "react";
-import { CalendarIcon, Bold, Italic, Underline, List, ListOrdered } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  CalendarIcon,
+  Bold,
+  Italic,
+  Underline,
+  List,
+  ListOrdered,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,12 +18,30 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/config";
+
+interface VendorCategory {
+  _id: string;
+  name: string;
+  description: string;
+}
 
 export default function PMCommentForm() {
   const [bidStart, setBidStart] = useState<Date>();
   const [bidDeadline, setBidDeadline] = useState<Date>();
+  const [vendorCategory, setVendorCategory] = useState<string>("");
+  const [vendorCategories, setVendorCategories] = useState<VendorCategory[]>(
+    []
+  );
   const [additionalInfo, setAdditionalInfo] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
   const [activeFormats, setActiveFormats] = useState({
@@ -27,16 +52,33 @@ export default function PMCommentForm() {
   const [errors, setErrors] = useState({
     bidStart: "",
     bidDeadline: "",
+    vendorCategory: "",
     additionalInfo: "",
     dateRange: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ type: "", message: "" });
 
+  useEffect(() => {
+    const fetchVendorCategories = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/vendor-categories`);
+        if (response.ok) {
+          const data = await response.json();
+          setVendorCategories(data.data || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch vendor categories:", error);
+      }
+    };
+    fetchVendorCategories();
+  }, []);
+
   const validateForm = () => {
     const newErrors = {
       bidStart: "",
       bidDeadline: "",
+      vendorCategory: "",
       additionalInfo: "",
       dateRange: "",
     };
@@ -51,6 +93,12 @@ export default function PMCommentForm() {
     // Validate Bid Deadline
     if (!bidDeadline) {
       newErrors.bidDeadline = "Bid deadline is required";
+      isValid = false;
+    }
+
+    // Validate Vendor Category
+    if (!vendorCategory) {
+      newErrors.vendorCategory = "Vendor category is required";
       isValid = false;
     }
 
@@ -99,6 +147,7 @@ export default function PMCommentForm() {
           body: JSON.stringify({
             bidStart: bidStart?.toISOString(),
             bidDeadline: bidDeadline?.toISOString(),
+            vendorCategory,
             additionalInfo: editorRef.current?.innerHTML || "",
           }),
         }
@@ -118,6 +167,7 @@ export default function PMCommentForm() {
       // Reset form
       setBidStart(undefined);
       setBidDeadline(undefined);
+      setVendorCategory("");
       setAdditionalInfo("");
       if (editorRef.current) {
         editorRef.current.innerHTML = "";
@@ -125,6 +175,7 @@ export default function PMCommentForm() {
       setErrors({
         bidStart: "",
         bidDeadline: "",
+        vendorCategory: "",
         additionalInfo: "",
         dateRange: "",
       });
@@ -199,7 +250,11 @@ export default function PMCommentForm() {
                 selected={bidStart}
                 onSelect={(date) => {
                   setBidStart(date);
-                  setErrors((prev) => ({ ...prev, bidStart: "", dateRange: "" }));
+                  setErrors((prev) => ({
+                    ...prev,
+                    bidStart: "",
+                    dateRange: "",
+                  }));
                 }}
                 initialFocus
               />
@@ -248,12 +303,49 @@ export default function PMCommentForm() {
           )}
         </div>
 
+        {/* Vendor Category */}
+        <div className="space-y-2">
+          <Label>Vendor Category</Label>
+          <Select
+            value={vendorCategory}
+            onValueChange={(value) => {
+              setVendorCategory(value);
+              setErrors((prev) => ({ ...prev, vendorCategory: "" }));
+            }}
+          >
+            <SelectTrigger
+              className={cn(
+                "w-full bg-white border border-[#9f9f9f] rounded-xl p-4 h-auto shadow-sm",
+                errors.vendorCategory && "border-red-500"
+              )}
+            >
+              <SelectValue placeholder="Select vendor category" />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              {vendorCategories.map((category) => (
+                <SelectItem 
+                  key={category._id} 
+                  value={category._id}
+                  className="hover:bg-[#0F1E7A] hover:text-white focus:bg-[#0F1E7A] focus:text-white data-[highlighted]:bg-[#0F1E7A] data-[highlighted]:text-white"
+                >
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.vendorCategory && (
+            <p className="text-red-500 text-sm mt-1">{errors.vendorCategory}</p>
+          )}
+        </div>
+
         {/* Additional Information */}
         <div className="space-y-2">
           <Label>Additional Information</Label>
-          <div className={`border rounded-xl shadow-sm ${
-            errors.additionalInfo ? "border-red-500" : "border-[#9f9f9f]"
-          }`}>
+          <div
+            className={`border rounded-xl shadow-sm ${
+              errors.additionalInfo ? "border-red-500" : "border-[#9f9f9f]"
+            }`}
+          >
             {/* Toolbar */}
             <div className="flex items-center gap-1 p-2 border-b border-gray-200">
               <Button
@@ -261,11 +353,13 @@ export default function PMCommentForm() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  document.execCommand('bold', false);
-                  setActiveFormats(prev => ({ ...prev, bold: !prev.bold }));
+                  document.execCommand("bold", false);
+                  setActiveFormats((prev) => ({ ...prev, bold: !prev.bold }));
                 }}
                 className={`h-8 w-8 p-0 ${
-                  activeFormats.bold ? 'bg-[#0F1E7A] text-white hover:bg-[#0F1E7A]/90' : ''
+                  activeFormats.bold
+                    ? "bg-[#0F1E7A] text-white hover:bg-[#0F1E7A]/90"
+                    : ""
                 }`}
               >
                 <Bold className="h-4 w-4" />
@@ -275,11 +369,16 @@ export default function PMCommentForm() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  document.execCommand('italic', false);
-                  setActiveFormats(prev => ({ ...prev, italic: !prev.italic }));
+                  document.execCommand("italic", false);
+                  setActiveFormats((prev) => ({
+                    ...prev,
+                    italic: !prev.italic,
+                  }));
                 }}
                 className={`h-8 w-8 p-0 ${
-                  activeFormats.italic ? 'bg-[#0F1E7A] text-white hover:bg-[#0F1E7A]/90' : ''
+                  activeFormats.italic
+                    ? "bg-[#0F1E7A] text-white hover:bg-[#0F1E7A]/90"
+                    : ""
                 }`}
               >
                 <Italic className="h-4 w-4" />
@@ -289,11 +388,16 @@ export default function PMCommentForm() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  document.execCommand('underline', false);
-                  setActiveFormats(prev => ({ ...prev, underline: !prev.underline }));
+                  document.execCommand("underline", false);
+                  setActiveFormats((prev) => ({
+                    ...prev,
+                    underline: !prev.underline,
+                  }));
                 }}
                 className={`h-8 w-8 p-0 ${
-                  activeFormats.underline ? 'bg-[#0F1E7A] text-white hover:bg-[#0F1E7A]/90' : ''
+                  activeFormats.underline
+                    ? "bg-[#0F1E7A] text-white hover:bg-[#0F1E7A]/90"
+                    : ""
                 }`}
               >
                 <Underline className="h-4 w-4" />
@@ -302,7 +406,9 @@ export default function PMCommentForm() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => document.execCommand('insertUnorderedList', false)}
+                onClick={() =>
+                  document.execCommand("insertUnorderedList", false)
+                }
                 className="h-8 w-8 p-0"
               >
                 <List className="h-4 w-4" />
@@ -311,7 +417,7 @@ export default function PMCommentForm() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => document.execCommand('insertOrderedList', false)}
+                onClick={() => document.execCommand("insertOrderedList", false)}
                 className="h-8 w-8 p-0"
               >
                 <ListOrdered className="h-4 w-4" />
@@ -322,22 +428,22 @@ export default function PMCommentForm() {
               ref={editorRef}
               contentEditable
               className="min-h-[200px] p-3 outline-none"
-              style={{ wordBreak: 'break-word' }}
+              style={{ wordBreak: "break-word" }}
               onInput={() => {
                 setErrors((prev) => ({ ...prev, additionalInfo: "" }));
               }}
               onMouseUp={() => {
                 setActiveFormats({
-                  bold: document.queryCommandState('bold'),
-                  italic: document.queryCommandState('italic'),
-                  underline: document.queryCommandState('underline'),
+                  bold: document.queryCommandState("bold"),
+                  italic: document.queryCommandState("italic"),
+                  underline: document.queryCommandState("underline"),
                 });
               }}
               onKeyUp={() => {
                 setActiveFormats({
-                  bold: document.queryCommandState('bold'),
-                  italic: document.queryCommandState('italic'),
-                  underline: document.queryCommandState('underline'),
+                  bold: document.queryCommandState("bold"),
+                  italic: document.queryCommandState("italic"),
+                  underline: document.queryCommandState("underline"),
                 });
               }}
               suppressContentEditableWarning={true}
