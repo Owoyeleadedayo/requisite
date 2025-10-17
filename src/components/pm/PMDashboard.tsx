@@ -294,7 +294,7 @@ export default function PMDashboard({
             : "Requests"}
         </p>
 
-        {page !== "procurementRequisitions" && (
+        {/* {page !== "procurementRequisitions" && (
           <Button
             asChild
             className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
@@ -304,7 +304,7 @@ export default function PMDashboard({
               <span className="hidden lg:flex">New Request</span>
             </Link>
           </Button>
-        )}
+        )} */}
       </div>
 
       {loading ? (

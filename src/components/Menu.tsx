@@ -49,7 +49,7 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: LayoutGrid, label: "Dashboard", href: "/pm" },
     { icon: FileCog, label: "Requests", href: "/pm/requests" },
     // { icon: Gavel, label: "Bids", href: "/pm/bids" },
-    { icon: Package, label: "My Request", href: "/pm/my-request" },
+    // { icon: Package, label: "My Request", href: "/pm/my-request" },
     { icon: ShoppingCart, label: "Vendors", href: "/pm/vendors" },
   ],
 };
