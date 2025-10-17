@@ -10,8 +10,9 @@ import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
-import RequestsCard from "./Vendor/RequestsCard";
+// import RequestsCard from "./Vendor/RequestsCard";
 import { vendorRequestsData } from "@/data/mock/tableData";
+import RequestsCard from "./RequestsCard";
 
 interface VendorDashboardProps {
   page?: "vendorDashboard" | "vendorBids";
