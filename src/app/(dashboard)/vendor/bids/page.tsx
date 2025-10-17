@@ -1,4 +1,4 @@
-import VendorDashboard from "@/components/VendorDashboard";
+import VendorDashboard from "@/components/Vendor/VendorDashboard";
 
 export default function VendorPage() {
   return <VendorDashboard page="vendorBids" />;

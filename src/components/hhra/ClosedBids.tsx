@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { AlarmClock, ArrowLeft } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ const ClosedBids = () => {
           <ArrowLeft color="#0F1E7A" size={18} className="cursor-pointer" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-[50%_40%] gap-24">
-        <div className="flex flex-col bg-white gap-2 py-6 h-[900px]  rounded-md shadow-md">
+          <div className="flex flex-col bg-white gap-2 py-6 h-[900px]  rounded-md shadow-md">
             <div className="flex justify-between items-center px-4">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-[#F6B40E]" />

@@ -1,60 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ArrowLeft, Loader2, Upload } from "lucide-react";
-import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUser } from "@/lib/auth";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import Comments from "@/components/CommentsUI";
-import Image from "next/image";
-
-interface RequestData {
-  _id: string;
-  title: string;
-  description: string;
-  category: string;
-  quantityNeeded: number;
-  estimatedUnitPrice: number;
-  justification: string;
-  requisitionNumber: string;
-  image: string;
-  priority: "low" | "medium" | "high";
-  attachment?: string;
-  requester?: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  status?: string;
-}
-
-interface ViewEditRequestProps {
-  requisitionId: string;
-  userType: "user" | "hod" | "hhra" | "procurementManager" | "vendor";
-  isEditMode: boolean;
-  onEditModeChange: (mode: boolean) => void;
-}
+import { RequestData, ViewEditRequestProps } from "./types";
+import RequestHeader from "./RequestHeader";
+import RequestCard from "./RequestCard";
+import RequestDetails from "./RequestDetails";
+import RequestForm from "./RequestForm";
+import RequestActions from "./RequestActions";
+import BidsSection from "./BidsSection";
+import Comments from "./CommentsSection";
+import PMCommentForm from "./PMCommentForm";
 
 export default function ViewEditRequest({
   requisitionId,
@@ -62,7 +21,6 @@ export default function ViewEditRequest({
   isEditMode,
   onEditModeChange,
 }: ViewEditRequestProps) {
-  const router = useRouter();
   const token = getToken();
   const user = getUser();
   const [loading, setLoading] = useState(false);
@@ -80,7 +38,8 @@ export default function ViewEditRequest({
     image: "",
     priority: "medium",
     attachment: "",
-    requester: { _id: "", firstName: "", lastName: "" },
+    requester: { _id: "", firstName: "", lastName: "", email: "" },
+    department: { _id: "", name: "", code: "" },
     status: "",
   });
 
@@ -100,7 +59,11 @@ export default function ViewEditRequest({
   };
 
   const backPath =
-    userType === "hod" ? "/hod/requisitions" : "/user/requisition";
+    userType === "hod"
+      ? "/hod/requisitions"
+      : userType === "procurementManager"
+      ? "/pm/requests"
+      : "/user/requisition";
 
   useEffect(() => {
     const reversePriorityMap: Record<RequestData["priority"], number> = {
@@ -186,7 +149,7 @@ export default function ViewEditRequest({
       const data = await res.json();
       if (data.success) {
         toast.success("Request cancelled successfully");
-        router.push(backPath);
+        window.location.href = backPath;
       } else {
         toast.error(data.message || "Failed to cancel request");
       }
@@ -268,27 +231,21 @@ export default function ViewEditRequest({
     }
   };
 
-  if (notFound)
+  if (notFound) {
     return (
       <div className="w-full flex flex-col justify-center items-center h-[80vh] text-center">
         <h2 className="text-2xl font-bold text-[#0F1E7A] mb-4">
           Request Not Found
         </h2>
         <p className="text-gray-600 mb-6">
-          The request you&apos;re looking for doesn&apos;t exist or has been
+          The request you&apos;re looking for doesn&apso;t exist or has been
           removed.
         </p>
-        <Button
-          onClick={() => router.back()}
-          className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white px-6 py-3"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Go Back
-        </Button>
       </div>
     );
+  }
 
-  if (!formData._id)
+  if (!formData._id) {
     return (
       <div className="w-full flex justify-center items-center h-[80vh] text-gray-500">
         <div className="flex gap-2 items-center">
@@ -297,379 +254,75 @@ export default function ViewEditRequest({
         </div>
       </div>
     );
+  }
 
   return (
     <div className="pt-8 pb-16 px-4 lg:px-12">
-      <div className="w-full flex items-center mb-12">
-        <Link
-          href={backPath}
-          className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-3"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-      </div>
-
-      <h1 className="text-2xl lg:text-3xl font-bold text-[#0F1E7A] mb-6">
-        {isEditMode ? "Update Request" : "View Request"} -{" "}
-        {formData.requisitionNumber}
-      </h1>
+      <RequestHeader
+        backPath={backPath}
+        isEditMode={isEditMode}
+        requisitionNumber={formData.requisitionNumber}
+      />
 
       <div className="w-full flex flex-col lg:flex-row gap-6 container">
         <div className="w-full lg:w-1/2 flex flex-col pb-16">
-          <div className="request relative w-full space-y-5">
-            {formData.status && (
-              <div className="status-badge absolute top-0 right-0 z-[5]">
-                <span
-                  className={`p-5 text-sm font-semibold text-white ${
-                    formData.status === "submitted"
-                      ? "bg-orange-500"
-                      : formData.status === "departmentApproved"
-                      ? "bg-green-500"
-                      : formData.status === "cancelled"
-                      ? "bg-red-500"
-                      : "bg-gray-500"
-                  }`}
-                >
-                  {formData.status}
-                </span>
-              </div>
+          <div className="rounded-md shadow-md bg-white">
+            <RequestCard formData={formData} user={user} />
+
+            {/* PM Comment Form */}
+            {userType === "procurementManager" && !isEditMode && (
+              <PMCommentForm />
             )}
 
-            <div className="w-full space-y-2">
-              <div className="relative w-full h-[300px] rounded-xl overflow-hidden bg-gray-100">
-                <Image
-                  fill
-                  alt="Request Image"
-                  src={formData.image || "/request-image.png"}
-                  className="object-contain"
-                />
-              </div>
-              {formData.requester && (
-                <p className="text-sm text-gray-600 font-semibold text-end my-4">
-                  Requested by:{" "}
-                  {user?.id === formData.requester._id
-                    ? "You"
-                    : `${formData.requester.firstName} ${formData.requester.lastName}`}
-                </p>
-              )}
-            </div>
+            {/* PM sees RequestDetails by default, others see RequestForm */}
+            {userType === "procurementManager" && !isEditMode && (
+              <RequestDetails formData={formData} />
+            )}
 
-            <div className="space-y-2">
-              <Label>Request Title</Label>
-              <Input
-                value={formData.title}
-                onChange={(e) => handleChange("title", e.target.value)}
-                readOnly={!isEditMode}
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
+            {/* Show RequestForm for user/hod always, or for PM in edit mode */}
+            {(userType === "user" || userType === "hod" || isEditMode) && (
+              <RequestForm
+                formData={formData}
+                isEditMode={isEditMode}
+                urgency={urgency}
+                setUrgency={setUrgency}
+                handleChange={handleChange}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Item Description</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => handleChange("description", e.target.value)}
-                readOnly={!isEditMode}
-                className="min-h-[100px] rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Category</Label>
-              {isEditMode ? (
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => handleChange("category", value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="product">Product</SelectItem>
-                    <SelectItem value="service">Service</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  value={formData.category}
-                  readOnly
-                  className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-                />
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Urgency</Label>
-              <div className="p-3 rounded-xl border border-[#9f9f9f] shadow-sm">
-                <Slider
-                  min={0}
-                  max={2}
-                  step={1}
-                  value={urgency}
-                  onValueChange={isEditMode ? setUrgency : undefined}
-                  disabled={!isEditMode}
-                  className="my-2 [&>span:first-child]:h-2 [&>span:first-child]:bg-gray-200"
-                />
-                <div className="flex justify-between text-sm text-gray-700">
-                  <span
-                    className={
-                      urgency[0] === 0 ? "font-semibold text-[#0d1b5e]" : ""
-                    }
-                  >
-                    Low
-                  </span>
-                  <span
-                    className={
-                      urgency[0] === 1 ? "font-semibold text-[#0d1b5e]" : ""
-                    }
-                  >
-                    Medium
-                  </span>
-                  <span
-                    className={
-                      urgency[0] === 2 ? "font-semibold text-[#0d1b5e]" : ""
-                    }
-                  >
-                    High
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Justification</Label>
-              <Textarea
-                value={formData.justification}
-                onChange={(e) => handleChange("justification", e.target.value)}
-                readOnly={!isEditMode}
-                className="min-h-[120px] rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Attach Image</Label>
-              <div className="flex items-center gap-2 border border-[#9f9f9f] p-3 rounded-xl shadow-sm py-2">
-                <Upload className="h-5 w-5 text-gray-500" />
-                <Input
-                  type="file"
-                  accept=".png,.jpg,.jpeg"
-                  disabled={!isEditMode}
-                  className="border-none shadow-none focus-visible:ring-0 p-0 text-sm"
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                Upload image most preferably in PNG, JPEG format.
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Units</Label>
-              <Input
-                type="number"
-                value={formData.quantityNeeded}
-                onChange={(e) =>
-                  handleChange("quantityNeeded", parseInt(e.target.value))
-                }
-                readOnly={!isEditMode}
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Unit Price (₦)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.estimatedUnitPrice}
-                onChange={(e) =>
-                  handleChange("estimatedUnitPrice", parseFloat(e.target.value))
-                }
-                readOnly={!isEditMode}
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3 pt-6">
-              {isEditMode ? (
-                <>
-                  <Button
-                    onClick={() => onEditModeChange(false)}
-                    variant="outline"
-                    className="flex-1 py-6"
-                  >
-                    Cancel Edit
-                  </Button>
-                  <Button
-                    disabled={loading}
-                    onClick={handleSave}
-                    className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-                  >
-                    {loading ? "Saving..." : "Save"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    onClick={() => router.push(backPath)}
-                    className="bg-gray-600 hover:bg-[#0b154b] text-white flex-1 py-6"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Close
-                  </Button>
-
-                  {(userType === "user" ||
-                    user?.id === formData.requester?._id) && (
-                    <Button
-                      onClick={() => onEditModeChange(true)}
-                      className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-                    >
-                      Edit
-                    </Button>
-                  )}
-                  {userType === "hod" && formData.status === "submitted" && (
-                    <>
-                      <Dialog
-                        open={showApprovalModal}
-                        onOpenChange={setShowApprovalModal}
-                      >
-                        <DialogTrigger asChild>
-                          <Button className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6">
-                            Approve
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl bg-white">
-                          <DialogHeader>
-                            <DialogTitle>Approve Request</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Approval Comment</Label>
-                              <Textarea
-                                value={approvalComment}
-                                onChange={(e) =>
-                                  setApprovalComment(e.target.value)
-                                }
-                                placeholder="Add a comment for approval"
-                                className="mt-2"
-                              />
-                            </div>
-                            <div className="flex gap-2 justify-end">
-                              <Button
-                                variant="outline"
-                                onClick={() => setShowApprovalModal(false)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                onClick={handleApproval}
-                                disabled={approvalLoading}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                              >
-                                {approvalLoading ? "Approving..." : "Approve"}
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Dialog
-                        open={showDenialModal}
-                        onOpenChange={setShowDenialModal}
-                      >
-                        <DialogTrigger asChild>
-                          <Button className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6">
-                            Deny
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl bg-white">
-                          <DialogHeader>
-                            <DialogTitle>Deny Request</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Reason for Denial</Label>
-                              <Textarea
-                                value={denialReason}
-                                onChange={(e) =>
-                                  setDenialReason(e.target.value)
-                                }
-                                placeholder="Please provide a reason for denying this request"
-                                className="mt-2"
-                              />
-                            </div>
-                            <div className="flex gap-2 justify-end">
-                              <Button
-                                variant="outline"
-                                onClick={() => setShowDenialModal(false)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                onClick={handleDenial}
-                                disabled={approvalLoading}
-                                className="bg-red-600 hover:bg-red-700 text-white"
-                              >
-                                {approvalLoading ? "Denying..." : "Deny"}
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </>
-                  )}
-                </>
-              )}
-              {(userType === "user" ||
-                user?.id === formData.requester?._id) && (
-                <Dialog
-                  open={showCancelModal}
-                  onOpenChange={setShowCancelModal}
-                >
-                  <DialogTrigger className="bg-white max-w-2xl" asChild>
-                    <Button
-                      variant="outline"
-                      className="border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
-                    >
-                      Cancel Request
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl bg-white">
-                    <DialogHeader>
-                      <DialogTitle>Cancel Request</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Reason for cancellation</Label>
-                        <Textarea
-                          value={cancelReason}
-                          onChange={(e) => setCancelReason(e.target.value)}
-                          placeholder="Please provide a reason for cancelling this request"
-                          className="mt-2"
-                        />
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowCancelModal(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={handleCancel}
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                          Confirm Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
+            )}
           </div>
+
+          <RequestActions
+            isEditMode={isEditMode}
+            loading={loading}
+            userType={userType}
+            formData={formData}
+            user={user}
+            backPath={backPath}
+            onEditModeChange={onEditModeChange}
+            onSave={handleSave}
+            showApprovalModal={showApprovalModal}
+            setShowApprovalModal={setShowApprovalModal}
+            approvalComment={approvalComment}
+            setApprovalComment={setApprovalComment}
+            onApproval={handleApproval}
+            showDenialModal={showDenialModal}
+            setShowDenialModal={setShowDenialModal}
+            denialReason={denialReason}
+            setDenialReason={setDenialReason}
+            onDenial={handleDenial}
+            approvalLoading={approvalLoading}
+            showCancelModal={showCancelModal}
+            setShowCancelModal={setShowCancelModal}
+            cancelReason={cancelReason}
+            setCancelReason={setCancelReason}
+            onCancel={handleCancel}
+          />
         </div>
 
-        {/* To decide on who can make comments on bids  */}
-        <Comments entityId={requisitionId} entityType="requisitions" />
+        <div className="w-full lg:w-1/2 flex flex-col pb-16">
+          {userType === "procurementManager" && <BidsSection />}
+          <Comments entityId={requisitionId} entityType="requisitions" />
+        </div>
       </div>
     </div>
   );

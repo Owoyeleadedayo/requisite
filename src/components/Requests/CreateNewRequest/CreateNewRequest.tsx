@@ -21,7 +21,7 @@ import { API_BASE_URL } from "@/lib/config";
 import { getToken } from "@/lib/auth";
 
 interface CreateNewRequestProps {
-  page: "user" | "hod";
+  page: "user" | "hod" | "pm";
 }
 
 export default function CreateNewRequest({ page }: CreateNewRequestProps) {
@@ -115,6 +115,8 @@ export default function CreateNewRequest({ page }: CreateNewRequestProps) {
               ? "/hod/my-requests"
               : page === "user"
               ? "/user/requisition"
+              : page === "pm"
+              ? "/pm/my-request"
               : ""
           }
           className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-3"
