@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { CalendarIcon } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { CalendarIcon, Bold, Italic, Underline, List, ListOrdered } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,12 @@ export default function PMCommentForm() {
   const [bidStart, setBidStart] = useState<Date>();
   const [bidDeadline, setBidDeadline] = useState<Date>();
   const [additionalInfo, setAdditionalInfo] = useState("");
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [activeFormats, setActiveFormats] = useState({
+    bold: false,
+    italic: false,
+    underline: false,
+  });
   const [errors, setErrors] = useState({
     bidStart: "",
     bidDeadline: "",
@@ -49,10 +55,11 @@ export default function PMCommentForm() {
     }
 
     // Validate Additional Information
-    if (!additionalInfo.trim()) {
+    const textContent = editorRef.current?.textContent || "";
+    if (!textContent.trim()) {
       newErrors.additionalInfo = "Additional information is required";
       isValid = false;
-    } else if (additionalInfo.trim().length < 10) {
+    } else if (textContent.trim().length < 10) {
       newErrors.additionalInfo =
         "Additional information must be at least 10 characters";
       isValid = false;
@@ -92,7 +99,7 @@ export default function PMCommentForm() {
           body: JSON.stringify({
             bidStart: bidStart?.toISOString(),
             bidDeadline: bidDeadline?.toISOString(),
-            additionalInfo,
+            additionalInfo: editorRef.current?.innerHTML || "",
           }),
         }
       );
@@ -112,6 +119,9 @@ export default function PMCommentForm() {
       setBidStart(undefined);
       setBidDeadline(undefined);
       setAdditionalInfo("");
+      if (editorRef.current) {
+        editorRef.current.innerHTML = "";
+      }
       setErrors({
         bidStart: "",
         bidDeadline: "",
@@ -241,17 +251,98 @@ export default function PMCommentForm() {
         {/* Additional Information */}
         <div className="space-y-2">
           <Label>Additional Information</Label>
-          <Textarea
-            value={additionalInfo}
-            onChange={(e) => {
-              setAdditionalInfo(e.target.value);
-              setErrors((prev) => ({ ...prev, additionalInfo: "" }));
-            }}
-            className={`min-h-[200px] rounded-xl border shadow-sm ${
-              errors.additionalInfo ? "border-red-500" : "border-[#9f9f9f]"
-            }`}
-            placeholder="Enter additional information..."
-          />
+          <div className={`border rounded-xl shadow-sm ${
+            errors.additionalInfo ? "border-red-500" : "border-[#9f9f9f]"
+          }`}>
+            {/* Toolbar */}
+            <div className="flex items-center gap-1 p-2 border-b border-gray-200">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  document.execCommand('bold', false);
+                  setActiveFormats(prev => ({ ...prev, bold: !prev.bold }));
+                }}
+                className={`h-8 w-8 p-0 ${
+                  activeFormats.bold ? 'bg-[#0F1E7A] text-white hover:bg-[#0F1E7A]/90' : ''
+                }`}
+              >
+                <Bold className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  document.execCommand('italic', false);
+                  setActiveFormats(prev => ({ ...prev, italic: !prev.italic }));
+                }}
+                className={`h-8 w-8 p-0 ${
+                  activeFormats.italic ? 'bg-[#0F1E7A] text-white hover:bg-[#0F1E7A]/90' : ''
+                }`}
+              >
+                <Italic className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  document.execCommand('underline', false);
+                  setActiveFormats(prev => ({ ...prev, underline: !prev.underline }));
+                }}
+                className={`h-8 w-8 p-0 ${
+                  activeFormats.underline ? 'bg-[#0F1E7A] text-white hover:bg-[#0F1E7A]/90' : ''
+                }`}
+              >
+                <Underline className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => document.execCommand('insertUnorderedList', false)}
+                className="h-8 w-8 p-0"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => document.execCommand('insertOrderedList', false)}
+                className="h-8 w-8 p-0"
+              >
+                <ListOrdered className="h-4 w-4" />
+              </Button>
+            </div>
+            {/* Editor */}
+            <div
+              ref={editorRef}
+              contentEditable
+              className="min-h-[200px] p-3 outline-none"
+              style={{ wordBreak: 'break-word' }}
+              onInput={() => {
+                setErrors((prev) => ({ ...prev, additionalInfo: "" }));
+              }}
+              onMouseUp={() => {
+                setActiveFormats({
+                  bold: document.queryCommandState('bold'),
+                  italic: document.queryCommandState('italic'),
+                  underline: document.queryCommandState('underline'),
+                });
+              }}
+              onKeyUp={() => {
+                setActiveFormats({
+                  bold: document.queryCommandState('bold'),
+                  italic: document.queryCommandState('italic'),
+                  underline: document.queryCommandState('underline'),
+                });
+              }}
+              suppressContentEditableWarning={true}
+            />
+          </div>
           {errors.additionalInfo && (
             <p className="text-red-500 text-sm mt-1">{errors.additionalInfo}</p>
           )}
