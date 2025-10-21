@@ -323,8 +323,8 @@ export default function PMCommentForm() {
             </SelectTrigger>
             <SelectContent className="bg-white">
               {vendorCategories.map((category) => (
-                <SelectItem 
-                  key={category._id} 
+                <SelectItem
+                  key={category._id}
                   value={category._id}
                   className="hover:bg-[#0F1E7A] hover:text-white focus:bg-[#0F1E7A] focus:text-white data-[highlighted]:bg-[#0F1E7A] data-[highlighted]:text-white"
                 >

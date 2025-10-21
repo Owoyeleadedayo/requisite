@@ -15,20 +15,26 @@ import {
   SelectValue,
 } from "./ui/select";
 
+export interface AdvancedSearchFilters {
+  searchQuery: string;
+  category: string;
+  dateRange: string;
+}
+
 interface SearchModalProps {
   trigger: React.ReactNode;
-  onSearch?: (query: string) => void;
+  onSearch?: (filters: AdvancedSearchFilters) => void;
 }
 
 export default function AdvancedSearchModal({ trigger, onSearch }: SearchModalProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(""); // This is the main search term inside the modal
   const [category, setCategory] = useState("");
   const [dateRange, setDateRange] = useState("");
   const [open, setOpen] = useState(false);
 
   const handleSearch = () => {
     if (onSearch) {
-      onSearch(searchQuery);
+      onSearch({ searchQuery, category, dateRange });
     }
     setOpen(false);
   };
