@@ -3,9 +3,7 @@
 import * as React from "react";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { ListFilter, Search, X, ChevronDown } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Label } from "./ui/label";
+import { Search, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -20,7 +18,11 @@ import {
   PaginationItem,
   PaginationLink,
 } from "@/components/ui/pagination";
-import AdvancedSearchModal from "./AdvancedSearchModal";
+import AdvancedSearchModal, {
+  AdvancedSearchFilters,
+} from "./AdvancedSearchModal";
+import { API_BASE_URL } from "@/lib/config";
+import { getToken } from "@/lib/auth";
 
 export type Column<T> = {
   key: keyof T;
@@ -49,14 +51,20 @@ export default function DataTable<T extends { id?: string | number }>({
 }: DataTableProps<T>) {
   const [currentPage, setCurrentPage] = React.useState(serverCurrentPage || 1);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [filteredData, setFilteredData] = React.useState(data);
+  const [filteredData, setFilteredData] = React.useState<T[]>(data);
+  const [serverResults, setServerResults] = React.useState<T[] | null>(null);
+  const [isServerFiltered, setIsServerFiltered] = React.useState(false);
+  const [localLoading, setLocalLoading] = React.useState(false);
   const [columnFilters, setColumnFilters] = React.useState<
     Record<string, string[]>
   >({});
   const [rangeFilters, setRangeFilters] = React.useState<
     Record<string, { min?: number; max?: number }>
   >({});
-  const [showFilterPopover, setShowFilterPopover] = React.useState(false);
+  const [activeSearchFilters, setActiveSearchFilters] =
+    React.useState<AdvancedSearchFilters | null>(null);
+  const [serverSearchTotalPages, setServerSearchTotalPages] =
+    React.useState<number>(0);
 
   const isServerPagination = !!onPageChange;
 
@@ -105,16 +113,102 @@ export default function DataTable<T extends { id?: string | number }>({
     setCurrentPage(1);
   }, [data, searchQuery, columnFilters, rangeFilters, columns]);
 
-  const handleSearch = () => {
-    applyFilters();
+  const handleSearch = async () => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return applyFilters();
+
+    // perform server-side search to /requisitions?page=1&limit=itemsPerPage&title={trimmed}
+    try {
+      setLocalLoading(true);
+      const token = getToken();
+      const res = await fetch(
+        `${API_BASE_URL}/requisitions?page=1&limit=${itemsPerPage}&title=${encodeURIComponent(
+          trimmed
+        )}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const json = await res.json();
+
+      if (json.success) {
+        setServerResults(json.data);
+        if (json.pagination) {
+          setServerSearchTotalPages(json.pagination.pages);
+        }
+      } else {
+        // Fallback for other response shapes
+        const results = Array.isArray(json)
+          ? json
+          : json?.data ?? json?.results ?? [];
+        setServerResults(results);
+      }
+      setIsServerFiltered(true);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error("Server search failed:", error);
+    } finally {
+      setLocalLoading(false);
+    }
+  };
+
+  const handleAdvancedSearch = async (filters: AdvancedSearchFilters) => {
+    setActiveSearchFilters(filters); // Persist advanced filters for pagination
+    const { searchQuery: term, category, dateRange } = filters;
+
+    const params = new URLSearchParams({
+      page: "1",
+      limit: String(itemsPerPage),
+    });
+
+    if (term) params.set("title", term);
+    if (category) params.set("category", category);
+    if (dateRange) params.set("dateRange", dateRange);
+
+    try {
+      setLocalLoading(true);
+      const token = getToken();
+      const res = await fetch(
+        `${API_BASE_URL}/requisitions?${params.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const json = await res.json();
+
+      if (json.success) {
+        setServerResults(json.data);
+        if (json.pagination) {
+          setServerSearchTotalPages(json.pagination.pages);
+        }
+      } else {
+        // Fallback for other response shapes
+        const results = Array.isArray(json)
+          ? json
+          : json?.data ?? json?.results ?? [];
+        setServerResults(results);
+      }
+      setIsServerFiltered(true);
+      // Also update the main search box to reflect the term used in advanced search
+      setSearchQuery(term);
+      setCurrentPage(1);
+    } catch (error) {
+      console.error("Advanced server search failed:", error);
+    } finally {
+      setLocalLoading(false);
+    }
   };
 
   const handleClearSearch = () => {
-    setSearchQuery("");
+    // Clear server-side results (if any) and restore initial data.
+    setServerResults(null);
+    setIsServerFiltered(false);
     setColumnFilters({});
     setRangeFilters({});
     setFilteredData(data);
-    setCurrentPage(1);
+    setSearchQuery(""); // Clear the search input as well
+    setActiveSearchFilters(null); // Clear persisted advanced filters
+    setServerSearchTotalPages(0); // Reset search total pages
   };
 
   const getUniqueValues = (columnKey: string) => {
@@ -172,8 +266,11 @@ export default function DataTable<T extends { id?: string | number }>({
   };
 
   React.useEffect(() => {
-    setFilteredData(data);
-  }, [data]);
+    // If there's no active server filter, keep filteredData synced to prop `data`.
+    if (!isServerFiltered) {
+      setFilteredData(data);
+    }
+  }, [data, isServerFiltered]);
 
   React.useEffect(() => {
     if (!isServerPagination) {
@@ -187,9 +284,14 @@ export default function DataTable<T extends { id?: string | number }>({
     }
   }, [serverCurrentPage]);
 
-  const totalPages =
-    serverTotalPages || Math.ceil(filteredData.length / itemsPerPage);
-  const paginatedData = isServerPagination
+  const totalPagesToRender = isServerFiltered
+    ? serverSearchTotalPages
+    : serverTotalPages ||
+      Math.ceil(filteredData.length / itemsPerPage);
+
+  const paginatedData = isServerFiltered
+    ? serverResults ?? []
+    : isServerPagination
     ? data
     : filteredData.slice(
         (currentPage - 1) * itemsPerPage,
@@ -197,9 +299,55 @@ export default function DataTable<T extends { id?: string | number }>({
       );
 
   const handlePageChange = (page: number) => {
-    if (isServerPagination && onPageChange) {
+    if (isServerFiltered) {
+      // If a server-side search is active, handle pagination internally
+      // by re-fetching with the new page number.
+      const fetchSearchedPage = async (newPage: number) => {
+        // Use persisted advanced filters if available, otherwise use simple search query
+        const searchTitle = activeSearchFilters?.searchQuery || searchQuery;
+        const searchCategory = activeSearchFilters?.category;
+        const searchDateRange = activeSearchFilters?.dateRange;
+
+        const params = new URLSearchParams({
+          page: String(newPage),
+          limit: String(itemsPerPage),
+        });
+        if (searchTitle) params.set("title", searchTitle);
+        if (searchCategory) params.set("category", searchCategory);
+        if (searchDateRange) params.set("dateRange", searchDateRange);
+
+        try {
+          setLocalLoading(true);
+          const token = getToken();
+          const res = await fetch(
+            `${API_BASE_URL}/requisitions?${params.toString()}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const json = await res.json();
+          if (json.success) {
+            setServerResults(json.data);
+            if (json.pagination) {
+              setServerSearchTotalPages(json.pagination.pages);
+            }
+          } else {
+            const results = Array.isArray(json)
+              ? json
+              : json?.data ?? json?.results ?? [];
+            setServerResults(results);
+          }
+          setCurrentPage(newPage);
+        } catch (error) {
+          console.error("Server search pagination failed:", error);
+        } finally {
+          setLocalLoading(false);
+        }
+      };
+      fetchSearchedPage(page);
+    } else if (isServerPagination && onPageChange) {
+      // Default to parent-controlled pagination if no search is active
       onPageChange(page);
     } else {
+      // Client-side pagination
       setCurrentPage(page);
     }
   };
@@ -217,22 +365,27 @@ export default function DataTable<T extends { id?: string | number }>({
             className="bg-[#FFFFFF] pl-4 pr-4 py-2 w-full h-12 rounded-md shadow-md"
           />
 
-          {searchQuery && filteredData.length !== data.length ? (
-            <Button
-              onClick={handleClearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent hover:bg-transparent p-0 h-auto"
-            >
-              <X color="black" size={20} />
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent hover:bg-transparent p-0 h-auto"
-            >
+          <Button
+            onClick={handleSearch}
+            disabled={localLoading}
+            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent hover:bg-transparent p-0 h-auto"
+          >
+            {localLoading ? (
+              <Loader2 className="animate-spin" color="black" size={20} />
+            ) : (
               <Search color="black" size={20} />
-            </Button>
-          )}
+            )}
+          </Button>
         </div>
+
+        {isServerFiltered && (
+          <Button
+            onClick={handleClearSearch}
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-md"
+          >
+            Clear
+          </Button>
+        )}
 
         <AdvancedSearchModal
           trigger={
@@ -246,7 +399,7 @@ export default function DataTable<T extends { id?: string | number }>({
               </div>
             </Button>
           }
-          onSearch={(query) => console.log("Search:", query)}
+          onSearch={handleAdvancedSearch}
         />
       </div>
 
@@ -307,7 +460,7 @@ export default function DataTable<T extends { id?: string | number }>({
         </Table>
       </div>
 
-      {totalPages > 1 && (
+      {totalPagesToRender > 1 && (
         <div className="flex justify-start mt-4">
           <Pagination className="!justify-end">
             <PaginationContent>
@@ -316,13 +469,13 @@ export default function DataTable<T extends { id?: string | number }>({
                   onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
                   className={`cursor-pointer ${
                     currentPage === 1 ? "pointer-events-none opacity-50" : ""
-                  }`}
+                  } `}
                   aria-label="Go to previous page"
                 >
                   &lt;
                 </PaginationLink>
               </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              {Array.from({ length: totalPagesToRender }, (_, i) => i + 1).map(
                 (page) => (
                   <PaginationItem key={page}>
                     <PaginationLink
@@ -338,10 +491,12 @@ export default function DataTable<T extends { id?: string | number }>({
               <PaginationItem>
                 <PaginationLink
                   onClick={() =>
-                    handlePageChange(Math.min(currentPage + 1, totalPages))
+                    handlePageChange(
+                      Math.min(currentPage + 1, totalPagesToRender)
+                    )
                   }
                   className={`cursor-pointer ${
-                    currentPage === totalPages
+                    currentPage === totalPagesToRender
                       ? "pointer-events-none opacity-50"
                       : ""
                   }`}
