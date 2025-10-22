@@ -138,8 +138,9 @@ export default function PMCommentForm({
 
     // Validate date range
     if (bidStart && bidDeadline) {
-      if (bidDeadline < bidStart) {
-        newErrors.dateRange = "Bid deadline must be after bid start date";
+      if (bidDeadline <= bidStart) {
+        newErrors.dateRange =
+          "Bid deadline date must be at least 24 hours after bid start date";
         isValid = false;
       }
     }
