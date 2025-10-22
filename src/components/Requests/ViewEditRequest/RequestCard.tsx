@@ -5,6 +5,7 @@ import { useState } from "react";
 import { AlarmClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { RequestData, RequestActionsProps } from "./types";
+import StatusBadge from "@/components/StatusBadge";
 
 interface RequestCardProps {
   formData: RequestData;
@@ -54,21 +55,10 @@ export default function RequestCard({ formData, user }: RequestCardProps) {
           />
 
           {formData.status && (
-            <div className="status-badge absolute top-5 right-1 z-[5]">
-              <span
-                className={`p-5 text-sm font-semibold text-white ${
-                  formData.status === "submitted"
-                    ? "bg-orange-500"
-                    : formData.status === "departmentApproved"
-                    ? "bg-green-500"
-                    : formData.status === "cancelled"
-                    ? "bg-red-500"
-                    : "bg-gray-500"
-                }`}
-              >
-                {formData.status}
-              </span>
-            </div>
+            <StatusBadge
+              status={formData.status}
+              className="absolute top-4 right-4 z-[5] text-sm p-2"
+            />
           )}
         </div>
 
