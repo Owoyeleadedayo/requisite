@@ -8,7 +8,7 @@ interface RequestDetailsProps {
 
 export default function RequestDetails({ formData }: RequestDetailsProps) {
   return (
-    <div className="flex flex-col gap-2 py-6">
+    <div className="flex flex-col gap-2 py-6 rounded-md shadow-md bg-white my-5">
       <div className="flex flex-col gap-3 px-4">
         <div className="flex justify-between items-start gap-4 text-start">
           <div className="flex flex-col w-2/3">
@@ -69,16 +69,6 @@ export default function RequestDetails({ formData }: RequestDetailsProps) {
           <p className="text-base text-[#0F1E7A] font-light">
             {formData.justification}
           </p>
-        </div>
-
-        <div className="flex items-center justify-center gap-6 px-auto lg:px-32 mt-8">
-          <Button className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6">
-            Publish Request
-          </Button>
-
-          <Button className="bg-red-500 hover:bg-red-700 text-white flex-1 py-6">
-            Close Request
-          </Button>
         </div>
       </div>
     </div>

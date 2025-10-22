@@ -55,13 +55,13 @@ export default function RequestActions({
         </>
       ) : (
         <>
-          <Button
+          {/* <Button
             onClick={() => router.push(backPath)}
             className="bg-gray-600 hover:bg-[#0b154b] text-white flex-1 py-6"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Close
-          </Button>
+          </Button> */}
 
           {(userType === "user" || user?.id === formData.requester?._id) && (
             <Button

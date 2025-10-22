@@ -7,16 +7,20 @@ import {
   List,
   ListOrdered,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Select,
@@ -27,7 +31,11 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import { API_BASE_URL } from "@/lib/config";
+import { getToken } from "@/lib/auth";
+import { RequestData } from "./types";
 
 interface VendorCategory {
   _id: string;
@@ -35,14 +43,24 @@ interface VendorCategory {
   description: string;
 }
 
-export default function PMCommentForm() {
+interface PMApprovalFormProps {
+  requisitionId: string;
+  formData: RequestData;
+  onActionSuccess?: () => void;
+}
+
+export default function PMCommentForm({
+  formData,
+  requisitionId,
+  onActionSuccess,
+}: PMApprovalFormProps) {
+  const token = getToken();
   const [bidStart, setBidStart] = useState<Date>();
   const [bidDeadline, setBidDeadline] = useState<Date>();
   const [vendorCategory, setVendorCategory] = useState<string>("");
   const [vendorCategories, setVendorCategories] = useState<VendorCategory[]>(
     []
   );
-  const [additionalInfo, setAdditionalInfo] = useState("");
   const editorRef = useRef<HTMLDivElement>(null);
   const [activeFormats, setActiveFormats] = useState({
     bold: false,
@@ -57,6 +75,11 @@ export default function PMCommentForm() {
     dateRange: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [additionalInfo, setAdditionalInfo] = useState("");
+
   const [submitStatus, setSubmitStatus] = useState({ type: "", message: "" });
 
   useEffect(() => {
@@ -115,7 +138,7 @@ export default function PMCommentForm() {
 
     // Validate date range
     if (bidStart && bidDeadline) {
-      if (bidDeadline <= bidStart) {
+      if (bidDeadline < bidStart) {
         newErrors.dateRange = "Bid deadline must be after bid start date";
         isValid = false;
       }
@@ -125,7 +148,7 @@ export default function PMCommentForm() {
     return isValid;
   };
 
-  const handleSubmit = async () => {
+  const handlePublish = async () => {
     // Clear previous status
     setSubmitStatus({ type: "", message: "" });
 
@@ -138,31 +161,40 @@ export default function PMCommentForm() {
 
     try {
       const response = await fetch(
-        "https://your-api-endpoint.com/api/procurement/comments",
+        `${API_BASE_URL}/requisitions/${requisitionId}/initiate-bidding`,
         {
-          method: "POST",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            bidStart: bidStart?.toISOString(),
-            bidDeadline: bidDeadline?.toISOString(),
-            vendorCategory,
+            biddingStartDate: bidStart?.toISOString(),
+            biddingDeadline: bidDeadline?.toISOString(),
+            vendorCategoryId: vendorCategory,
             additionalInfo: editorRef.current?.innerHTML || "",
+
+            // selectedVendorIds: [
+            //   "5f7b1a9b9c9d440000a1b1c2",
+            //   "5f7b1a9b9c9d440000a1b1c3",
+            // ],
+
+            // biddingMessage:
+            //   "Please submit your best competitive pricing for this requisition.",
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`
+        );
       }
 
       const data = await response.json();
-
-      setSubmitStatus({
-        type: "success",
-        message: "Comment submitted successfully!",
-      });
+      toast.success(data.message || "Request published successfully!");
+      onActionSuccess?.();
 
       // Reset form
       setBidStart(undefined);
@@ -182,18 +214,54 @@ export default function PMCommentForm() {
     } catch (error) {
       setSubmitStatus({
         type: "error",
-        message: "Failed to submit comment. Please try again.",
+        message:
+          (error as Error).message ||
+          "Failed to publish request. Please try again.",
       });
-      console.error("Submission error:", error);
+      toast.error((error as Error).message || "Failed to publish request.");
+    } finally {
+      setIsSubmitting(false);
+      setShowPublishModal(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!cancelReason.trim()) {
+      toast.error("Please provide a reason for cancellation.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      // Replace with your actual cancel endpoint and payload
+      const response = await fetch(
+        `${API_BASE_URL}/requisitions/${requisitionId}/cancel`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ reason: cancelReason }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Cancellation failed.");
+
+      toast.success(data.message || "Request cancelled successfully.");
+      setShowCancelModal(false);
+      setCancelReason("");
+      onActionSuccess?.();
+    } catch (error) {
+      toast.error((error as Error).message || "Failed to cancel request.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-8 bg-white">
+    <div className="w-full mx-auto p-4 rounded-md shadow-md bg-white">
       <h1 className="text-base font-semibold mb-8 text-[#121212]">
-        Comment from Procurement Manager
+        Important Information
       </h1>
 
       <div className="space-y-6">
@@ -227,80 +295,82 @@ export default function PMCommentForm() {
           </Alert>
         )}
 
-        {/* Bid Start */}
-        <div className="space-y-2">
-          <Label>Bid Start</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-between text-left font-normal bg-white border border-[#9f9f9f] rounded-xl p-4 h-auto shadow-sm",
-                  !bidStart && "text-muted-foreground",
-                  errors.bidStart && "border-red-500"
-                )}
-              >
-                {bidStart ? format(bidStart, "PPP") : "Select date"}
-                <CalendarIcon className="h-4 w-4 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-white" align="start">
-              <Calendar
-                mode="single"
-                selected={bidStart}
-                onSelect={(date) => {
-                  setBidStart(date);
-                  setErrors((prev) => ({
-                    ...prev,
-                    bidStart: "",
-                    dateRange: "",
-                  }));
-                }}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          {errors.bidStart && (
-            <p className="text-red-500 text-sm mt-1">{errors.bidStart}</p>
-          )}
-        </div>
+        <div className="flex flex-col lg:flex-row items-center gap-4">
+          {/* Bid Start */}
+          <div className="w-full lg:w-1/2 space-y-2">
+            <Label>Bid Start</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-between text-left font-normal bg-white border border-[#9f9f9f] rounded-xl p-4 h-auto shadow-sm",
+                    !bidStart && "text-muted-foreground",
+                    errors.bidStart && "border-red-500"
+                  )}
+                >
+                  {bidStart ? format(bidStart, "PPP") : "Select date"}
+                  <CalendarIcon className="h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-white" align="start">
+                <Calendar
+                  mode="single"
+                  selected={bidStart}
+                  onSelect={(date) => {
+                    setBidStart(date);
+                    setErrors((prev) => ({
+                      ...prev,
+                      bidStart: "",
+                      dateRange: "",
+                    }));
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            {errors.bidStart && (
+              <p className="text-red-500 text-sm mt-1">{errors.bidStart}</p>
+            )}
+          </div>
 
-        {/* Bid Deadline */}
-        <div className="space-y-2">
-          <Label>Bid Deadline</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-between text-left font-normal bg-white border border-[#9f9f9f] rounded-xl p-4 h-auto shadow-sm",
-                  !bidDeadline && "text-muted-foreground",
-                  errors.bidDeadline && "border-red-500"
-                )}
-              >
-                {bidDeadline ? format(bidDeadline, "PPP") : "Select date"}
-                <CalendarIcon className="h-4 w-4 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-white" align="start">
-              <Calendar
-                mode="single"
-                selected={bidDeadline}
-                onSelect={(date) => {
-                  setBidDeadline(date);
-                  setErrors((prev) => ({
-                    ...prev,
-                    bidDeadline: "",
-                    dateRange: "",
-                  }));
-                }}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-          {errors.bidDeadline && (
-            <p className="text-red-500 text-sm mt-1">{errors.bidDeadline}</p>
-          )}
+          {/* Bid Deadline */}
+          <div className="w-full lg:w-1/2 space-y-2">
+            <Label>Bid Deadline</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-between text-left font-normal bg-white border border-[#9f9f9f] rounded-xl p-4 h-auto shadow-sm",
+                    !bidDeadline && "text-muted-foreground",
+                    errors.bidDeadline && "border-red-500"
+                  )}
+                >
+                  {bidDeadline ? format(bidDeadline, "PPP") : "Select date"}
+                  <CalendarIcon className="h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 bg-white" align="start">
+                <Calendar
+                  mode="single"
+                  selected={bidDeadline}
+                  onSelect={(date) => {
+                    setBidDeadline(date);
+                    setErrors((prev) => ({
+                      ...prev,
+                      bidDeadline: "",
+                      dateRange: "",
+                    }));
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            {errors.bidDeadline && (
+              <p className="text-red-500 text-sm mt-1">{errors.bidDeadline}</p>
+            )}
+          </div>
         </div>
 
         {/* Vendor Category */}
@@ -429,7 +499,8 @@ export default function PMCommentForm() {
               contentEditable
               className="min-h-[200px] p-3 outline-none"
               style={{ wordBreak: "break-word" }}
-              onInput={() => {
+              onInput={(e) => {
+                setAdditionalInfo(e.currentTarget.innerHTML);
                 setErrors((prev) => ({ ...prev, additionalInfo: "" }));
               }}
               onMouseUp={() => {
@@ -454,17 +525,88 @@ export default function PMCommentForm() {
           )}
         </div>
 
-        {/* Submit Button */}
-        <div className="flex justify-end pt-4">
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="bg-[#0F1E7A] hover:bg-blue-800 text-white px-16 py-3 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? "Sending..." : "Send"}
-          </Button>
-        </div>
+        {formData.status === "departmentApproved" && (
+          <div className="flex items-center justify-center gap-6 px-auto lg:px-32 mt-8">
+            <Button
+              onClick={() => {
+                if (validateForm()) {
+                  setShowPublishModal(true);
+                }
+              }}
+              className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
+            >
+              Publish Request
+            </Button>
+
+            <Button
+              onClick={() => setShowCancelModal(true)}
+              className="bg-red-500 hover:bg-red-700 text-white flex-1 py-6"
+            >
+              Cancel Request
+            </Button>
+          </div>
+        )}
       </div>
+
+      {/* Publish Confirmation Modal */}
+      <Dialog open={showPublishModal} onOpenChange={setShowPublishModal}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle>Confirm Publish</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>
+              Vendors will be able to see this request. Are you sure you want to
+              publish?
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowPublishModal(false)}
+            >
+              Back
+            </Button>
+            <Button
+              onClick={handlePublish}
+              disabled={isSubmitting}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {isSubmitting ? "Publishing..." : "Confirm"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Confirmation Modal */}
+      <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
+        <DialogContent className="max-w-lg bg-white">
+          <DialogHeader>
+            <DialogTitle>Cancel Request</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-2">
+            <Label htmlFor="cancelReason">Reason for Cancellation</Label>
+            <Textarea
+              id="cancelReason"
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Please provide a reason..."
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowCancelModal(false)}>
+              Back
+            </Button>
+            <Button
+              onClick={handleCancel}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isSubmitting ? "Cancelling..." : "Confirm Cancellation"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

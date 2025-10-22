@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
@@ -65,35 +65,35 @@ export default function ViewEditRequest({
       ? "/pm/requests"
       : "/user/requisition";
 
-  useEffect(() => {
+  const fetchRequest = useCallback(async () => {
     const reversePriorityMap: Record<RequestData["priority"], number> = {
       low: 0,
       medium: 1,
       high: 2,
     };
-
-    const fetchRequest = async () => {
-      try {
-        const res = await fetch(
-          `${API_BASE_URL}/requisitions/${requisitionId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        const data = await res.json();
-        if (data.success) {
-          const req = data.data;
-          setFormData(req);
-          const priority = req.priority as RequestData["priority"];
-          setUrgency([reversePriorityMap[priority]]);
-        } else setNotFound(true);
-      } catch (error) {
-        console.error(error);
-        setNotFound(true);
-      }
-    };
-    fetchRequest();
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/requisitions/${requisitionId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        const req = data.data;
+        setFormData(req);
+        const priority = req.priority as RequestData["priority"];
+        setUrgency([reversePriorityMap[priority]]);
+      } else setNotFound(true);
+    } catch (error) {
+      console.error(error);
+      setNotFound(true);
+    }
   }, [requisitionId, token]);
+
+  useEffect(() => {
+    fetchRequest();
+  }, [fetchRequest]);
 
   const handleChange = (field: keyof RequestData, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -266,30 +266,32 @@ export default function ViewEditRequest({
 
       <div className="w-full flex flex-col lg:flex-row gap-6 container">
         <div className="w-full lg:w-1/2 flex flex-col pb-16">
-          <div className="rounded-md shadow-md bg-white">
-            <RequestCard formData={formData} user={user} />
+          <RequestCard formData={formData} user={user} />
 
-            {/* PM Comment Form */}
-            {userType === "procurementManager" && !isEditMode && (
-              <PMCommentForm />
-            )}
+          {/* PM sees RequestDetails by default, others see RequestForm */}
+          {userType === "procurementManager" && !isEditMode && (
+            <RequestDetails formData={formData} />
+          )}
 
-            {/* PM sees RequestDetails by default, others see RequestForm */}
-            {userType === "procurementManager" && !isEditMode && (
-              <RequestDetails formData={formData} />
-            )}
+          {/* PM Comment Form */}
+          {userType === "procurementManager" && !isEditMode && (
+            <PMCommentForm
+              formData={formData}
+              requisitionId={requisitionId}
+              onActionSuccess={fetchRequest}
+            />
+          )}
 
-            {/* Show RequestForm for user/hod always, or for PM in edit mode */}
-            {(userType === "user" || userType === "hod" || isEditMode) && (
-              <RequestForm
-                formData={formData}
-                isEditMode={isEditMode}
-                urgency={urgency}
-                setUrgency={setUrgency}
-                handleChange={handleChange}
-              />
-            )}
-          </div>
+          {/* Show RequestForm for user/hod always, or for PM in edit mode */}
+          {(userType === "user" || userType === "hod" || isEditMode) && (
+            <RequestForm
+              formData={formData}
+              isEditMode={isEditMode}
+              urgency={urgency}
+              setUrgency={setUrgency}
+              handleChange={handleChange}
+            />
+          )}
 
           <RequestActions
             isEditMode={isEditMode}
@@ -320,7 +322,7 @@ export default function ViewEditRequest({
         </div>
 
         <div className="w-full lg:w-1/2 flex flex-col pb-16">
-          {userType === "procurementManager" && <BidsSection />}
+          {/* {userType === "procurementManager" && <BidsSection />} */}
           <Comments entityId={requisitionId} entityType="requisitions" />
         </div>
       </div>

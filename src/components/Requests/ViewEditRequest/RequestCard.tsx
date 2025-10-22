@@ -20,7 +20,7 @@ export default function RequestCard({ formData, user }: RequestCardProps) {
   };
 
   return (
-    <div className="request w-full space-y-5">
+    <div className="request w-full space-y-5 rounded-md shadow-md bg-white">
       <div className="flex justify-between items-center px-4 my-5">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-[#F6B40E]" />
@@ -44,13 +44,13 @@ export default function RequestCard({ formData, user }: RequestCardProps) {
       </div>
 
       <div className="w-full space-y-2">
-        <div className="relative w-full h-[300px] rounded-xl overflow-hidden bg-gray-100">
+        <div className="relative w-full h-[300px] overflow-hidden bg-gray-100">
           <Image
             fill
             alt="Request Image"
             src={getImageSrc()}
-            className="object-cover relative"
             onError={() => setImageError(true)}
+            className="object-cover relative rounded-xl px-4"
           />
 
           {formData.status && (
@@ -73,7 +73,7 @@ export default function RequestCard({ formData, user }: RequestCardProps) {
         </div>
 
         {formData.requester && (
-          <p className="text-sm text-gray-600 font-semibold text-end px-4 pt-4">
+          <p className="text-sm text-gray-600 font-semibold text-end px-4 py-4">
             Requested by:{" "}
             {user?.id === formData.requester._id
               ? "You"
