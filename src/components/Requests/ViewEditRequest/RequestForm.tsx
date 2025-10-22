@@ -29,7 +29,7 @@ export default function RequestForm({
 }: RequestFormProps) {
 
   return (
-    <div className="view-edit flex flex-col gap-6 px-4 py-6">
+    <div className="view-edit flex flex-col gap-6 px-4 py-6 my-5 rounded-md shadow-md bg-white">
       <div className="space-y-2">
         <Label>Request Title</Label>
         <Input
