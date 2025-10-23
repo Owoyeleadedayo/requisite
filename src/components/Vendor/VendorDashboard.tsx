@@ -13,6 +13,7 @@ import { getToken, getUserId, getAuthData } from "@/lib/auth";
 // import RequestsCard from "./Vendor/RequestsCard";
 import { vendorRequestsData } from "@/data/mock/tableData";
 import RequestsCard from "./RequestsCard";
+import StatusBadge from "../StatusBadge";
 
 interface VendorDashboardProps {
   page?: "vendorDashboard" | "vendorBids";
@@ -96,19 +97,7 @@ export default function VendorDashboard({
     {
       key: "status",
       label: "Status",
-      render: (value) => {
-        const statusColors: Record<string, string> = {
-          draft: "text-gray-500",
-          departmentApproved: "text-green-500",
-          cancelled: "text-red-500",
-          pending: "text-orange-500",
-        };
-        return (
-          <span className={statusColors[value] ?? "text-gray-500"}>
-            {value}
-          </span>
-        );
-      },
+      render: (value) => <StatusBadge status={value} />,
     },
     // {
     //   key: "requester",

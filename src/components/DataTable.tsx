@@ -23,6 +23,7 @@ import AdvancedSearchModal, {
 } from "./AdvancedSearchModal";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken } from "@/lib/auth";
+import StatusBadge from "./StatusBadge";
 
 export type Column<T> = {
   key: keyof T;
@@ -286,8 +287,7 @@ export default function DataTable<T extends { id?: string | number }>({
 
   const totalPagesToRender = isServerFiltered
     ? serverSearchTotalPages
-    : serverTotalPages ||
-      Math.ceil(filteredData.length / itemsPerPage);
+    : serverTotalPages || Math.ceil(filteredData.length / itemsPerPage);
 
   const paginatedData = isServerFiltered
     ? serverResults ?? []
@@ -448,9 +448,13 @@ export default function DataTable<T extends { id?: string | number }>({
                       key={String(col.key)}
                       className="whitespace-nowrap"
                     >
-                      {col.render
-                        ? col.render(row[col.key], row)
-                        : String(row[col.key])}
+                      {col.key === "status" ? (
+                        <StatusBadge status={row[col.key]} />
+                      ) : col.render ? (
+                        col.render(row[col.key], row)
+                      ) : (
+                        String(row[col.key])
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
