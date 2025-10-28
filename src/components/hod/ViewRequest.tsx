@@ -89,7 +89,7 @@ const ViewRequest = () => {
                   Confirm Urgency Level
                 </Label>
                 <div className="py-3 border rounded-md">
-                  <div className="px-3">
+                <div className="px-3">
                     <Slider
                       getAriaLabel={() => "Temperature range"}
                       value={value}

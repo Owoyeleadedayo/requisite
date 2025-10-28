@@ -19,7 +19,7 @@ const HRTable = () => {
       date: "08-May-2025",
       brand: "Dell",
       price: 100000,
-      status: "Pending",
+      status: "Completed",
       document: null, 
     },
     {
@@ -30,7 +30,7 @@ const HRTable = () => {
       date: "12-May-2025",
       brand: "Ikea",
       price: 45000,
-      status: "Approved",
+      status: "Closed",
       document: null,
     },
     {
@@ -74,7 +74,7 @@ const HRTable = () => {
       date: "23-May-2025",
       brand: "Seagate",
       price: 25000,
-      status: "Approved",
+      status: "Closed",
       document: null,
     },
     {
@@ -85,7 +85,7 @@ const HRTable = () => {
       date: "26-May-2025",
       brand: "Samsung",
       price: 180000,
-      status: "Pending",
+      status: "Rejected",
       document: null,
     },
     {
@@ -96,7 +96,7 @@ const HRTable = () => {
       date: "29-May-2025",
       brand: "Philips",
       price: 8000,
-      status: "Approved",
+      status: "Completed",
       document: null,
     },
   ];
@@ -124,14 +124,14 @@ const HRTable = () => {
                 <TableCell>{item.brand}</TableCell>
                 <TableCell>{item.price}</TableCell>
                 <TableCell className={
-                  item.status === "Approved" ? "text-[#26850B]" : item.status === "Pending" ? "text-[#F6B40E]" : "text-[#DE1216]"
+                  item.status === "Completed" ? "text-[#26850B]" : item.status === "Pending" ? "text-[#F6B40E]" : item.status === "Rejected" ? "text-[#ED3237]" : "text-[#000]"
                 }>{item.status}</TableCell>
                 <TableCell>
                 <Link href={
-                 "/hhra/request?view=new"
+                 item.status === "Completed" ? "/hhra/request?view=completed" : item.status === "Pending" ? "/hhra/request?view=new" : item.status === "Closed" ? "/hhra/request?view=closed" : "/hhra/request?view=rejected"
                 }>
                 <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
-                  View 
+                  View  
                 </Button>
                 </Link>
                 </TableCell>

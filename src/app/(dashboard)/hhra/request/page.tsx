@@ -1,10 +1,12 @@
-import ClosedBids from "@/components/hhra/ClosedBids";
-import HistoryTable from "@/components/hhra/HistoryTable";
-import AcceptedRequest from "@/components/hod/AcceptedRequest";
-import DeniedRequest from "@/components/hod/DeniedRequest";
-import HODTable from "@/components/hod/HODTable";
-import NewRequest from "@/components/hod/NewRequest";
-import ViewRequest from "@/components/hod/ViewRequest";
+import BiddingPage from "@/components/hhra/BiddingPage";
+import CompletedBid from "@/components/hhra/CompletedBid";
+import DetailsPage from "@/components/hhra/DetailsPage";
+import HRTable from "@/components/hhra/HRTable";
+import Negotiation from "@/components/hhra/Negotiation";
+import RejectedBid from "@/components/hhra/RejectedBid";
+import ShortlistedPage from "@/components/hhra/ShortlistedPage";
+import ViewRequest from "@/components/hhra/ViewActiveBid";
+import ViewClosedBid from "@/components/hhra/ViewClosedBid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
@@ -17,7 +19,34 @@ export default function Page({
   const view = searchParams.view;
 
   if (view === "new") {
-    return <ClosedBids />;
+    return <ViewRequest />;
+  }
+  if (view === "details") {
+    return <DetailsPage />;
+  }
+
+  if(view === "closed"){
+    return <ViewClosedBid />
+  }
+
+  if(view === "shortlisted"){
+    return <ShortlistedPage />
+  }
+
+  if(view === "bidding"){
+    return <BiddingPage />
+  }
+
+  if(view === "rejected"){
+    return <RejectedBid />
+  }
+
+  if(view === "completed"){
+    return <CompletedBid />
+  }
+
+  if(view === "negotiation"){
+    return <Negotiation />
   }
 
   return (
@@ -44,8 +73,8 @@ export default function Page({
             Request History
           </p>
         </div>
-        <HistoryTable />
+        <HRTable /> 
       </div>
-    </div>
+    </div>   
   );
 }
