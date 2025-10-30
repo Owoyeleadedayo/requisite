@@ -32,7 +32,7 @@ import {
 
 interface CreateNewRequestProps {
   page: "user" | "hod";
-  data: any[];
+  data: unknown[];
 }
 
 export default function CreateNewRequest({
