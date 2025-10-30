@@ -300,10 +300,10 @@ export default function ViewEditRequest({
 
   return (
     <div className="pt-8 pb-16 px-4 lg:px-12">
-      <div className="w-full flex items-center mb-12">
+      <div className="w-full flex items-center mb-4">
         <Link
           href={backPath}
-          className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-3"
+          className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-1"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
@@ -320,7 +320,7 @@ export default function ViewEditRequest({
             {formData.status && (
               <div className="status-badge absolute top-0 right-0 z-[5]">
                 <span
-                  className={`p-5 text-sm font-semibold text-white ${
+                  className={`py-3 px-4 rounded-sm text-sm font-semibold text-white ${
                     formData.status === "submitted"
                       ? "bg-orange-500"
                       : formData.status === "departmentApproved"
@@ -355,13 +355,36 @@ export default function ViewEditRequest({
             </div>
 
             <div className="space-y-2">
-              <Label>Request Title</Label>
+              <Label>Name of Item</Label>
               <Input
                 value={formData.title}
                 onChange={(e) => handleChange("title", e.target.value)}
                 readOnly={!isEditMode}
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
+                className="!p-4 rounded-md border shadow-sm"
               />
+            </div>
+
+            <div className="w-full flex gap-3">
+              <div className="w-full space-y-2">
+                <Label>Item Type *</Label>
+                <Select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="product">Product</SelectItem>
+                    <SelectItem value="service">Service</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-full space-y-2">
+                <Label>Brand</Label>
+                <Input
+                  placeholder="Brand"
+                  className="!p-4 rounded-md border shadow-sm"
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -370,11 +393,11 @@ export default function ViewEditRequest({
                 value={formData.description}
                 onChange={(e) => handleChange("description", e.target.value)}
                 readOnly={!isEditMode}
-                className="min-h-[100px] rounded-xl border border-[#9f9f9f] shadow-sm"
+                className="min-h-[100px] rounded-md border shadow-sm"
               />
             </div>
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label>Category</Label>
               {isEditMode ? (
                 <Select
@@ -396,9 +419,9 @@ export default function ViewEditRequest({
                   className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
                 />
               )}
-            </div>
+            </div> */}
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label>Urgency</Label>
               <div className="p-3 rounded-xl border border-[#9f9f9f] shadow-sm">
                 <Slider
@@ -434,9 +457,9 @@ export default function ViewEditRequest({
                   </span>
                 </div>
               </div>
-            </div>
+            </div> */}
 
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label>Justification</Label>
               <Textarea
                 value={formData.justification}
@@ -444,11 +467,11 @@ export default function ViewEditRequest({
                 readOnly={!isEditMode}
                 className="min-h-[120px] rounded-xl border border-[#9f9f9f] shadow-sm"
               />
-            </div>
+            </div> */}
 
             <div className="space-y-2">
               <Label>Attach Image</Label>
-              <div className="flex items-center gap-2 border border-[#9f9f9f] p-3 rounded-xl shadow-sm py-2">
+              <div className="flex items-center gap-2 border p-3 rounded-md shadow-sm py-1">
                 <Upload className="h-5 w-5 text-gray-500" />
                 <Input
                   type="file"
@@ -462,31 +485,49 @@ export default function ViewEditRequest({
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label>Units</Label>
-              <Input
-                type="number"
-                value={formData.quantityNeeded}
-                onChange={(e) =>
-                  handleChange("quantityNeeded", parseInt(e.target.value))
-                }
-                readOnly={!isEditMode}
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
+            <div className="w-full flex gap-3">
+              <div className="w-full space-y-2">
+                <Label>Units</Label>
+                <Input
+                  placeholder="Units"
+                  className="!p-4 rounded-md border shadow-sm"
+                  required
+                />
+              </div>
+              <div className="w-full space-y-2">
+                <Label>UOM (Unit of Measure)</Label>
+                <Select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="UOM" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="product">Product</SelectItem>
+                    <SelectItem value="service">Service</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label>Unit Price (₦)</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.estimatedUnitPrice}
-                onChange={(e) =>
-                  handleChange("estimatedUnitPrice", parseFloat(e.target.value))
-                }
-                readOnly={!isEditMode}
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
+            <div className="w-full flex gap-3">
+              <div className="w-full space-y-2">
+                <Label>Recommended Vendor</Label>
+                <Input
+                  placeholder="Vendor"
+                  className="!p-4 rounded-md border shadow-sm"
+                  required
+                />
+              </div>
+              <div className="w-full space-y-2">
+                <Label>Is this a worktool? *</Label>
+                <Select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="select" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-6">
@@ -673,4 +714,4 @@ export default function ViewEditRequest({
       </div>
     </div>
   );
-} 
+}
