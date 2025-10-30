@@ -251,7 +251,7 @@ export default function CreateNewRequest({ page }: CreateNewRequestProps) {
         </div>
 
         <div className="space-y-2 mb-6 ">
-          <Label>Units</Label>
+          <Label>Units</Label>  
           <Input
             type="number"
             placeholder="Quantity"
