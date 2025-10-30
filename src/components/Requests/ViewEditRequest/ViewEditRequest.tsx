@@ -398,30 +398,6 @@ export default function ViewEditRequest({
             </div>
 
             {/* <div className="space-y-2">
-              <Label>Category</Label>
-              {isEditMode ? (
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => handleChange("category", value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="product">Product</SelectItem>
-                    <SelectItem value="service">Service</SelectItem>
-                  </SelectContent>
-                </Select>
-              ) : (
-                <Input
-                  value={formData.category}
-                  readOnly
-                  className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-                />
-              )}
-            </div> */}
-
-            {/* <div className="space-y-2">
               <Label>Urgency</Label>
               <div className="p-3 rounded-xl border border-[#9f9f9f] shadow-sm">
                 <Slider
