@@ -314,8 +314,8 @@ export default function ViewEditRequest({
         {formData.requisitionNumber}
       </h1>
 
-      <div className="w-full flex flex-col lg:flex-row gap-6 container">
-        <div className="w-full lg:w-1/2 flex flex-col pb-16">
+      <div className="w-full flex flex-col lg:flex-row gap-8 container">
+        <div className="w-full flex flex-col pb-16">
           <div className="request relative w-full space-y-5">
             {formData.status && (
               <div className="status-badge absolute top-0 right-0 z-[5]">
