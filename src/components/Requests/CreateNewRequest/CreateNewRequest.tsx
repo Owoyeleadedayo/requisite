@@ -14,7 +14,15 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Folder, Plus, Search, Upload, X } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarIcon,
+  Folder,
+  Plus,
+  Search,
+  Upload,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
@@ -29,6 +37,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { parseDate } from "chrono-node";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+
+function formatDate(date: Date | undefined) {
+  if (!date) return "";
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
 
 interface CreateNewRequestProps {
   page: "user" | "hod" | "pm";
@@ -123,12 +147,17 @@ export default function CreateNewRequest({
     }
   };
 
-  
+  const [openStart, setOpenStart] = useState(false);
+  const [mydateStart, setMydateStart] = useState("12/12/25");
+  const [dateStart, setDateStart] = useState<Date | undefined>(
+    parseDate(mydateStart) || undefined
+  );
+  const [monthStart, setMonthStart] = useState<Date | undefined>(dateStart);
 
   return (
     <div className="w-full lg:w-full flex flex-col px-4 py-8 pb-16">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center mb-4">
+      <div className="flex flex-col items-start gap-4">
+        <div className="flex items-center">
           <Link
             href={
               page === "hod"
@@ -137,7 +166,7 @@ export default function CreateNewRequest({
                 ? "/user/requisition"
                 : ""
             }
-            className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-2"
+            className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-1"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -157,7 +186,7 @@ export default function CreateNewRequest({
             <Label>Request Title</Label>
             <Input
               placeholder="Request title"
-              className="!p-4 rounded-xl border shadow-sm"
+              className="!p-4 rounded-md border shadow-sm"
               value={formData.title}
               onChange={(e) =>
                 setFormData({ ...formData, title: e.target.value })
@@ -168,7 +197,7 @@ export default function CreateNewRequest({
 
           <div className="space-y-2 mb-6">
             <Label>Urgency</Label>
-            <div className="p-3 rounded-xl border shadow-sm">
+            <div className="p-3 rounded-md border shadow-sm">
               <Slider
                 min={0}
                 max={2}
@@ -205,9 +234,9 @@ export default function CreateNewRequest({
 
           <div className="space-y-2 mb-6">
             <Label>Justification</Label>
-            <Input
+            <Textarea
               placeholder="Justification"
-              className="rounded-xl min-h-[100px] border shadow-sm"
+              className="rounded-md min-h-[100px] border shadow-sm"
               value={formData.justification}
               onChange={(e) =>
                 setFormData({ ...formData, justification: e.target.value })
@@ -263,18 +292,58 @@ export default function CreateNewRequest({
             </Select>
           </div>
 
-          <div className="space-y-2 mb-6 ">
-            <Label>Units</Label>
-            <Input
-              type="number"
-              placeholder="Quantity"
-              className="!p-4 rounded-xl border shadow-sm"
-              value={formData.quantityNeeded}
-              onChange={(e) =>
-                setFormData({ ...formData, quantityNeeded: e.target.value })
-              }
-              required
-            />
+          <div className="flex flex-col gap-1">
+            <Label>Preferred Delivery Date *</Label>
+            <div className="relative flex gap-2">
+              <Input
+                id="date-start"
+                value={mydateStart}
+                placeholder="12/12/25"
+                className="bg-background pr-10 border"
+                onChange={(e) => {
+                  setMydateStart(e.target.value);
+                  const date = parseDate(e.target.value);
+                  if (date) {
+                    setDateStart(date);
+                    setMonthStart(date);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setOpenStart(true);
+                  }
+                }}
+              />
+              <Popover open={openStart} onOpenChange={setOpenStart}>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="date-picker-start"
+                    variant="ghost"
+                    className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                  >
+                    <CalendarIcon className="size-3.5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto overflow-hidden bg-white p-0"
+                  align="end"
+                >
+                  <Calendar
+                    mode="single"
+                    selected={dateStart}
+                    captionLayout="dropdown"
+                    month={monthStart}
+                    onMonthChange={setMonthStart}
+                    onSelect={(date) => {
+                      setDateStart(date);
+                      setMydateStart(formatDate(date));
+                      setOpenStart(false);
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
           <div className="pt-4">
@@ -424,7 +493,7 @@ export default function CreateNewRequest({
                         <Label>Is this a worktool? *</Label>
                         <Select>
                           <SelectTrigger className="w-full">
-                            <SelectValue placeholder="select" />
+                            <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent className="bg-white">
                             <SelectItem value="yes">Yes</SelectItem>
@@ -434,18 +503,20 @@ export default function CreateNewRequest({
                       </div>
                     </div>
                   </form>
-                  
-                   <div className="w-full flex gap-3">
-                   <Button className="bg-[#0F1E7A] text-white px-18 cursor-pointer">Cancel</Button>
+
+                  <div className="w-full flex gap-3">
+                    <Button className="bg-[#0F1E7A] text-white px-18 cursor-pointer">
+                      Submit
+                    </Button>
                     <DialogClose asChild>
                       <Button
                         type="button"
-                        className="border border-[#DE1216] text-[#DE1216] px-20"
+                        className="border border-[#DE1216] text-[#DE1216] px-19"
                       >
                         Close
                       </Button>
                     </DialogClose>
-                   </div>
+                  </div>
                 </DialogContent>
               </Dialog>
             </div>

@@ -448,7 +448,7 @@ export default function ViewEditRequest({
                 <Label>Is this a worktool? *</Label>
                 <Select>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="select" />
+                    <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent className="bg-white">
                     <SelectItem value="yes">Yes</SelectItem>
