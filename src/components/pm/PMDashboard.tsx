@@ -20,7 +20,7 @@ interface ProcurementManagerDashboardProps {
 }
 
 type RequisitionShape = {
-  _id: string;
+  _id: string;  
   title: string;
   category: string;
   description: string;

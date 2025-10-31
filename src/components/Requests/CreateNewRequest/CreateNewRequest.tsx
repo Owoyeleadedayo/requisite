@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 
 interface CreateNewRequestProps {
-  page: "user" | "hod";
+  page: "user" | "hod" | "pm";
   data: unknown[];
 }
 
