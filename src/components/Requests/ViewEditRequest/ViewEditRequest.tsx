@@ -397,54 +397,6 @@ export default function ViewEditRequest({
               />
             </div>
 
-            {/* <div className="space-y-2">
-              <Label>Urgency</Label>
-              <div className="p-3 rounded-xl border border-[#9f9f9f] shadow-sm">
-                <Slider
-                  min={0}
-                  max={2}
-                  step={1}
-                  value={urgency}
-                  onValueChange={isEditMode ? setUrgency : undefined}
-                  disabled={!isEditMode}
-                  className="my-2 [&>span:first-child]:h-2 [&>span:first-child]:bg-gray-200"
-                />
-                <div className="flex justify-between text-sm text-gray-700">
-                  <span
-                    className={
-                      urgency[0] === 0 ? "font-semibold text-[#0d1b5e]" : ""
-                    }
-                  >
-                    Low
-                  </span>
-                  <span
-                    className={
-                      urgency[0] === 1 ? "font-semibold text-[#0d1b5e]" : ""
-                    }
-                  >
-                    Medium
-                  </span>
-                  <span
-                    className={
-                      urgency[0] === 2 ? "font-semibold text-[#0d1b5e]" : ""
-                    }
-                  >
-                    High
-                  </span>
-                </div>
-              </div>
-            </div> */}
-
-            {/* <div className="space-y-2">
-              <Label>Justification</Label>
-              <Textarea
-                value={formData.justification}
-                onChange={(e) => handleChange("justification", e.target.value)}
-                readOnly={!isEditMode}
-                className="min-h-[120px] rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
-            </div> */}
-
             <div className="space-y-2">
               <Label>Attach Image</Label>
               <div className="flex items-center gap-2 border p-3 rounded-md shadow-sm py-1">
