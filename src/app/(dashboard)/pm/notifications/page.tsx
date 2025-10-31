@@ -1,8 +1,10 @@
-import { Suspense } from "react";
+"use client";
+
 import NotificationsPage from "@/components/NotificationsPage";
 import SuspenseFallback from "@/components/SuspenseFallback";
+import { Suspense } from "react";
 
-export default function UserNotifications() {
+export default function PMNotifications() {
   return (
     <Suspense
       fallback={<SuspenseFallback message="Loading notifications..." />}

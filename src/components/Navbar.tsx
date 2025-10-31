@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import {
-  Bell,
   CircleUser,
   Crown,
   Gem,
@@ -26,6 +25,7 @@ import {
   Search,
   Settings,
 } from "lucide-react";
+import NotificationDropdown from "./NotificationDropdown";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import Menu from "./Menu";
 import { useState } from "react";
@@ -36,7 +36,8 @@ const Navbar = () => {
   const user = getUser();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  const capitalize = (str: string) => str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+  const capitalize = (str: string) =>
+    str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
 
   // Get current role from URL or user data
   const currentRole = pathname.split("/")[1] || user?.role || "user";
@@ -101,104 +102,7 @@ const Navbar = () => {
             <Settings color="#FFF" className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div className="relative cursor-pointer">
-                <Bell color="#FFF" className="w-5 h-5 sm:w-7 sm:h-7" />
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold">
-                  8
-                </span>
-              </div>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent className="w-[400px] bg-white border-none mr-20">
-              <DropdownMenuLabel className="flex justify-between items-center">
-                <p className="text-lg font-medium">NOTIFICATIONS</p>
-                <p className="text-sm font-light cursor-pointer">
-                  Mark all read
-                </p>
-              </DropdownMenuLabel>
-              <div className="border-b-1 border-[#e5e5e5]" />
-
-              <DropdownMenuGroup>
-                <DropdownMenuItem className="flex flex-col items-start py-3 hover:bg-gray-100 cursor-pointer">
-                  <p className="text-sm font-medium">New Microphones</p>
-                  <p className="text-xs font-normal">
-                    Your request has been approved by the HOD
-                  </p>
-                  <div className="flex justify-between w-full mt-1">
-                    <p className="text-xs font-normal">6 hours 33 mins ago</p>
-                    <p
-                      className="text-xs font-light underline cursor-pointer"
-                      onClick={() => router.push(notificationsPath)}
-                    >
-                      View full notification
-                    </p>
-                  </div>
-                </DropdownMenuItem>
-                <div className="border-b-1 border-[#e5e5e5]" />
-
-                <DropdownMenuItem className="flex flex-col items-start py-3 hover:bg-gray-100 cursor-pointer">
-                  <p className="text-sm font-medium">Laptop Request</p>
-                  <p className="text-xs font-normal">
-                    Your request has been declined by the Manager
-                  </p>
-                  <div className="flex justify-between w-full mt-1">
-                    <p className="text-xs font-normal">1 day ago</p>
-                    <p
-                      className="text-xs font-light underline cursor-pointer"
-                      onClick={() => router.push(notificationsPath)}
-                    >
-                      View full notification
-                    </p>
-                  </div>
-                </DropdownMenuItem>
-                <div className="border-b-1 border-[#e5e5e5]" />
-
-                <DropdownMenuItem className="flex flex-col items-start py-3 hover:bg-gray-100 cursor-pointer">
-                  <p className="text-sm font-medium">Budget Update</p>
-                  <p className="text-xs font-normal">
-                    Finance team updated the Q3 budget
-                  </p>
-                  <div className="flex justify-between w-full mt-1">
-                    <p className="text-xs font-normal">2 days ago</p>
-                    <p
-                      className="text-xs font-light underline cursor-pointer"
-                      onClick={() => router.push(notificationsPath)}
-                    >
-                      View full notification
-                    </p>
-                  </div>
-                </DropdownMenuItem>
-                <div className="border-b-1 border-[#e5e5e5]" />
-
-                <DropdownMenuItem className="flex flex-col items-start py-3 hover:bg-gray-100 cursor-pointer">
-                  <p className="text-sm font-medium">Meeting Reminder</p>
-                  <p className="text-xs font-normal">
-                    Don&apos;t forget the weekly staff meeting at 10 AM
-                  </p>
-                  <div className="flex justify-between w-full mt-1">
-                    <p className="text-xs font-normal">3 days ago</p>
-                    <p
-                      className="text-xs font-light underline cursor-pointer"
-                      onClick={() => router.push(notificationsPath)}
-                    >
-                      View full notification
-                    </p>
-                  </div>
-                </DropdownMenuItem>
-                <div className="border-b-1 border-[#e5e5e5]" />
-                <DropdownMenuItem
-                  className="flex justify-center items-center py-4 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => router.push(notificationsPath)}
-                >
-                  <p className="text-xs font-light underline cursor-pointer">
-                    View all notifications
-                  </p>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NotificationDropdown notificationsPath={notificationsPath} />
         </div>
 
         <DropdownMenu>
@@ -220,7 +124,8 @@ const Navbar = () => {
                       <CircleUser size={25} />
                     </span>
                     <span>
-                      {capitalize(user?.firstName || "")} {capitalize(user?.lastName || "")}
+                      {capitalize(user?.firstName || "")}{" "}
+                      {capitalize(user?.lastName || "")}
                     </span>
                   </p>
 
@@ -235,7 +140,9 @@ const Navbar = () => {
                     <span className="">
                       <Crown size={25} />
                     </span>
-                    <span>{capitalize(user?.designation || user?.role || "")}</span>
+                    <span>
+                      {capitalize(user?.designation || user?.role || "")}
+                    </span>
                   </p>
 
                   {user?.role !== "vendor" && (

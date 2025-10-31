@@ -1,5 +1,5 @@
-import PMDashboard from "@/components/PMDashboard";
+import PMDashboard from "@/components/pm/PMDashboard";
 
 export default function PMPage() {
-  return <PMDashboard />;
+  return <PMDashboard page="procurementDashboard" />;
 }

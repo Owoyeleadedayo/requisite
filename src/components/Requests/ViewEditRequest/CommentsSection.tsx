@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Textarea } from "./ui/textarea";
+import { Textarea } from "../../ui/textarea";
 import { Ellipsis, Send, Edit, Trash2, Loader2 } from "lucide-react";
 import { getToken, getUser } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/config";
@@ -208,7 +208,7 @@ export default function Comments({ entityId, entityType }: CommentsProps) {
     }
   }, [entityId, token, fetchComments]);
   return (
-    <div className="w-full lg:w-1/2 flex flex-col py-5 h-[600px] border border-[#E5E5E5] rounded-md overflow-y-auto">
+    <div className="w-full flex flex-col py-5 h-[600px] border border-[#E5E5E5] rounded-md shadow-md bg-white overflow-y-auto">
       <div className="flex items-center px-4 gap-2 mb-4">
         <div className="w-9 h-9 rounded-full bg-[#0F1E7A] flex items-center justify-center text-white text-sm font-semibold flex-shrink-0 self-start">
           {user ? getInitials(user.firstName, user.lastName) : "U"}

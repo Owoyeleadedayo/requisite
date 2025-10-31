@@ -26,8 +26,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import Comments from "@/components/CommentsUI";
 import Image from "next/image";
+import Comments from "./CommentsSection";
 
 interface RequestData {
   _id: string;
