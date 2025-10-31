@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
@@ -44,6 +43,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Slider, SliderProps, styled } from "@mui/material";
 
 function formatDate(date: Date | undefined) {
   if (!date) return "";
@@ -53,6 +53,21 @@ function formatDate(date: Date | undefined) {
     day: "numeric",
   });
 }
+
+const CustomSlider = styled(Slider)({
+  "& .MuiSlider-mark": {
+    width: 50,
+    height: 50,
+    borderRadius: "50%",
+    backgroundColor: "#0F1E7A",
+  },
+  "& .MuiSlider-markActive": {
+    opacity: 1,
+    backgroundColor: "#0F1E7A",
+  },
+});
+
+const marks = [{ value: 0 }, { value: 50 }, { value: 98 }];
 
 interface CreateNewRequestProps {
   page: "user" | "hod" | "pm";
@@ -154,6 +169,14 @@ export default function CreateNewRequest({
   );
   const [monthStart, setMonthStart] = useState<Date | undefined>(dateStart);
 
+  const [value, setValue] = useState<number[]>([2, 52]);
+
+  const handleChange: SliderProps["onChange"] = (event, newValue) => {
+    if (Array.isArray(newValue)) {
+      setValue(newValue);
+    }
+  };
+
   return (
     <div className="w-full lg:w-full flex flex-col px-4 py-8 pb-16">
       <div className="flex flex-col items-start gap-4">
@@ -197,37 +220,37 @@ export default function CreateNewRequest({
 
           <div className="space-y-2 mb-6">
             <Label>Urgency</Label>
-            <div className="p-3 rounded-md border shadow-sm">
-              <Slider
-                min={0}
-                max={2}
-                step={1}
-                value={urgency}
-                onValueChange={setUrgency}
-                className="my-2 [&>span:first-child]:h-2 [&>span:first-child]:bg-gray-200"
-              />
-              <div className="flex justify-between text-sm text-gray-700">
-                <span
-                  className={
-                    urgency[0] === 0 ? "font-semibold text-[#0d1b5e]" : ""
-                  }
-                >
-                  Low
-                </span>
-                <span
-                  className={
-                    urgency[0] === 1 ? "font-semibold text-[#0d1b5e]" : ""
-                  }
-                >
-                  Medium
-                </span>
-                <span
-                  className={
-                    urgency[0] === 2 ? "font-semibold text-[#0d1b5e]" : ""
-                  }
-                >
-                  High
-                </span>
+            <div className="w-full py-3 shadow-md rounded-md">
+              <div className="pl-3 pr-6">
+                <Slider
+                  value={value}
+                  onChange={handleChange}
+                  marks={marks}
+                  sx={{
+                    color: "#0F1E7A", 
+                    "& .MuiSlider-thumb": {
+                      backgroundColor: "#0F1E7A",
+                    },
+                    "& .MuiSlider-track": {
+                      backgroundColor: "#0F1E7A",
+                    },
+                    "& .MuiSlider-rail": {
+                      backgroundColor: "#e5e5e5",
+                    },
+                    "& .MuiSlider-mark": {
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      backgroundColor: "#e5e5e5",
+                      border: "1px solid #e5e5e5",
+                    },
+                  }}
+                />
+              </div>
+              <div className="flex justify-between items-center px-2">
+                <p className="font-normal">Low</p>
+                <p className="pl-3 text-center font-normal">Medium</p>
+                <p className="font-normal">High</p>
               </div>
             </div>
           </div>
