@@ -28,6 +28,15 @@ import {
 } from "@/components/ui/dialog";
 import Image from "next/image";
 import Comments from "./CommentsSection";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface RequestData {
   _id: string;
@@ -314,7 +323,7 @@ export default function ViewEditRequest({
         {formData.requisitionNumber}
       </h1>
 
-      <div className="w-full flex flex-col lg:flex-row gap-8 container">
+      <div className="grid grid-cols-[50%_45%] gap-18">
         <div className="w-full flex flex-col pb-16">
           <div className="request relative w-full space-y-5">
             {formData.status && (
@@ -478,11 +487,13 @@ export default function ViewEditRequest({
                 </>
               ) : (
                 <>
+                  <Button className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6 cursor-pointer">
+                    Approve
+                  </Button>
                   <Button
                     onClick={() => router.push(backPath)}
-                    className="bg-gray-600 hover:bg-[#0b154b] text-white flex-1 py-6"
+                    className="bg-[#DE1216] hover:bg-[#0b154b] text-white flex-1 py-6"
                   >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
                     Close
                   </Button>
 
@@ -637,8 +648,60 @@ export default function ViewEditRequest({
           </div>
         </div>
 
-        {/* To decide on who can make comments on bids  */}
-        <Comments entityId={requisitionId} entityType="requisitions" />
+        <div className="flex flex-col gap-8">
+          {userType === "hod" && (
+            <div className="flex flex-col w-full bg-white border border-[#E5E5E5] p-5 rounded-md shadow-md gap">
+              <div className="flex gap-3">
+                <Select>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Bulk Actions" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white">
+                    <SelectItem value="product">Product</SelectItem>
+                    <SelectItem value="service">Service</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
+                  Apply
+                </Button>
+              </div>
+              <div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>
+                        <Checkbox />
+                      </TableHead>
+                      <TableHead>Item Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>
+                        <Checkbox />
+                      </TableCell>
+                      <TableCell>New Microphones</TableCell>
+                      <TableCell>Product</TableCell>
+                      <TableCell className="text-[#F59313]">Pending</TableCell>
+                      <TableCell>
+                        <Button className="bg-[#0F1E7A] h-[35px] text-white cursor-pointer capitalize">
+                          View
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+
+          {/* To decide on who can make comments on bids  */}
+          <Comments entityId={requisitionId} entityType="requisitions" />
+        </div>
       </div>
     </div>
   );

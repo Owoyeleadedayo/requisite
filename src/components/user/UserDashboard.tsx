@@ -54,12 +54,11 @@ type RequisitionShape = {
 };
 
 const columns: Column<RequisitionShape>[] = [
-  { key: "title", label: "Title" },
-  { key: "quantityNeeded", label: "QTY" },
-  { key: "category", label: "Category" },
+  { key: "title", label: "Request Title" },
+  { key: "quantityNeeded", label: "No of Items" },
   {
     key: "createdAt",
-    label: "Date",
+    label: "Date Submitted",
     render: (value) => {
       const date = new Date(value);
       const day = date.getDate().toString().padStart(2, "0");
@@ -68,20 +67,8 @@ const columns: Column<RequisitionShape>[] = [
       return `${day}-${month}-${year}`;
     },
   },
-  {
-    key: "estimatedUnitPrice",
-    label: "Price",
-    render: (value) => (
-      <NumericFormat
-        prefix="₦ "
-        value={value}
-        decimalScale={2}
-        fixedDecimalScale
-        displayType="text"
-        thousandSeparator=","
-      />
-    ),
-  },
+  { key: "quantityNeeded", label: "Staff" },
+  { key: "quantityNeeded", label: "Location" },
   {
     key: "status",
     label: "Status",
@@ -97,7 +84,6 @@ const columns: Column<RequisitionShape>[] = [
       );
     },
   },
-  { key: "requisitionNumber", label: "Req. Number" },
   {
     key: "_id",
     label: "Action",

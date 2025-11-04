@@ -62,7 +62,7 @@ export default function HDODashboard({
   page = "hodDashboard",
 }: HDODashboardProps = {}) {
   const columns: Column<RequisitionShape>[] = [
-    { key: "title", label: "Title" },
+    { key: "title", label: "Request Title" },
     { key: "quantityNeeded", label: "QTY" },
     { key: "category", label: "Category" },
     {
