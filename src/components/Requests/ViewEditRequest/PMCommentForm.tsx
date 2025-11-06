@@ -35,7 +35,7 @@ import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken } from "@/lib/auth";
-import { RequestData } from "./types";
+import { RequestData } from "../types";
 
 interface VendorCategory {
   _id: string;

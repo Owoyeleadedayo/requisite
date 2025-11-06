@@ -43,14 +43,14 @@ export default function CancelRequestModal({
             <Label>Reason for cancellation</Label>
             <Textarea
               value={reason}
+              className="mt-2"
               onChange={(e) => onReasonChange(e.target.value)}
               placeholder="Please provide a reason for cancelling this request"
-              className="mt-2"
             />
           </div>
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              Close
             </Button>
             <Button
               onClick={onCancel}

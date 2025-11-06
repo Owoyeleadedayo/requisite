@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { RequestData } from "./types";
+import { RequestData } from "../types";
 import { NumericFormat } from "react-number-format";
 
 interface RequestDetailsProps {

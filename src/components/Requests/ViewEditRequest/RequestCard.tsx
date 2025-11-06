@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { AlarmClock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { RequestData, RequestActionsProps } from "./types";
+import { RequestData, RequestActionsProps } from "../types";
 import StatusBadge from "@/components/StatusBadge";
 
 interface RequestCardProps {

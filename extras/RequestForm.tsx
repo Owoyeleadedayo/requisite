@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RequestData } from "./types";
+import { RequestData } from "../src/components/Requests/types";
 
 interface RequestFormProps {
   formData: RequestData;
