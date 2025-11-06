@@ -59,15 +59,25 @@ export default function CreateNewRequest({
       return;
     }
 
+    const formattedDate = dateStart
+      ? new Date(dateStart.getTime() - dateStart.getTimezoneOffset() * 60000)
+          .toISOString()
+          .split("T")[0]
+      : undefined;
+
     const payload = {
       title: formData.title,
       urgency: urgencyMap[urgency[0]],
       justification: formData.justification,
       deliveryLocation: formData.deliveryLocation,
-      deliveryDate: dateStart?.toISOString().split("T")[0],
-      items: items.map(
-        ({ id, uploadImage, ...rest }) => rest // Exclude local id and image file
-      ),
+      deliveryDate: formattedDate,
+      items: items.map(({ id, uploadImage, ...rest }) => {
+        const { recommendedVendor, ...itemPayload } = rest;
+        if (recommendedVendor) {
+          return { ...itemPayload, recommendedVendor };
+        }
+        return itemPayload;
+      }),
     };
 
     console.log("Request Payload:", payload);
@@ -142,8 +152,13 @@ export default function CreateNewRequest({
   };
 
   const handleAddItem = () => {
-    if (!currentItem.itemName || !currentItem.itemType || !currentItem.units) {
-      toast.error("Please fill all required fields for the item.");
+    if (
+      !currentItem.itemName ||
+      !currentItem.itemType ||
+      !currentItem.itemDescription ||
+      typeof currentItem.isWorkTool !== "boolean"
+    ) {
+      toast.error("Please fill all required fields marked with *");
       return;
     }
 
@@ -184,9 +199,7 @@ export default function CreateNewRequest({
     toast.success("Item removed.");
   };
 
-  const [dateStart, setDateStart] = useState<Date | undefined>(
-    parseDate("12/12/25") || undefined
-  );
+  const [dateStart, setDateStart] = useState<Date | undefined>(new Date());
 
   return (
     <div className="w-full lg:w-full flex flex-col px-4 py-8 pb-16">

@@ -72,6 +72,7 @@ export default function ItemFormDialog({
                 onValueChange={(value: ItemType) =>
                   handleItemFormChange("itemType", value)
                 }
+                required
               >
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select type" />
@@ -102,6 +103,7 @@ export default function ItemFormDialog({
               onChange={(e) =>
                 handleItemFormChange("itemDescription", e.target.value)
               }
+              required
             />
           </div>
           <div className="space-y-2">
@@ -135,25 +137,16 @@ export default function ItemFormDialog({
                     e.target.value ? parseInt(e.target.value) : ""
                   )
                 }
-                required
               />
             </div>
             <div className="w-full space-y-2">
               <Label>UOM (Unit of Measure)</Label>
-              <Select
+              <Input
+                placeholder="e.g., Reams, Pieces, Packs"
+                className="!p-4 rounded-md border shadow-sm bg-white"
                 value={currentItem.UOM}
-                onValueChange={(value) => handleItemFormChange("UOM", value)}
-              >
-                <SelectTrigger className="w-full bg-white">
-                  <SelectValue placeholder="UOM" />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="reams">Reams</SelectItem>
-                  <SelectItem value="pieces">Pieces</SelectItem>
-                  <SelectItem value="packs">Packs</SelectItem>
-                  <SelectItem value="units">Units</SelectItem>
-                </SelectContent>
-              </Select>
+                onChange={(e) => handleItemFormChange("UOM", e.target.value)}
+              />
             </div>
           </div>
           <div className="w-full flex gap-3">
@@ -179,6 +172,7 @@ export default function ItemFormDialog({
                 onValueChange={(value) =>
                   handleItemFormChange("isWorkTool", value === "true")
                 }
+                required
               >
                 <SelectTrigger className="w-full bg-white">
                   <SelectValue placeholder="Select" />

@@ -72,7 +72,7 @@ export default function RequestForm({
   loading,
 }: RequestFormProps) {
   const [openStart, setOpenStart] = useState(false);
-  const [mydateStart, setMydateStart] = useState("");
+  const [mydateStart, setMydateStart] = useState(formatDate(dateStart));
   const [monthStart, setMonthStart] = useState<Date | undefined>(dateStart);
   const [locations, setLocations] = useState<Location[]>([]);
   const [locationsLoading, setLocationsLoading] = useState(true);
@@ -88,9 +88,7 @@ export default function RequestForm({
         });
         const data = await response.json();
         if (data) {
-          console.log(data.data);
-
-          setLocations(data.data);
+          setLocations(data);
         }
       } catch (error) {
         console.error("Failed to fetch locations", error);
@@ -101,8 +99,6 @@ export default function RequestForm({
 
     fetchLocations();
   }, []);
-
-  console.log("Locations: ", locations);
 
   return (
     <form
@@ -190,7 +186,11 @@ export default function RequestForm({
           </SelectTrigger>
           <SelectContent className="bg-white">
             {locations.map((location) => (
-              <SelectItem key={location._id} value={location._id}>
+              <SelectItem
+                key={location._id}
+                value={location._id}
+                className="hover:bg-gray-100 data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:text-white"
+              >
                 {location.name.charAt(0).toUpperCase() + location.name.slice(1)}
               </SelectItem>
             ))}

@@ -83,7 +83,7 @@ export default function ItemsList({
       </Table>
       <Button
         onClick={onAddNewItem}
-        className="flex flex-row border border-[#0F1E7A] mt-5 cursor-pointer bg-white text-[#0F1E7A] hover:bg-gray-100"
+        className="flex flex-row border border-[#0F1E7A] mt-5 cursor-pointer bg-white text-[#0F1E7A] hover:bg-gray-100 mt-10 mx-auto"
       >
         <Plus /> Add Another Item
       </Button>
