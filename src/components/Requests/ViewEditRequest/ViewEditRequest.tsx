@@ -26,12 +26,15 @@ import {
 } from "@/components/ui/dialog";
 import Image from "next/image";
 import Comments from "./CommentsSection";
-import RequestForm from "../RequestForm";
-import ItemsList from "../ItemsList";
-// import ItemFormDialog from "../ItemFormDialog";
-import { Item, Vendor } from "../types";
-import { Textarea } from "@/components/ui/textarea";
-import ItemFormDialog from "../ItemFormDialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface RequestData {
   _id: string;
