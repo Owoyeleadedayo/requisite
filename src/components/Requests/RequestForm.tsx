@@ -25,25 +25,19 @@ import { Calendar } from "@/components/ui/calendar";
 import { Slider, SliderProps } from "@mui/material";
 import { log } from "console";
 
-interface RequestFormProps {
-  formData: {
-    title: string;
-    justification: string;
-    deliveryLocation: string;
-  };
-  setFormData: React.Dispatch<
-    React.SetStateAction<{
-      title: string;
-      justification: string;
-      deliveryLocation: string;
-    }>
-  >;
+interface RequestFormProps<
+  T extends { title: string; justification: string; deliveryLocation: string }
+> {
+  formData: T;
+  setFormData: React.Dispatch<React.SetStateAction<T>>;
   urgency: number[];
   setUrgency: React.Dispatch<React.SetStateAction<number[]>>;
   dateStart: Date | undefined;
   setDateStart: React.Dispatch<React.SetStateAction<Date | undefined>>;
   handleSubmit: (e: React.FormEvent) => void;
   loading: boolean;
+  isEditMode?: boolean;
+  isCreating?: boolean;
 }
 
 interface Location {
@@ -61,7 +55,9 @@ function formatDate(date: Date | undefined) {
 }
 
 const marks = [{ value: 0 }, { value: 1 }, { value: 2 }];
-export default function RequestForm({
+export default function RequestForm<
+  T extends { title: string; justification: string; deliveryLocation: string }
+>({
   formData,
   setFormData,
   urgency,
@@ -70,7 +66,9 @@ export default function RequestForm({
   setDateStart,
   handleSubmit,
   loading,
-}: RequestFormProps) {
+  isEditMode = true,
+  isCreating = false,
+}: RequestFormProps<T>) {
   const [openStart, setOpenStart] = useState(false);
   const [mydateStart, setMydateStart] = useState(formatDate(dateStart));
   const [monthStart, setMonthStart] = useState<Date | undefined>(dateStart);
@@ -112,6 +110,7 @@ export default function RequestForm({
           className="!p-4 rounded-md border shadow-sm bg-white"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          readOnly={!isEditMode}
           required
         />
       </div>
@@ -125,6 +124,7 @@ export default function RequestForm({
               onChange={(e, val) =>
                 setUrgency(Array.isArray(val) ? val : [val])
               }
+              disabled={!isEditMode}
               marks={marks}
               step={1}
               max={2}
@@ -166,6 +166,7 @@ export default function RequestForm({
           onChange={(e) =>
             setFormData({ ...formData, justification: e.target.value })
           }
+          readOnly={!isEditMode}
           required
         />
       </div>
@@ -173,13 +174,15 @@ export default function RequestForm({
       <div className="space-y-2 mb-6">
         <Label>Delivery Location *</Label>
         <Select
+          // className="w-full"
           value={formData.deliveryLocation}
           onValueChange={(value) =>
             setFormData({ ...formData, deliveryLocation: value })
           }
+          disabled={!isEditMode || locationsLoading}
           required
         >
-          <SelectTrigger className="w-full bg-white">
+          <SelectTrigger className="w-full bg-white border-2 border-black">
             <SelectValue
               placeholder={locationsLoading ? "Loading..." : "Select Location"}
             />
@@ -206,6 +209,7 @@ export default function RequestForm({
             value={mydateStart}
             placeholder="Select date"
             className="bg-background pr-10 border"
+            readOnly={!isEditMode}
             onChange={(e) => {
               setMydateStart(e.target.value);
               const date = parseDate(e.target.value);
@@ -217,6 +221,7 @@ export default function RequestForm({
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
                 e.preventDefault();
+                if (!isEditMode) return;
                 setOpenStart(true);
               }
             }}
@@ -227,6 +232,7 @@ export default function RequestForm({
                 id="date-picker-start"
                 variant="ghost"
                 className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
+                disabled={!isEditMode}
               >
                 <CalendarIcon className="size-3.5" />
               </Button>
@@ -252,15 +258,24 @@ export default function RequestForm({
         </div>
       </div>
 
-      <div className="pt-4">
-        <Button
-          type="submit"
-          disabled={loading}
-          className="bg-[#0d1b5e] hover:bg-[#0b154b] text-white rounded-lg text-base p-6"
-        >
-          {loading ? "Creating..." : "Proceed"}
-        </Button>
-      </div>
+      {isCreating && (
+        <div className="w-full flex items-center gap-4 pt-4">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="bg-[#0d1b5e] hover:bg-[#0b154b] text-white rounded-lg text-base p-6"
+          >
+            {loading ? "Creating..." : "Proceed"}
+          </Button>
+          {/* <Button
+            type="submit"
+            disabled={loading}
+            className="text-[#0d1b5e] border border-[#0b154b] bg-white rounded-lg text-base p-6"
+          >
+            Cancel
+          </Button> */}
+        </div>
+      )}
     </form>
   );
 }

@@ -8,10 +8,10 @@ import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken } from "@/lib/auth";
 import { parseDate } from "chrono-node";
-import RequestForm from "./RequestForm";
-import ItemsList from "./ItemsList";
-import ItemFormDialog from "./ItemFormDialog";
-import { Item, Vendor } from "./types";
+import RequestForm from "../RequestForm";
+import ItemsList from "../ItemsList";
+import ItemFormDialog from "../ItemFormDialog";
+import { Item, Vendor } from "../types";
 
 interface CreateNewRequestProps {
   page: "user" | "hod" | "pm";
@@ -276,6 +276,8 @@ export default function CreateNewRequest({
           setDateStart={setDateStart}
           handleSubmit={handleSubmit}
           loading={loading}
+          isCreating={true}
+          isEditMode={false}
         />
 
         <div className="flex lg:flex-col">

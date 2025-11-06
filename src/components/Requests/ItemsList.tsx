@@ -17,6 +17,7 @@ interface ItemsListProps {
   onEditItem: (item: Item) => void;
   onDeleteItem: (id: number) => void;
   onAddNewItem: () => void;
+  isEditMode?: boolean;
 }
 
 export default function ItemsList({
@@ -24,6 +25,7 @@ export default function ItemsList({
   onEditItem,
   onDeleteItem,
   onAddNewItem,
+  isEditMode = true,
 }: ItemsListProps) {
   if (items.length === 0) {
     return (
@@ -35,6 +37,7 @@ export default function ItemsList({
           </p>
           <div>
             <Button
+              disabled={!isEditMode}
               onClick={onAddNewItem}
               className="flex flex-row border border-[#0F1E7A] mt-5 cursor-pointer bg-white text-[#0F1E7A] hover:bg-gray-100"
             >
@@ -70,12 +73,14 @@ export default function ItemsList({
                 <Button
                   size="lg"
                   variant="ghost"
+                  disabled={!isEditMode}
                   onClick={() => onEditItem(item)}
                 >
                   <Edit className="text-[#0F1E7A] h-4 w-4" />
                 </Button>
                 <Button
                   size="lg"
+                  disabled={!isEditMode}
                   variant="ghost"
                   onClick={() => onDeleteItem(item.id)}
                 >
@@ -87,6 +92,7 @@ export default function ItemsList({
         </TableBody>
       </Table>
       <Button
+        disabled={!isEditMode}
         onClick={onAddNewItem}
         className="flex flex-row border border-[#0F1E7A] mt-5 cursor-pointer bg-white text-[#0F1E7A] hover:bg-gray-100 mt-10 mx-auto"
       >
