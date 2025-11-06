@@ -276,8 +276,7 @@ export default function CreateNewRequest({
           setDateStart={setDateStart}
           handleSubmit={handleSubmit}
           loading={loading}
-          isCreating={true}
-          isEditMode={false}
+          isCreating={true} // isEditMode will default to true
         />
 
         <div className="flex lg:flex-col">
