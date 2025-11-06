@@ -224,7 +224,7 @@ export default function CreateNewRequest({
         </h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[50%_45%]  w-full gap-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[50%_45%]  w-full lg:max-w-7xl gap-10">
         <RequestForm
           formData={formData}
           setFormData={setFormData}

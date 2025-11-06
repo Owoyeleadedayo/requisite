@@ -103,7 +103,7 @@ export default function RequestForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full bg-white max-w-xl space-y-5 border-2 border-[#e5e5e5e5] shadow-xl p-5 rounded-xl"
+      className="w-full bg-white space-y-5 border-2 border-[#e5e5e5e5] shadow-xl p-5 rounded-xl"
     >
       <div className="space-y-2 mb-6">
         <Label>Request Title</Label>

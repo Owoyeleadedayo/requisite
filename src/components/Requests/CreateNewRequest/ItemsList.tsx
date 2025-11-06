@@ -27,18 +27,20 @@ export default function ItemsList({
 }: ItemsListProps) {
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center mt-20 ">
-        <Folder size={80} />
-        <p className="text-center max-w-sm">
-          Your item list is empty. Click the button below to create an item.
-        </p>
-        <div>
-          <Button
-            onClick={onAddNewItem}
-            className="flex flex-row border border-[#0F1E7A] mt-5 cursor-pointer bg-white text-[#0F1E7A] hover:bg-gray-100"
-          >
-            <Plus /> Add New Item
-          </Button>
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="flex flex-col items-center mt-20 lg:mt-0">
+          <Folder size={80} />
+          <p className="text-center max-w-sm">
+            Your item list is empty. Click the button below to create an item.
+          </p>
+          <div>
+            <Button
+              onClick={onAddNewItem}
+              className="flex flex-row border border-[#0F1E7A] mt-5 cursor-pointer bg-white text-[#0F1E7A] hover:bg-gray-100"
+            >
+              <Plus /> Add New Item
+            </Button>
+          </div>
         </div>
       </div>
     );
