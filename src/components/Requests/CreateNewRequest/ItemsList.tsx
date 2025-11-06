@@ -47,7 +47,7 @@ export default function ItemsList({
   }
 
   return (
-    <div className="w-full bg-white border-2 border-[#e5e5e5e5] shadow-xl p-5">
+    <div className="w-full bg-white border-2 border-[#e5e5e5e5] rounded-xl shadow-xl p-5">
       <Table>
         <TableHeader>
           <TableRow>
@@ -61,22 +61,25 @@ export default function ItemsList({
           {items.map((item) => (
             <TableRow key={item.id}>
               <TableCell>{item.itemName}</TableCell>
-              <TableCell>{item.units}</TableCell>
-              <TableCell>{item.itemType}</TableCell>
+              <TableCell>{item.units || "N/A"}</TableCell>
+              <TableCell>
+                {item.itemType[0].toUpperCase() + item.itemType.slice(1) ||
+                  "N/A"}
+              </TableCell>
               <TableCell className="flex gap-2">
                 <Button
+                  size="lg"
                   variant="ghost"
-                  size="icon"
                   onClick={() => onEditItem(item)}
                 >
-                  <Edit className="h-4 w-4" />
+                  <Edit className="text-[#0F1E7A] h-4 w-4" />
                 </Button>
                 <Button
+                  size="lg"
                   variant="ghost"
-                  size="icon"
                   onClick={() => onDeleteItem(item.id)}
                 >
-                  <Trash2 className="h-4 w-4 text-red-500" />
+                  <Trash2 className="text-red-500 h-4 w-4" />
                 </Button>
               </TableCell>
             </TableRow>

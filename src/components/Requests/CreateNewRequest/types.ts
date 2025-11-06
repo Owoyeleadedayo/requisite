@@ -12,3 +12,8 @@ export interface Item {
   recommendedVendor: string;
   isWorkTool: boolean | string;
 }
+
+export interface Vendor {
+  _id: string;
+  name: string;
+}

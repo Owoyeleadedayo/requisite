@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import { parseDate } from "chrono-node";
 import RequestForm from "./RequestForm";
 import ItemsList from "./ItemsList";
 import ItemFormDialog from "./ItemFormDialog";
-import { Item } from "./types";
+import { Item, Vendor } from "./types";
 
 interface CreateNewRequestProps {
   page: "user" | "hod" | "pm";
@@ -27,6 +27,8 @@ export default function CreateNewRequest({
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [vendorsLoading, setVendorsLoading] = useState(true);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
@@ -144,6 +146,40 @@ export default function CreateNewRequest({
     }
   };
 
+  const fetchAllVendors = async (token: string) => {
+    setVendorsLoading(true);
+    let allVendors: Vendor[] = [];
+    let currentPage = 1;
+    let totalPages = 1;
+
+    try {
+      do {
+        const response = await fetch(
+          `${API_BASE_URL}/vendors?page=${currentPage}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        const data = await response.json();
+        if (data.success) {
+          allVendors = [...allVendors, ...data.data];
+          totalPages = data.pagination.pages;
+          currentPage++;
+        } else {
+          console.error("Failed to fetch a page of vendors:", data.message);
+          break; // Stop fetching if an error occurs on any page
+        }
+      } while (currentPage <= totalPages);
+
+      setVendors(allVendors);
+    } catch (error) {
+      console.error("Error fetching vendors:", error);
+      toast.error("Could not load vendors.");
+    } finally {
+      setVendorsLoading(false);
+    }
+  };
+
   const handleItemFormChange = (
     field: keyof Item,
     value: string | number | boolean | File | null
@@ -201,6 +237,12 @@ export default function CreateNewRequest({
 
   const [dateStart, setDateStart] = useState<Date | undefined>(new Date());
 
+  useEffect(() => {
+    if (token) {
+      fetchAllVendors(token);
+    }
+  }, [token]);
+
   return (
     <div className="w-full lg:w-full flex flex-col px-4 py-8 pb-16">
       <div className="flex flex-col items-start gap-4">
@@ -257,6 +299,8 @@ export default function CreateNewRequest({
             handleItemFormChange={handleItemFormChange}
             handleAddItem={handleAddItem}
             editingItemId={editingItemId}
+            vendors={vendors}
+            vendorsLoading={vendorsLoading}
           />
         </div>
       </div>

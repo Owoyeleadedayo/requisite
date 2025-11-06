@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
+import { Upload, Check, ChevronsUpDown } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +34,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Item, ItemType } from "./types";
+import { Item, ItemType, Vendor } from "./types";
 
 interface ItemFormDialogProps {
   isOpen: boolean;
@@ -32,6 +46,8 @@ interface ItemFormDialogProps {
   ) => void;
   handleAddItem: () => void;
   editingItemId: number | null;
+  vendors: Vendor[];
+  vendorsLoading: boolean;
 }
 
 export default function ItemFormDialog({
@@ -41,7 +57,11 @@ export default function ItemFormDialog({
   handleItemFormChange,
   handleAddItem,
   editingItemId,
+  vendors,
+  vendorsLoading,
 }: ItemFormDialogProps) {
+  const [comboboxOpen, setComboboxOpen] = React.useState(false);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md flex flex-col bg-white items-center">
@@ -152,14 +172,60 @@ export default function ItemFormDialog({
           <div className="w-full flex gap-3">
             <div className="w-full space-y-2">
               <Label>Recommended Vendor</Label>
-              <Input
-                placeholder="Vendor"
-                className="!p-4 rounded-md border shadow-sm bg-white"
-                value={currentItem.recommendedVendor}
-                onChange={(e) =>
-                  handleItemFormChange("recommendedVendor", e.target.value)
-                }
-              />
+              <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                <PopoverTrigger className="!bg-white" asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={comboboxOpen}
+                    className="w-full justify-between bg-white hover:bg-white"
+                  >
+                    {currentItem.recommendedVendor
+                      ? vendors.find(
+                          (vendor) =>
+                            vendor._id === currentItem.recommendedVendor
+                        )?.name
+                      : vendorsLoading
+                      ? "Loading vendors..."
+                      : "Select vendor..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[350px] p-0 bg-white">
+                  <Command>
+                    <CommandInput placeholder="Search vendor..." />
+                    <CommandList>
+                      <CommandEmpty>No vendor found.</CommandEmpty>
+                      <CommandGroup>
+                        {vendors.map((vendor) => (
+                          <CommandItem
+                            key={vendor._id}
+                            value={vendor.name}
+                            onSelect={() => {
+                              handleItemFormChange(
+                                "recommendedVendor",
+                                vendor._id === currentItem.recommendedVendor
+                                  ? ""
+                                  : vendor._id
+                              );
+                              setComboboxOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${
+                                currentItem.recommendedVendor === vendor._id
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              }`}
+                            />
+                            {vendor.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="w-full space-y-2">
               <Label>Is this a worktool? *</Label>
