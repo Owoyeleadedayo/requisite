@@ -35,6 +35,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import ItemFormDialog from "../ItemFormDialog";
+import ItemsList from "../ItemsList";
+import { Textarea } from "@/components/ui/textarea";
+import RequestForm from "../RequestForm";
+import { Item, Vendor } from "../types";
 
 interface RequestData {
   _id: string;
