@@ -75,7 +75,7 @@ export default function ItemFormDialog({
         </DialogHeader>
         <div className="flex flex-col w-full max-w-xl space-y-5">
           <div className="space-y-2">
-            <Label>Name of Item *</Label>
+            <Label>Name of Item <span className="compulsory-field">*</span></Label>
             <Input
               placeholder="e.g., A4 Paper"
               className="!p-4 rounded-md border shadow-sm bg-white"
@@ -86,7 +86,7 @@ export default function ItemFormDialog({
           </div>
           <div className="w-full flex gap-3">
             <div className="w-full space-y-2">
-              <Label>Item Type *</Label>
+              <Label>Item Type <span className="compulsory-field">*</span></Label>
               <Select
                 value={currentItem.itemType}
                 onValueChange={(value: ItemType) =>
@@ -116,7 +116,7 @@ export default function ItemFormDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Item Description *</Label>
+            <Label>Item Description <span className="compulsory-field">*</span></Label>
             <Textarea
               className="min-h-[100px] rounded-md border shadow-sm bg-white"
               value={currentItem.itemDescription}
@@ -228,7 +228,7 @@ export default function ItemFormDialog({
               </Popover>
             </div>
             <div className="w-full space-y-2">
-              <Label>Is this a worktool? *</Label>
+              <Label>Is this a worktool? <span className="compulsory-field">*</span></Label>
               <Select
                 value={
                   typeof currentItem.isWorkTool === "boolean"

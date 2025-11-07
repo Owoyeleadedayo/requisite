@@ -104,7 +104,7 @@ export default function RequestForm<
       className="w-full bg-white space-y-5 border-2 border-[#e5e5e5e5] shadow-xl p-5 rounded-xl"
     >
       <div className="space-y-2 mb-6">
-        <Label>Request Title</Label>
+        <Label>Request Title <span className="compulsory-field">*</span></Label>
         <Input
           placeholder="Request title"
           className="!p-4 rounded-md border shadow-sm bg-white"
@@ -116,18 +116,18 @@ export default function RequestForm<
       </div>
 
       <div className="space-y-2 mb-6">
-        <Label>Urgency</Label>
+        <Label>Urgency <span className="compulsory-field">*</span></Label>
         <div className="w-full py-3 shadow-md rounded-md bg-white">
           <div className="pl-3 pr-6">
             <Slider
+              max={2}
+              step={1}
+              marks={marks}
               value={urgency[0]}
+              disabled={!isEditMode}
               onChange={(e, val) =>
                 setUrgency(Array.isArray(val) ? val : [val])
               }
-              disabled={!isEditMode}
-              marks={marks}
-              step={1}
-              max={2}
               sx={{
                 color: "#0F1E7A",
                 "& .MuiSlider-thumb": {
@@ -158,7 +158,7 @@ export default function RequestForm<
       </div>
 
       <div className="space-y-2 mb-6">
-        <Label>Justification</Label>
+        <Label>Justification <span className="compulsory-field">*</span></Label>
         <Textarea
           placeholder="Justification"
           className="rounded-md min-h-[100px] border shadow-sm bg-white"
@@ -172,7 +172,7 @@ export default function RequestForm<
       </div>
 
       <div className="space-y-2 mb-6">
-        <Label>Delivery Location *</Label>
+        <Label>Delivery Location <span className="compulsory-field">*</span></Label>
         <Select
           // className="w-full"
           value={formData.deliveryLocation}
@@ -182,7 +182,7 @@ export default function RequestForm<
           disabled={!isEditMode || locationsLoading}
           required
         >
-          <SelectTrigger className="w-full bg-white border-2 border-black">
+          <SelectTrigger className="w-full bg-white border-1 border-black">
             <SelectValue
               placeholder={locationsLoading ? "Loading..." : "Select Location"}
             />
@@ -202,7 +202,7 @@ export default function RequestForm<
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label>Preferred Delivery Date *</Label>
+        <Label>Preferred Delivery Date <span className="compulsory-field">*</span></Label>
         <div className="relative flex gap-2">
           <Input
             id="date-start"

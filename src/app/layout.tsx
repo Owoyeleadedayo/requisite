@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={montserrat.variable}>
-      <body>
+      <body className={`${montserrat.className} font-sans`}>
         {children}
         <Toaster
           closeButton
