@@ -37,9 +37,11 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import ItemFormDialog from "../ItemFormDialog";
 import ItemsList from "../ItemsList";
+import ItemViewDialog from "../ItemViewDialog";
 import { Textarea } from "@/components/ui/textarea";
 import RequestForm from "../RequestForm";
 import { Item, Vendor } from "../types";
+import { formatStatus } from "@/lib/statusFormatter";
 
 interface RequestData {
   _id: string;
@@ -105,6 +107,8 @@ export default function ViewEditRequest({
   const [urgency, setUrgency] = useState([1]);
   const [items, setItems] = useState<Item[]>([]);
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
+  const [isItemViewDialogOpen, setIsItemViewDialogOpen] = useState(false);
+  const [viewingItem, setViewingItem] = useState<Item | null>(null);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [vendorsLoading, setVendorsLoading] = useState(true);
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
@@ -473,6 +477,7 @@ export default function ViewEditRequest({
             >
               {formData.status[0].toUpperCase() + formData.status.slice(1)}
             </span>
+            {/* {formatStatus(formData.status)} */}
           </span>
         )}
       </div>
@@ -537,8 +542,7 @@ export default function ViewEditRequest({
                 <>
                   <Button
                     onClick={() => onEditModeChange(false)}
-                    variant="destructive"
-                    className="flex-1 py-6 bg-red-600 hover:bg-red-700"
+                    className="border border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
                   >
                     Cancel Edit
                   </Button>
@@ -661,8 +665,8 @@ export default function ViewEditRequest({
                 >
                   <DialogTrigger className="bg-white max-w-2xl" asChild>
                     <Button
-                      variant="outline"
-                      className="border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
+                      variant="destructive"
+                      className="flex-1 py-6 bg-red-600 hover:bg-red-700"
                     >
                       Cancel Request
                     </Button>
@@ -718,6 +722,10 @@ export default function ViewEditRequest({
                 setEditingItemId(item.id);
                 setIsItemDialogOpen(true);
               }}
+              onViewItem={(item) => {
+                setViewingItem(item);
+                setIsItemViewDialogOpen(true);
+              }}
               onDeleteItem={handleDeleteItem}
             />
             <ItemFormDialog
@@ -730,6 +738,14 @@ export default function ViewEditRequest({
               onOpenChange={setIsItemDialogOpen}
               handleItemFormChange={handleItemFormChange}
             />
+            {viewingItem && (
+              <ItemViewDialog
+                isOpen={isItemViewDialogOpen}
+                onOpenChange={setIsItemViewDialogOpen}
+                currentItem={viewingItem}
+                vendors={vendors}
+              />
+            )}
           </>
           {/* ) : ( */}
           <Comments entityId={requisitionId} entityType="requisitions" />

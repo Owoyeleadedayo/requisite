@@ -10,6 +10,8 @@ import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId } from "@/lib/auth";
+import { formatUrgencyText, UrgencyDisplay } from "@/lib/urgencyFormatter";
+import { formatStatus } from "@/lib/statusFormatter";
 
 interface UserDashboardProps {
   page?: "userDashboard" | "userRequisition";
@@ -123,7 +125,9 @@ export default function UserDashboard({
     },
   ];
 
-  const getLocationName = (location: string | { _id: string; name: string }) => {
+  const getLocationName = (
+    location: string | { _id: string; name: string }
+  ) => {
     if (typeof location === "object" && location !== null) {
       return location.name.charAt(0).toUpperCase() + location.name.slice(1);
     }
@@ -131,7 +135,8 @@ export default function UserDashboard({
       const foundLocation = locations.find((loc) => loc._id === location);
       if (foundLocation) {
         return (
-          foundLocation.name.charAt(0).toUpperCase() + foundLocation.name.slice(1)
+          foundLocation.name.charAt(0).toUpperCase() +
+          foundLocation.name.slice(1)
         );
       }
     }
@@ -153,6 +158,12 @@ export default function UserDashboard({
       },
     },
     {
+      key: "urgency",
+      label: "Urgency",
+      // render: (urgency) => urgency[0].toUpperCase() + urgency.slice(1),
+      render: (urgency) => <UrgencyDisplay urgency={urgency} />,
+    },
+    {
       key: "deliveryLocation",
       label: "Location",
       render: (location) => getLocationName(location),
@@ -160,22 +171,7 @@ export default function UserDashboard({
     {
       key: "status",
       label: "Status",
-      render: (value) => {
-        const statusColors: Record<string, string> = {
-          draft: "text-gray-500",
-          submitted: "text-blue-500",
-          departmentApproved: "text-green-500",
-          cancelled: "text-red-500",
-          pending: "text-orange-500",
-        };
-        return (
-          <span
-            className={`${statusColors[value] ?? "text-gray-500"} capitalize`}
-          >
-            {value}
-          </span>
-        );
-      },
+      render: (value) => formatStatus(value),
     },
     {
       key: "_id",

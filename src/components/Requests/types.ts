@@ -15,6 +15,9 @@ export interface Item {
   itemDescription: string;
   uploadImage: File | null;
   units: number | "";
+  status?: string;
+  uploadedImageUrl?: string;
+  imageUrl?: string;
   UOM: string;
   recommendedVendor: string;
   isWorkTool: boolean | string;
