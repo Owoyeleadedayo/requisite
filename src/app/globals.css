@@ -4,3 +4,10 @@
 :root {
   --primary-color: #0f1e7a;
 }
+
+.compulsory-field {
+  margin: 0;
+  padding: 0;
+  color: red;
+  /* font-size: large; */
+}
