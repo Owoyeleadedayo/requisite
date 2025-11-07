@@ -269,7 +269,13 @@ export default function ViewEditRequest({
         body: JSON.stringify({
           ...formData,
           priority: priorityMap[urgency[0]],
-          items: items.map(({ id, ...rest }) => rest),
+          items: items.map(({ id, uploadImage, ...rest }) => {
+            const { recommendedVendor, ...itemPayload } = rest;
+            if (recommendedVendor) {
+              return { ...itemPayload, recommendedVendor };
+            }
+            return itemPayload;
+          }),
         }),
       });
       const data = await res.json();

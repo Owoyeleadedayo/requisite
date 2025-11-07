@@ -120,14 +120,14 @@ export default function RequestForm<
         <div className="w-full py-3 shadow-md rounded-md bg-white">
           <div className="pl-3 pr-6">
             <Slider
+              max={2}
+              step={1}
+              marks={marks}
               value={urgency[0]}
+              disabled={!isEditMode}
               onChange={(e, val) =>
                 setUrgency(Array.isArray(val) ? val : [val])
               }
-              disabled={!isEditMode}
-              marks={marks}
-              step={1}
-              max={2}
               sx={{
                 color: "#0F1E7A",
                 "& .MuiSlider-thumb": {
