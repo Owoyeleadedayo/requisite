@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Folder, Edit, Trash2, Plus } from "lucide-react";
+import { Folder, Edit, Trash2, Plus, Eye } from "lucide-react";
 import { Item } from "./types";
 
 interface ItemsListProps {
@@ -17,6 +17,7 @@ interface ItemsListProps {
   onEditItem: (item: Item) => void;
   onDeleteItem: (id: number) => void;
   onAddNewItem: () => void;
+  onViewItem: (item: Item) => void;
   isEditMode?: boolean;
 }
 
@@ -25,6 +26,7 @@ export default function ItemsList({
   onEditItem,
   onDeleteItem,
   onAddNewItem,
+  onViewItem,
   isEditMode = true,
 }: ItemsListProps) {
   if (items.length === 0) {
@@ -56,6 +58,7 @@ export default function ItemsList({
           <TableRow>
             <TableHead>Item Name</TableHead>
             <TableHead>QTY</TableHead>
+            <TableHead>UOM</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Action</TableHead>
           </TableRow>
@@ -65,11 +68,19 @@ export default function ItemsList({
             <TableRow key={item.id}>
               <TableCell>{item.itemName}</TableCell>
               <TableCell>{item.units || "N/A"}</TableCell>
+              <TableCell>{item.UOM || "N/A"}</TableCell>
               <TableCell>
                 {item.itemType[0].toUpperCase() + item.itemType.slice(1) ||
                   "N/A"}
               </TableCell>
               <TableCell className="flex gap-0">
+                <Button
+                  variant="ghost"
+                  className="!px-2 !lg:px-1"
+                  onClick={() => onViewItem(item)}
+                >
+                  <Eye size={24} className="!text-[#0F1E7A]" />
+                </Button>
                 <Button
                   variant="ghost"
                   className="!px-2 !lg:px-1"

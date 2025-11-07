@@ -291,6 +291,10 @@ export default function CreateNewRequest({
               setEditingItemId(item.id);
               setIsItemDialogOpen(true);
             }}
+            onViewItem={(item) => {
+              setCurrentItem(item);
+              setIsItemDialogOpen(true);
+            }}
             onDeleteItem={handleDeleteItem}
           />
           <ItemFormDialog

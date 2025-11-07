@@ -39,9 +39,9 @@ export default function RequestActions({
       {isEditMode ? (
         <>
           <Button
-            onClick={() => onEditModeChange(false)}
             variant="outline"
             className="flex-1 py-6"
+            onClick={() => onEditModeChange(false)}
           >
             Cancel Edit
           </Button>
