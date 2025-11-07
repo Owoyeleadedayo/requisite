@@ -182,7 +182,7 @@ export default function RequestForm<
           disabled={!isEditMode || locationsLoading}
           required
         >
-          <SelectTrigger className="w-full bg-white border-2 border-black">
+          <SelectTrigger className="w-full bg-white border-1 border-black">
             <SelectValue
               placeholder={locationsLoading ? "Loading..." : "Select Location"}
             />

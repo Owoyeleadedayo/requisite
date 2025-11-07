@@ -453,17 +453,36 @@ export default function ViewEditRequest({
         </Link>
       </div>
 
-      <h1 className="text-2xl lg:text-3xl font-bold text-[#0F1E7A] mb-6">
-        {isEditMode ? "Update Request" : "View Request"} -{" "}
-        {formData.requisitionNumber}
-      </h1>
+      <div className="w-full flex items-center gap-2 mb-6">
+        <h1 className="text-2xl lg:text-3xl font-bold text-[#0F1E7A]">
+          {isEditMode ? "Update Request" : "View Request"} -{" "}
+          {formData.requisitionNumber}{" "}
+        </h1>
+        {formData.status && (
+          <span className="status-badge ml-4">
+            <span
+              className={`py-3 px-4 rounded-full text-sm font-semibold text-white ${
+                formData.status === "submitted"
+                  ? "bg-orange-500"
+                  : formData.status === "departmentApproved"
+                  ? "bg-green-500"
+                  : formData.status === "cancelled"
+                  ? "bg-red-500"
+                  : "bg-gray-500"
+              }`}
+            >
+              {formData.status[0].toUpperCase() + formData.status.slice(1)}
+            </span>
+          </span>
+        )}
+      </div>
 
       {/* <div className="w-full flex flex-col lg:flex-row gap-8 container"> */}
       <div className="grid grid-cols-1 lg:grid-cols-[50%_45%]  w-full lg:max-w-7xl gap-10">
         <div className="w-full flex flex-col pb-16">
           <div className="request relative w-full space-y-5">
             {/* Request Status */}
-            {formData.status && (
+            {/* {formData.status && (
               <div className="status-badge absolute top-0 right-0 z-[5]">
                 <span
                   className={`py-3 px-4 rounded-sm text-sm font-semibold text-white ${
@@ -479,10 +498,10 @@ export default function ViewEditRequest({
                   {formData.status}
                 </span>
               </div>
-            )}
+            )} */}
 
             {/* Request Image */}
-            <div className="w-full space-y-2">
+            {/* <div className="w-full space-y-2">
               <div className="relative w-full h-[300px] rounded-xl overflow-hidden bg-gray-100">
                 <Image
                   fill
@@ -499,7 +518,7 @@ export default function ViewEditRequest({
                     : `${formData.requester.firstName} ${formData.requester.lastName}`}
                 </p>
               )}
-            </div>
+            </div> */}
 
             <RequestForm
               formData={formData}

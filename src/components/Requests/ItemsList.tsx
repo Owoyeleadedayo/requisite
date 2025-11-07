@@ -69,22 +69,22 @@ export default function ItemsList({
                 {item.itemType[0].toUpperCase() + item.itemType.slice(1) ||
                   "N/A"}
               </TableCell>
-              <TableCell className="flex gap-2">
+              <TableCell className="flex gap-0">
                 <Button
-                  size="lg"
                   variant="ghost"
+                  className="!px-2 !lg:px-1"
                   disabled={!isEditMode}
                   onClick={() => onEditItem(item)}
                 >
-                  <Edit className="text-[#0F1E7A] h-4 w-4" />
+                  <Edit size={24} className="!text-[#0F1E7A]" />
                 </Button>
                 <Button
-                  size="lg"
-                  disabled={!isEditMode}
                   variant="ghost"
+                  className="!px-2 !lg:px-1"
+                  disabled={!isEditMode}
                   onClick={() => onDeleteItem(item.id)}
                 >
-                  <Trash2 className="text-red-500 h-4 w-4" />
+                  <Trash2 size={24} className="!text-red-500" />
                 </Button>
               </TableCell>
             </TableRow>
