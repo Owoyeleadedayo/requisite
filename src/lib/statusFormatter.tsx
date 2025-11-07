@@ -1,4 +1,6 @@
-export function formatStatus(status: string): JSX.Element {
+import React from "react";
+
+export function formatStatus(status: string): React.ReactNode {
   const statusColors: Record<string, string> = {
     draft: "text-gray-500",
     submitted: "text-blue-500",
@@ -8,9 +10,7 @@ export function formatStatus(status: string): JSX.Element {
   };
 
   return (
-    <span
-      className={`${statusColors[status] ?? "text-gray-500"} capitalize`}
-    >
+    <span className={`${statusColors[status] ?? "text-gray-500"} capitalize`}>
       {status}
     </span>
   );
