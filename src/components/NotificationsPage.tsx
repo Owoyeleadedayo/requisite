@@ -325,10 +325,21 @@ export default function NotificationsPage() {
               </div>
             </div>
             
-            <div className="flex justify-end p-6 border-t">
+            <div className="flex justify-between p-6 border-t">
+              {selectedNotification.resource && (
+                <Button
+                  onClick={() => {
+                    setSelectedNotification(null);
+                    window.location.href = `/user/requisition/${selectedNotification.resource!.id}`;
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  Go to Request
+                </Button>
+              )}
               <Button
                 onClick={() => setSelectedNotification(null)}
-                className="bg-[#0A1A6B] hover:bg-[#0A1A6B]/90 text-white"
+                className="bg-[#0A1A6B] hover:bg-[#0A1A6B]/90 text-white ml-auto"
               >
                 Close
               </Button>

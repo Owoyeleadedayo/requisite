@@ -144,6 +144,12 @@ export default function ViewEditRequest({
     userType === "hod" ? "/hod/requisitions" : "/user/requisition";
 
   useEffect(() => {
+    const urgencyMap: Record<string, number> = {
+      low: 0,
+      medium: 1,
+      high: 2,
+    };
+
     const reversePriorityMap: Record<RequestData["priority"], number> = {
       low: 0,
       medium: 1,
@@ -172,8 +178,8 @@ export default function ViewEditRequest({
               id: item._id || index,
             }))
           );
-          const priority = req.priority as RequestData["priority"];
-          setUrgency([reversePriorityMap[priority]]);
+          const urgencyValue = req.urgency || req.priority;
+          setUrgency([urgencyMap[urgencyValue] || 1]);
           if (req.deliveryDate) {
             setDateStart(new Date(req.deliveryDate));
           }
@@ -272,7 +278,7 @@ export default function ViewEditRequest({
         },
         body: JSON.stringify({
           ...formData,
-          priority: priorityMap[urgency[0]],
+          urgency: priorityMap[urgency[0]],
           items: items.map(({ id, uploadImage, ...rest }) => {
             const { recommendedVendor, ...itemPayload } = rest;
             if (recommendedVendor) {

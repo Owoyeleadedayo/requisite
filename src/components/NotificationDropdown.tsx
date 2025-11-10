@@ -21,10 +21,16 @@ interface Notification {
     title?: string;
     message?: string;
     resourceNumber?: string;
+    text?: string;
   };
   actor: {
     firstName: string;
     lastName: string;
+  };
+  resource?: {
+    kind: string;
+    id: string;
+    commentId?: string;
   };
   isRead: boolean;
   createdAt: string;
@@ -118,6 +124,18 @@ export default function NotificationDropdown({
     }
   };
 
+  const handleNotificationClick = (notification: Notification) => {
+    if (notification.type === "requisition_status_changed" && notification.resource) {
+      router.push(`/user/requisition/${notification.resource.id}`);
+    } else {
+      router.push(`${notificationsPath}?id=${notification._id}`);
+    }
+  };
+
+  const truncateText = (text: string, maxLength: number = 50) => {
+    return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -148,7 +166,7 @@ export default function NotificationDropdown({
             <div key={notification._id}>
               <DropdownMenuItem 
                 className="flex flex-col items-start py-3 hover:bg-gray-100 cursor-pointer"
-                onClick={() => router.push(`${notificationsPath}?id=${notification._id}`)}
+                onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex items-center gap-2 mb-1">
                   {(() => {
@@ -165,16 +183,29 @@ export default function NotificationDropdown({
                 <p className="text-sm font-medium">
                   {notification.metadata.title || "Notification"}
                 </p>
-                <p className="text-xs font-normal">
-                  {notification.metadata.message}
-                </p>
+                {notification.type === "comment_replied" ? (
+                  <>
+                    <p className="text-xs font-normal">
+                      {truncateText(notification.metadata.text || "")}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      From: {notification.actor.firstName} {notification.actor.lastName}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-xs font-normal">
+                    {notification.metadata.message}
+                  </p>
+                )}
                 <div className="flex justify-between w-full mt-1">
                   <p className="text-xs font-normal">
                     {formatDate(notification.createdAt)}
                   </p>
-                  <p className="text-xs font-light underline cursor-pointer">
-                    View full notification
-                  </p>
+                  {notification.type === "comment_replied" && (
+                    <p className="text-xs font-light underline cursor-pointer">
+                      View full notification
+                    </p>
+                  )}
                 </div>
               </DropdownMenuItem>
               <div className="border-b-1 border-[#e5e5e5]" />

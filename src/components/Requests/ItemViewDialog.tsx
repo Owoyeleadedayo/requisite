@@ -36,23 +36,25 @@ export default function ItemViewDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md flex flex-col bg-white items-center">
+      <DialogContent className="sm:max-w-md h-[80vh] max-h-[600px] flex flex-col bg-white items-center overflow-hidden">
         <DialogHeader className="flex justify-center items-center">
           <DialogTitle className="text-2xl">Item Details</DialogTitle>
           <DialogDescription>
             View the details of the item below
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col w-full max-w-xl space-y-5">
-          <div className="space-y-2">
-            <Image
-              src={currentItem.imageUrl || noImage}
-              alt={currentItem.itemName || "Item Image"}
-              className="w-full h-auto rounded-md"
-              width={500}
-              height={300}
-            />
-          </div>
+        <div className="flex flex-col w-full max-w-xl space-y-5 overflow-y-auto flex-1 px-1">
+          {currentItem.imageUrl && (
+            <div className="space-y-2">
+              <Image
+                src={currentItem.imageUrl || noImage}
+                alt={currentItem.itemName || "Item Image"}
+                className="w-full h-auto rounded-md"
+                width={500}
+                height={300}
+              />
+            </div>
+          )}
           <div className="w-full flex gap-2">
             <div className="w-full space-y-2">
               <Label className="font-bold">Name of Item</Label>
@@ -125,7 +127,7 @@ export default function ItemViewDialog({
           </div>
         </div>
 
-        <div className="w-full">
+        <div className="w-full mt-4 flex-shrink-0">
           <DialogClose asChild>
             <Button type="button" className="w-full bg-[#0F1E7A] text-white">
               Close

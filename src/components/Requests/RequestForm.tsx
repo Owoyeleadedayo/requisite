@@ -123,7 +123,7 @@ export default function RequestForm<
               max={2}
               step={1}
               marks={marks}
-              value={urgency[0]}
+              value={Array.isArray(urgency) ? urgency[0] : urgency}
               disabled={!isEditMode}
               onChange={(e, val) =>
                 setUrgency(Array.isArray(val) ? val : [val])
