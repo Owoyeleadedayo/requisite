@@ -64,7 +64,7 @@ export default function ItemFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md flex flex-col bg-white items-center">
+      <DialogContent className="sm:max-w-md h-[80vh] max-h-[600px] flex flex-col bg-white items-center overflow-hidden">
         <DialogHeader className="flex justify-center items-center">
           <DialogTitle className="text-2xl">
             {editingItemId ? "Edit Item" : "New Item"}
@@ -73,7 +73,7 @@ export default function ItemFormDialog({
             Enter the details of the item below
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col w-full max-w-xl space-y-5">
+        <div className="flex flex-col w-full max-w-xl space-y-5 overflow-y-auto flex-1 px-1">
           <div className="space-y-2">
             <Label>Name of Item <span className="compulsory-field">*</span></Label>
             <Input
@@ -252,7 +252,7 @@ export default function ItemFormDialog({
           </div>
         </div>
 
-        <div className="w-full flex gap-3">
+        <div className="w-full flex gap-3 mt-4 flex-shrink-0">
           <div className="w-1/2">
             <Button
               onClick={handleAddItem}

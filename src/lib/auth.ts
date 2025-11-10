@@ -16,6 +16,7 @@ type AuthData = {
   token: string;
 };
 
+// getAuthData retrieves and parses the auth data from localStorage
 export const getAuthData = (): AuthData | null => {
   if (typeof window === "undefined") return null;
   const authDataString = localStorage.getItem("authData");
@@ -44,6 +45,7 @@ export const getUserRole = (): string | null => {
   return user?.role || null;
 };
 
+// Todo
 export const isAuthenticated = (): boolean => {
   return !!getToken();
 };

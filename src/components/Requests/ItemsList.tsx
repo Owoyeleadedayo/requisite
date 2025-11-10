@@ -58,8 +58,8 @@ export default function ItemsList({
           <TableRow>
             <TableHead>Item Name</TableHead>
             <TableHead>QTY</TableHead>
-            <TableHead>UOM</TableHead>
             <TableHead>Type</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>Action</TableHead>
           </TableRow>
         </TableHeader>
@@ -68,10 +68,14 @@ export default function ItemsList({
             <TableRow key={item.id}>
               <TableCell>{item.itemName}</TableCell>
               <TableCell>{item.units || "N/A"}</TableCell>
-              <TableCell>{item.UOM || "N/A"}</TableCell>
               <TableCell>
                 {item.itemType[0].toUpperCase() + item.itemType.slice(1) ||
                   "N/A"}
+              </TableCell>
+              <TableCell>
+                {item.status
+                  ? item.status[0].toUpperCase() + item.status.slice(1)
+                  : "N/A"}
               </TableCell>
               <TableCell className="flex gap-0">
                 <Button
