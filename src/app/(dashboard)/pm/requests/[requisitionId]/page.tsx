@@ -13,7 +13,7 @@ export default function HODViewEditRequest() {
     searchParams.get("mode") === "edit"
   );
 
-  return (
+  return (  
     <ViewEditRequest
       requisitionId={requisitionId as string}
       userType="procurementManager"

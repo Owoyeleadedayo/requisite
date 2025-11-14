@@ -467,7 +467,7 @@ export default function CreateNewRequest({
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label>Item Description *</Label>
+                      <Label>Item Description <span className="text-red-500 -ml-1">*</span></Label>
                       <Textarea className="min-h-[100px] rounded-md border shadow-sm" />
                     </div>
                     <div className="space-y-2">

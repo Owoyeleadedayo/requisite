@@ -469,43 +469,61 @@ export default function ViewEditRequest({
 
             <div className="flex flex-col sm:flex-row gap-3 pt-6">
               {isEditMode ? (
-                <>
-                  <Button
-                    onClick={() => onEditModeChange(false)}
-                    variant="outline"
-                    className="flex-1 py-6"
-                  >
-                    Cancel Edit
-                  </Button>
-                  <Button
-                    disabled={loading}
-                    onClick={handleSave}
-                    className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-                  >
-                    {loading ? "Saving..." : "Save"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6 cursor-pointer">
-                    Approve
-                  </Button>
-                  <Button
-                    onClick={() => router.push(backPath)}
-                    className="bg-[#DE1216] hover:bg-[#0b154b] text-white flex-1 py-6"
-                  >
-                    Close
-                  </Button>
-
-                  {(userType === "user" ||
-                    user?.id === formData.requester?._id) && (
-                    <Button
-                      onClick={() => onEditModeChange(true)}
-                      className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-                    >
-                      Edit
-                    </Button>
-                  )}
+               <>
+               <Button
+                 onClick={() => onEditModeChange(false)}
+                 variant="outline"
+                 className="flex-1 py-6"
+               >
+                 Cancel Edit
+               </Button>
+               <Button
+                 disabled={loading}
+                 onClick={handleSave}
+                 className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
+               >
+                 {loading ? "Saving..." : "Save"}
+               </Button>
+             </>
+           ) : (
+             <>
+               {userType === "procurementManager" ? (
+                 <>
+                   <Button
+                     onClick={() => router.push("/pm/generate-rfq")} 
+                     className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
+                   >
+                     Generate RFQ
+                   </Button>
+                   <Button
+                     onClick={() => router.push(backPath)}
+                     className="bg-[#DE1216] hover:bg-[#0b154b] text-white flex-1 py-6"
+                   >
+                     Close
+                   </Button>
+                 </>
+               ) : (
+                 <>
+                   <Button className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6 cursor-pointer">
+                     Approve
+                   </Button>
+                   <Button
+                     onClick={() => router.push(backPath)}
+                     className="bg-[#DE1216] hover:bg-[#0b154b] text-white flex-1 py-6"
+                   >
+                     Close
+                   </Button>
+                 </>
+               )}
+           
+               {(userType === "user" || user?.id === formData.requester?._id) && (
+                 <Button
+                   onClick={() => onEditModeChange(true)}
+                   className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
+                 >
+                   Edit
+                 </Button>
+               )}
                   {userType === "hod" && formData.status === "submitted" && (
                     <>
                       <Dialog
@@ -649,7 +667,7 @@ export default function ViewEditRequest({
         </div>
 
         <div className="flex flex-col gap-8">
-          {userType === "hod" && (
+          {userType === "hod" || "procurementManager" && (
             <div className="flex flex-col w-full bg-white border border-[#E5E5E5] p-5 rounded-md shadow-md gap">
               <div className="flex gap-3">
                 <Select>
