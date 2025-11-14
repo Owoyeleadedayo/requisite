@@ -10,6 +10,8 @@ import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
+import { RequisitionShape } from "@/types/requisition";
+import getLocationName from "@/lib/getLocationName";
 
 interface ProcurementManagerDashboardProps {
   page?:
@@ -19,122 +21,6 @@ interface ProcurementManagerDashboardProps {
     | "procurementBids";
 }
 
-type RequisitionShape = {
-  _id: string;  
-  title: string;
-  category: string;
-  description: string;
-  quantityNeeded: number;
-  image: string;
-  estimatedUnitPrice: number;
-  priority: string;
-  justification: string;
-  requester: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  department: {
-    _id: string;
-    name: string;
-    code: string;
-  };
-  status: string;
-  selectedVendors: [];
-  paymentStatus: string;
-  paymentAmount: 0;
-  shortlistedVendors: [];
-  deadlineExtensions: [];
-  approvals: [
-    {
-      stage: string;
-      approver: string;
-      status: string;
-      timestamp: string;
-      _id: string;
-      comments: string;
-    }
-  ];
-  requisitionNumber: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-};
-
-const columns: Column<RequisitionShape>[] = [
-  { key: "title", label: "Title" },
-  { key: "quantityNeeded", label: "QTY" },
-  { key: "category", label: "Category" },
-  {
-    key: "createdAt",
-    label: "Date",
-    render: (value) => {
-      const date = new Date(value);
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = date.toLocaleString("default", { month: "long" });
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
-    },
-  },
-  {
-    key: "estimatedUnitPrice",
-    label: "Price",
-    render: (value) => (
-      <NumericFormat
-        prefix="₦ "
-        value={value}
-        decimalScale={2}
-        fixedDecimalScale
-        displayType="text"
-        thousandSeparator=","
-      />
-    ),
-  },
-  {
-    key: "status",
-    label: "Status",
-    render: (value) => {
-      const statusColors: Record<string, string> = {
-        draft: "text-gray-500",
-        departmentApproved: "text-green-500",
-        procurementApproved: "text-blue-500",
-        cancelled: "text-red-500",
-        pending: "text-orange-500",
-        bidding: "text-purple-500",
-      };
-      return (
-        <span className={statusColors[value] ?? "text-gray-500"}>{value}</span>
-      );
-    },
-  },
-  {
-    key: "department",
-    label: "Department",
-    render: (value) => value.name,
-  },
-  {
-    key: "_id",
-    label: "Action",
-    render: (_, row) => (
-      <div className="flex gap-2 items-center">
-        <Button
-          asChild
-          className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-        >
-          <Link href={`/pm/requests/${row._id}`}>View</Link>
-        </Button>
-        {/* <Button
-          asChild
-          className="bg-green-600 hover:bg-green-700 text-white px-4"
-        >
-          <Link href={`/procurement/bids/${row._id}`}>Manage Bids</Link>
-        </Button> */}
-      </div>
-    ),
-  },
-];
-
 export default function PMDashboard({
   page = "procurementDashboard",
 }: ProcurementManagerDashboardProps = {}) {
@@ -142,6 +28,12 @@ export default function PMDashboard({
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  // const [locations, setLocations] = useState<{ _id: string; name: string }[]>(
+  //   []
+  // );
+  const [locations, setLocations] = useState<{ _id: string; name: string }[]>(
+    []
+  );
   const [totalCount, setTotalCount] = useState(0);
   const [dashboardStats, setDashboardStats] = useState({
     total: 0,
@@ -155,6 +47,104 @@ export default function PMDashboard({
   const userId = getUserId();
   const token = getToken();
   const authdata = getAuthData();
+
+  const fetchLocations = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/locations`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data) {
+        setLocations(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch locations", error);
+    }
+  }, [token]);
+
+  const columns: Column<RequisitionShape>[] = [
+    { key: "title", label: "Request Title" },
+    {
+      key: "items",
+      label: "No. of Items",
+      render: (value) => value.length,
+    },
+    {
+      key: "createdAt",
+      label: "Date Submitted",
+      render: (value) => {
+        const date = new Date(value);
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = date.toLocaleString("default", { month: "long" });
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      },
+    },
+    {
+      key: "requester",
+      label: page === "pmRequests" ? "Requisition Number" : "Staff",
+      render: (_, row) => {
+        if (page === "pmRequests") {
+          return row.requisitionNumber;
+        }
+        const currentUser = authdata?.user;
+        return currentUser?.id === row.requester._id
+          ? "You"
+          : `${row.requester.firstName} ${row.requester.lastName}`;
+      },
+    },
+    {
+      key: "department",
+      label: "Department",
+      render: (value) => value.name,
+    },
+    {
+      key: "deliveryLocation",
+      label: "Location",
+      render: (location) => getLocationName(location, locations),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => {
+        const statusColors: Record<string, string> = {
+          draft: "text-gray-500",
+          departmentApproved: "text-green-500",
+          procurementApproved: "text-blue-500",
+          cancelled: "text-red-500",
+          pending: "text-orange-500",
+          bidding: "text-purple-500",
+        };
+        return (
+          <span className={statusColors[value] ?? "text-gray-500"}>
+            {value}
+          </span>
+        );
+      },
+    },
+    {
+      key: "_id",
+      label: "Action",
+      render: (_, row) => (
+        <div className="flex gap-2 items-center">
+          <Button
+            asChild
+            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+          >
+            <Link href={`/pm/requests/${row._id}`}>View</Link>
+          </Button>
+          {/* <Button
+          asChild
+          className="bg-green-600 hover:bg-green-700 text-white px-4"
+        >
+          <Link href={`/procurement/bids/${row._id}`}>Manage Bids</Link>
+        </Button> */}
+        </div>
+      ),
+    },
+  ];
 
   const dashboardCardItems = [
     {
@@ -244,9 +234,10 @@ export default function PMDashboard({
 
   useEffect(() => {
     if (token) {
+      fetchLocations();
       fetchRequisitions(1);
     }
-  }, [token, fetchRequisitions]);
+  }, [token, fetchRequisitions, fetchLocations]);
 
   const handlePageChange = (page: number) => {
     fetchRequisitions(page);
@@ -294,7 +285,7 @@ export default function PMDashboard({
             : "Requests"}
         </p>
 
-        {/* {page !== "procurementRequisitions" && (
+        {page !== "procurementRequisitions" && (
           <Button
             asChild
             className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
@@ -304,7 +295,7 @@ export default function PMDashboard({
               <span className="hidden lg:flex">New Request</span>
             </Link>
           </Button>
-        )} */}
+        )}
       </div>
 
       {loading ? (
