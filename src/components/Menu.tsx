@@ -36,7 +36,7 @@ const menuItems: Record<string, MenuItem[]> = {
   hod: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hod" },
     { icon: FileCog, label: "Requisitions", href: "/hod/requisitions" },
-    { icon: Package, label: "My Request", href: "/hod/my-requests" },
+    { icon: Package, label: "My Requests", href: "/hod/my-requests" },
     // { icon: User, label: "Profile", href: "/hod/profile" },
   ],
   hhra: [
@@ -48,9 +48,9 @@ const menuItems: Record<string, MenuItem[]> = {
   pm: [
     { icon: LayoutGrid, label: "Dashboard", href: "/pm" },
     { icon: FileCog, label: "Requests", href: "/pm/requests" },
-    { icon: ShoppingCart, label: "Vendors", href: "/pm/vendors" },
+    { icon: Package, label: "My Requests", href: "/pm/my-requests" },
+    // { icon: ShoppingCart, label: "Vendors", href: "/pm/vendors" },
     // { icon: Gavel, label: "Bids", href: "/pm/bids" },
-    // { icon: Package, label: "My Request", href: "/pm/my-request" },
   ],
 };
 

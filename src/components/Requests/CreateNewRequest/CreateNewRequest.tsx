@@ -102,8 +102,12 @@ export default function CreateNewRequest({
       if (createData.success) {
         if (page === "hod") {
           // For HOD: Requisition is already approved in response
-          toast.success("Requisition created and approved successfully!");
+          toast.success("Requisition created!");
           router.push("/hod/my-requests/");
+        } else if (page == "pm") {
+          // For PM: Requisition is created as a draft
+          toast.success("Requisition created!");
+          router.push("/pm/my-requests/");
         } else {
           // For user: Submit requisition
           const submitResponse = await fetch(
