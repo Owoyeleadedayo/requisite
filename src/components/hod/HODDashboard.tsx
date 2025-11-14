@@ -10,64 +10,26 @@ import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
+import getLocationName from "@/lib/getLocationName";
+import { RequisitionShape } from "@/types/requisition";
 
 interface HDODashboardProps {
   page?: "hodDashboard" | "hodRequisitions" | "hodRequests";
 }
-
-type RequisitionShape = {
-  _id: string;
-  title: string;
-  category: string;
-  description: string;
-  quantityNeeded: number;
-  image: string;
-  estimatedUnitPrice: number;
-  priority: string;
-  justification: string;
-  requester: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  department: {
-    _id: string;
-    name: string;
-    code: string;
-  };
-  status: string;
-  selectedVendors: [];
-  paymentStatus: string;
-  paymentAmount: 0;
-  shortlistedVendors: [];
-  deadlineExtensions: [];
-  approvals: [
-    {
-      stage: string;
-      approver: string;
-      status: string;
-      timestamp: string;
-      _id: string;
-      comments: string;
-    }
-  ];
-  requisitionNumber: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-};
 
 export default function HDODashboard({
   page = "hodDashboard",
 }: HDODashboardProps = {}) {
   const columns: Column<RequisitionShape>[] = [
     { key: "title", label: "Request Title" },
-    { key: "quantityNeeded", label: "QTY" },
-    { key: "category", label: "Category" },
+    {
+      key: "items",
+      label: "No. of Items",
+      render: (value) => value.length,
+    },
     {
       key: "createdAt",
-      label: "Date",
+      label: "Date Submitted",
       render: (value) => {
         const date = new Date(value);
         const day = date.getDate().toString().padStart(2, "0");
@@ -77,18 +39,22 @@ export default function HDODashboard({
       },
     },
     {
-      key: "estimatedUnitPrice",
-      label: "Price",
-      render: (value) => (
-        <NumericFormat
-          prefix="₦ "
-          value={value}
-          decimalScale={2}
-          fixedDecimalScale
-          displayType="text"
-          thousandSeparator=","
-        />
-      ),
+      key: "requester",
+      label: page === "hodRequests" ? "Requisition Number" : "Staff",
+      render: (_, row) => {
+        if (page === "hodRequests") {
+          return row.requisitionNumber;
+        }
+        const currentUser = authdata?.user;
+        return currentUser?.id === row.requester._id
+          ? "You"
+          : `${row.requester.firstName} ${row.requester.lastName}`;
+      },
+    },
+    {
+      key: "deliveryLocation",
+      label: "Location",
+      render: (location) => getLocationName(location, locations),
     },
     {
       key: "status",
@@ -105,19 +71,6 @@ export default function HDODashboard({
             {value}
           </span>
         );
-      },
-    },
-    {
-      key: "requester",
-      label: page === "hodRequests" ? "Requisition Number" : "Requester",
-      render: (_, row) => {
-        if (page === "hodRequests") {
-          return row.requisitionNumber;
-        }
-        const currentUser = authdata?.user;
-        return currentUser?.id === row.requester._id
-          ? "You"
-          : `${row.requester.firstName} ${row.requester.lastName}`;
       },
     },
     {
@@ -146,6 +99,7 @@ export default function HDODashboard({
   ];
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
+  const [locations, setLocations] = useState<{ _id: string; name: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -195,6 +149,22 @@ export default function HDODashboard({
       value: dashboardStats.rejected,
     },
   ];
+
+  const fetchLocations = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/locations`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data) {
+        setLocations(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch locations", error);
+    }
+  }, [token]);
 
   const fetchRequisitions = useCallback(
     async (pageNum: number = 1) => {
@@ -263,9 +233,10 @@ export default function HDODashboard({
 
   useEffect(() => {
     if (userId && token) {
+      fetchLocations();
       fetchRequisitions(1);
     }
-  }, [userId, token, fetchRequisitions]);
+  }, [userId, token, fetchRequisitions, fetchLocations]);
 
   const handlePageChange = (page: number) => {
     fetchRequisitions(page);

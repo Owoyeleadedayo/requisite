@@ -12,65 +12,12 @@ import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId } from "@/lib/auth";
 import { formatUrgencyText, UrgencyDisplay } from "@/lib/urgencyFormatter";
 import { formatStatus } from "@/lib/statusFormatter";
+import getLocationName from "@/lib/getLocationName";
+import { RequisitionShape, Location } from "@/types/requisition";
 
 interface UserDashboardProps {
   page?: "userDashboard" | "userRequisition";
 }
-
-type Location = {
-  _id: string;
-  name: string;
-};
-
-type ItemShape = {
-  _id: string;
-  itemName: string;
-  itemType: string;
-  itemDescription: string;
-  units: number | null;
-  isWorkTool: boolean;
-  status: string;
-};
-
-type ApprovalShape = {
-  stage: string;
-  approver: string;
-  status: string;
-  timestamp: string;
-  _id: string;
-  comments?: string;
-};
-
-type RequisitionShape = {
-  _id: string;
-  title: string;
-  urgency: string;
-  justification: string;
-  deliveryLocation: string | { _id: string; name: string };
-  deliveryDate: string;
-  items: ItemShape[];
-  requester: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-  };
-  department: {
-    _id: string;
-    name: string;
-  };
-  status: string;
-  selectedVendors: [];
-  paymentStatus: string;
-  paymentAmount: number;
-  shortlistedVendors: [];
-  deadlineExtensions: [];
-  approvals: ApprovalShape[];
-  requisitionNumber: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-};
 
 export default function UserDashboard({
   page = "userDashboard",
@@ -78,6 +25,7 @@ export default function UserDashboard({
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -125,23 +73,7 @@ export default function UserDashboard({
     },
   ];
 
-  const getLocationName = (
-    location: string | { _id: string; name: string }
-  ) => {
-    if (typeof location === "object" && location !== null) {
-      return location.name.charAt(0).toUpperCase() + location.name.slice(1);
-    }
-    if (typeof location === "string") {
-      const foundLocation = locations.find((loc) => loc._id === location);
-      if (foundLocation) {
-        return (
-          foundLocation.name.charAt(0).toUpperCase() +
-          foundLocation.name.slice(1)
-        );
-      }
-    }
-    return "N/A";
-  };
+
 
   const columns: Column<RequisitionShape>[] = [
     { key: "title", label: "Request Title" },
@@ -166,7 +98,7 @@ export default function UserDashboard({
     {
       key: "deliveryLocation",
       label: "Location",
-      render: (location) => getLocationName(location),
+      render: (location) => getLocationName(location, locations),
     },
     {
       key: "status",
@@ -195,6 +127,8 @@ export default function UserDashboard({
       ),
     },
   ];
+
+
 
   const fetchLocations = useCallback(async () => {
     try {
