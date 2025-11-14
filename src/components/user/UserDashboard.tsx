@@ -10,108 +10,22 @@ import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId } from "@/lib/auth";
+import { formatUrgencyText, UrgencyDisplay } from "@/lib/urgencyFormatter";
+import { formatStatus } from "@/lib/statusFormatter";
+import getLocationName from "@/lib/getLocationName";
+import { RequisitionShape, Location } from "@/types/requisition";
 
 interface UserDashboardProps {
   page?: "userDashboard" | "userRequisition";
 }
-
-type RequisitionShape = {
-  _id: string;
-  title: string;
-  category: string;
-  description: string;
-  quantityNeeded: number;
-  image: string;
-  estimatedUnitPrice: number;
-  priority: string;
-  justification: string;
-  requester: string;
-  department: {
-    _id: string;
-    name: string;
-    code: string;
-  };
-  status: string;
-  selectedVendors: [];
-  paymentStatus: string;
-  paymentAmount: 0;
-  shortlistedVendors: [];
-  deadlineExtensions: [];
-  approvals: [
-    {
-      stage: string;
-      approver: string;
-      status: string;
-      timestamp: string;
-      _id: string;
-      comments: string;
-    }
-  ];
-  requisitionNumber: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-};
-
-const columns: Column<RequisitionShape>[] = [
-  { key: "title", label: "Request Title" },
-  { key: "quantityNeeded", label: "No of Items" },
-  {
-    key: "createdAt",
-    label: "Date Submitted",
-    render: (value) => {
-      const date = new Date(value);
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = date.toLocaleString("default", { month: "long" });
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
-    },
-  },
-  { key: "quantityNeeded", label: "Staff" },
-  { key: "quantityNeeded", label: "Location" },
-  {
-    key: "status",
-    label: "Status",
-    render: (value) => {
-      const statusColors: Record<string, string> = {
-        draft: "text-gray-500",
-        departmentApproved: "text-green-500",
-        cancelled: "text-red-500",
-        pending: "text-orange-500",
-      };
-      return (
-        <span className={statusColors[value] ?? "text-gray-500"}>{value}</span>
-      );
-    },
-  },
-  {
-    key: "_id",
-    label: "Action",
-    render: (_, row) => (
-      <div className="flex gap-2 items-center">
-        <Button
-          asChild
-          className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-        >
-          <Link href={`/user/requisition/${row._id}`}>View</Link>
-        </Button>
-
-        <Button
-          asChild
-          className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-        >
-          <Link href={`/user/requisition/${row._id}?mode=edit`}>Edit</Link>
-        </Button>
-      </div>
-    ),
-  },
-];
 
 export default function UserDashboard({
   page = "userDashboard",
 }: UserDashboardProps = {}) {
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -158,6 +72,79 @@ export default function UserDashboard({
       value: dashboardStats.rejected,
     },
   ];
+
+
+
+  const columns: Column<RequisitionShape>[] = [
+    { key: "title", label: "Request Title" },
+    { key: "items", label: "No. of Items", render: (items) => items.length },
+    {
+      key: "createdAt",
+      label: "Date Submitted",
+      render: (value) => {
+        const date = new Date(value);
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = date.toLocaleString("default", { month: "long" });
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      },
+    },
+    {
+      key: "urgency",
+      label: "Urgency",
+      // render: (urgency) => urgency[0].toUpperCase() + urgency.slice(1),
+      render: (urgency) => <UrgencyDisplay urgency={urgency} />,
+    },
+    {
+      key: "deliveryLocation",
+      label: "Location",
+      render: (location) => getLocationName(location, locations),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => formatStatus(value),
+    },
+    {
+      key: "_id",
+      label: "Action",
+      render: (_, row) => (
+        <div className="flex gap-2 items-center">
+          <Button
+            asChild
+            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+          >
+            <Link href={`/user/requisition/${row._id}`}>View</Link>
+          </Button>
+
+          <Button
+            asChild
+            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+          >
+            <Link href={`/user/requisition/${row._id}?mode=edit`}>Edit</Link>
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+
+
+  const fetchLocations = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/locations`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (data) {
+        setLocations(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch locations", error);
+    }
+  }, [token]);
 
   const fetchRequisitions = useCallback(
     async (pageNum: number = 1) => {
@@ -214,9 +201,10 @@ export default function UserDashboard({
 
   useEffect(() => {
     if (userId && token) {
+      fetchLocations();
       fetchRequisitions(1);
     }
-  }, [userId, token, fetchRequisitions]);
+  }, [userId, token, fetchRequisitions, fetchLocations]);
 
   const handlePageChange = (page: number) => {
     fetchRequisitions(page);

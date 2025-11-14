@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,7 +11,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/components/ui/select"; // Keep for HOD/PM actions if needed
 import { ArrowLeft, Loader2, Upload } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -37,6 +35,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import ItemFormDialog from "../ItemFormDialog";
+import ItemsList from "../ItemsList";
+import ItemViewDialog from "../ItemViewDialog";
+import { Textarea } from "@/components/ui/textarea";
+import RequestForm from "../RequestForm";
+import { Item, Vendor } from "../types";
+import { formatStatus } from "@/lib/statusFormatter";
 
 interface RequestData {
   _id: string;
@@ -44,10 +49,10 @@ interface RequestData {
   description: string;
   category: string;
   quantityNeeded: number;
-  estimatedUnitPrice: number;
   justification: string;
   requisitionNumber: string;
   image: string;
+  deliveryLocation: string;
   priority: "low" | "medium" | "high";
   attachment?: string;
   requester?: {
@@ -56,7 +61,12 @@ interface RequestData {
     lastName: string;
   };
   status?: string;
+  items?: Item[];
+  deliveryDate?: string;
 }
+
+// Define a type for the item object received from the API
+type BackendItem = Omit<Item, "id"> & { _id: string };
 
 interface ViewEditRequestProps {
   requisitionId: string;
@@ -83,17 +93,39 @@ export default function ViewEditRequest({
     description: "",
     category: "",
     quantityNeeded: 0,
-    estimatedUnitPrice: 0,
     justification: "",
     requisitionNumber: "",
     image: "",
+    deliveryLocation: "",
     priority: "medium",
     attachment: "",
     requester: { _id: "", firstName: "", lastName: "" },
     status: "",
+    items: [],
   });
 
   const [urgency, setUrgency] = useState([1]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
+  const [isItemViewDialogOpen, setIsItemViewDialogOpen] = useState(false);
+  const [viewingItem, setViewingItem] = useState<Item | null>(null);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [vendorsLoading, setVendorsLoading] = useState(true);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [dateStart, setDateStart] = useState<Date | undefined>();
+
+  const [currentItem, setCurrentItem] = useState<Item>({
+    id: 0,
+    itemName: "",
+    itemType: "",
+    preferredBrand: "",
+    itemDescription: "",
+    uploadImage: null,
+    units: "",
+    UOM: "",
+    recommendedVendor: "",
+    isWorkTool: "",
+  });
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [showApprovalModal, setShowApprovalModal] = useState(false);
@@ -112,6 +144,12 @@ export default function ViewEditRequest({
     userType === "hod" ? "/hod/requisitions" : "/user/requisition";
 
   useEffect(() => {
+    const urgencyMap: Record<string, number> = {
+      low: 0,
+      medium: 1,
+      high: 2,
+    };
+
     const reversePriorityMap: Record<RequestData["priority"], number> = {
       low: 0,
       medium: 1,
@@ -129,9 +167,22 @@ export default function ViewEditRequest({
         const data = await res.json();
         if (data.success) {
           const req = data.data;
-          setFormData(req);
-          const priority = req.priority as RequestData["priority"];
-          setUrgency([reversePriorityMap[priority]]);
+          setFormData({
+            ...req,
+            title: req.title,
+            justification: req.justification,
+          });
+          setItems(
+            req.items.map((item: BackendItem, index: number) => ({
+              ...item,
+              id: item._id || index,
+            }))
+          );
+          const urgencyValue = req.urgency || req.priority;
+          setUrgency([urgencyMap[urgencyValue] || 1]);
+          if (req.deliveryDate) {
+            setDateStart(new Date(req.deliveryDate));
+          }
         } else setNotFound(true);
       } catch (error) {
         console.error(error);
@@ -139,10 +190,81 @@ export default function ViewEditRequest({
       }
     };
     fetchRequest();
-  }, [requisitionId, token]);
 
-  const handleChange = (field: keyof RequestData, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    const fetchAllVendors = async (token: string) => {
+      setVendorsLoading(true);
+      let allVendors: Vendor[] = [];
+      let currentPage = 1;
+      let totalPages = 1;
+
+      try {
+        do {
+          const response = await fetch(
+            `${API_BASE_URL}/vendors?page=${currentPage}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const data = await response.json();
+          if (data.success) {
+            allVendors = [...allVendors, ...data.data];
+            totalPages = data.pagination.pages;
+            currentPage++;
+          } else {
+            console.error("Failed to fetch a page of vendors:", data.message);
+            break;
+          }
+        } while (currentPage <= totalPages);
+
+        setVendors(allVendors);
+      } catch (error) {
+        console.error("Error fetching vendors:", error);
+        toast.error("Could not load vendors.");
+      } finally {
+        setVendorsLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchAllVendors(token);
+    }
+  }, [requisitionId, token, isEditMode]);
+
+  const handleItemFormChange = (
+    field: keyof Item,
+    value: string | number | boolean | File | null
+  ) => {
+    setCurrentItem((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddItem = () => {
+    if (
+      !currentItem.itemName ||
+      !currentItem.itemType ||
+      !currentItem.itemDescription ||
+      typeof currentItem.isWorkTool !== "boolean"
+    ) {
+      toast.error("Please fill all required fields marked with *");
+      return;
+    }
+
+    if (editingItemId !== null) {
+      setItems(
+        items.map((item) => (item.id === editingItemId ? currentItem : item))
+      );
+      toast.success("Item updated successfully!");
+    } else {
+      setItems([...items, { ...currentItem, id: Date.now() }]);
+      toast.success("Item added successfully!");
+    }
+
+    resetCurrentItem();
+    setIsItemDialogOpen(false);
+  };
+
+  const handleDeleteItem = (id: number | string) => {
+    setItems(items.filter((item) => item.id !== id));
+    toast.success("Item removed.");
   };
 
   const handleSave = async () => {
@@ -156,7 +278,14 @@ export default function ViewEditRequest({
         },
         body: JSON.stringify({
           ...formData,
-          priority: priorityMap[urgency[0]],
+          urgency: priorityMap[urgency[0]],
+          items: items.map(({ id, uploadImage, ...rest }) => {
+            const { recommendedVendor, ...itemPayload } = rest;
+            if (recommendedVendor) {
+              return { ...itemPayload, recommendedVendor };
+            }
+            return itemPayload;
+          }),
         }),
       });
       const data = await res.json();
@@ -172,6 +301,22 @@ export default function ViewEditRequest({
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetCurrentItem = () => {
+    setCurrentItem({
+      id: 0,
+      itemName: "",
+      itemType: "",
+      preferredBrand: "",
+      itemDescription: "",
+      uploadImage: null,
+      units: "",
+      UOM: "",
+      recommendedVendor: "",
+      isWorkTool: "",
+    });
+    setEditingItemId(null);
   };
 
   const handleCancel = async () => {
@@ -318,15 +463,37 @@ export default function ViewEditRequest({
         </Link>
       </div>
 
-      <h1 className="text-2xl lg:text-3xl font-bold text-[#0F1E7A] mb-6">
-        {isEditMode ? "Update Request" : "View Request"} -{" "}
-        {formData.requisitionNumber}
-      </h1>
+      <div className="w-full flex items-center gap-2 mb-6">
+        <h1 className="text-2xl lg:text-3xl font-bold text-[#0F1E7A]">
+          {isEditMode ? "Update Request" : "View Request"} -{" "}
+          {formData.requisitionNumber}{" "}
+        </h1>
+        {formData.status && (
+          <span className="status-badge ml-4">
+            <span
+              className={`py-3 px-4 rounded-full text-sm font-semibold text-white ${
+                formData.status === "submitted"
+                  ? "bg-orange-500"
+                  : formData.status === "departmentApproved"
+                  ? "bg-green-500"
+                  : formData.status === "cancelled"
+                  ? "bg-red-500"
+                  : "bg-gray-500"
+              }`}
+            >
+              {formData.status[0].toUpperCase() + formData.status.slice(1)}
+            </span>
+            {/* {formatStatus(formData.status)} */}
+          </span>
+        )}
+      </div>
 
-      <div className="grid grid-cols-[50%_45%] gap-18">
+      {/* <div className="w-full flex flex-col lg:flex-row gap-8 container"> */}
+      <div className="grid grid-cols-1 lg:grid-cols-[50%_45%]  w-full lg:max-w-7xl gap-10">
         <div className="w-full flex flex-col pb-16">
           <div className="request relative w-full space-y-5">
-            {formData.status && (
+            {/* Request Status */}
+            {/* {formData.status && (
               <div className="status-badge absolute top-0 right-0 z-[5]">
                 <span
                   className={`py-3 px-4 rounded-sm text-sm font-semibold text-white ${
@@ -342,9 +509,10 @@ export default function ViewEditRequest({
                   {formData.status}
                 </span>
               </div>
-            )}
+            )} */}
 
-            <div className="w-full space-y-2">
+            {/* Request Image */}
+            {/* <div className="w-full space-y-2">
               <div className="relative w-full h-[300px] rounded-xl overflow-hidden bg-gray-100">
                 <Image
                   fill
@@ -361,169 +529,48 @@ export default function ViewEditRequest({
                     : `${formData.requester.firstName} ${formData.requester.lastName}`}
                 </p>
               )}
-            </div>
+            </div> */}
 
-            <div className="space-y-2">
-              <Label>Name of Item</Label>
-              <Input
-                value={formData.title}
-                onChange={(e) => handleChange("title", e.target.value)}
-                readOnly={!isEditMode}
-                className="!p-4 rounded-md border shadow-sm"
-              />
-            </div>
-
-            <div className="w-full flex gap-3">
-              <div className="w-full space-y-2">
-                <Label>Item Type *</Label>
-                <Select>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="product">Product</SelectItem>
-                    <SelectItem value="service">Service</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full space-y-2">
-                <Label>Brand</Label>
-                <Input
-                  placeholder="Brand"
-                  className="!p-4 rounded-md border shadow-sm"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Item Description</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => handleChange("description", e.target.value)}
-                readOnly={!isEditMode}
-                className="min-h-[100px] rounded-md border shadow-sm"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Attach Image</Label>
-              <div className="flex items-center gap-2 border p-3 rounded-md shadow-sm py-1">
-                <Upload className="h-5 w-5 text-gray-500" />
-                <Input
-                  type="file"
-                  accept=".png,.jpg,.jpeg"
-                  disabled={!isEditMode}
-                  className="border-none shadow-none focus-visible:ring-0 p-0 text-sm"
-                />
-              </div>
-              <p className="text-xs text-gray-500">
-                Upload image most preferably in PNG, JPEG format.
-              </p>
-            </div>
-
-            <div className="w-full flex gap-3">
-              <div className="w-full space-y-2">
-                <Label>Units</Label>
-                <Input
-                  placeholder="Units"
-                  className="!p-4 rounded-md border shadow-sm"
-                  required
-                />
-              </div>
-              <div className="w-full space-y-2">
-                <Label>UOM (Unit of Measure)</Label>
-                <Select>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="UOM" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="product">Product</SelectItem>
-                    <SelectItem value="service">Service</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="w-full flex gap-3">
-              <div className="w-full space-y-2">
-                <Label>Recommended Vendor</Label>
-                <Input
-                  placeholder="Vendor"
-                  className="!p-4 rounded-md border shadow-sm"
-                  required
-                />
-              </div>
-              <div className="w-full space-y-2">
-                <Label>Is this a worktool? *</Label>
-                <Select>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="yes">Yes</SelectItem>
-                    <SelectItem value="no">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            <RequestForm
+              formData={formData}
+              setFormData={setFormData}
+              urgency={urgency}
+              setUrgency={setUrgency}
+              dateStart={dateStart}
+              setDateStart={setDateStart}
+              handleSubmit={handleSave}
+              loading={loading}
+              isEditMode={isEditMode}
+            />
 
             <div className="flex flex-col sm:flex-row gap-3 pt-6">
               {isEditMode ? (
-               <>
-               <Button
-                 onClick={() => onEditModeChange(false)}
-                 variant="outline"
-                 className="flex-1 py-6"
-               >
-                 Cancel Edit
-               </Button>
-               <Button
-                 disabled={loading}
-                 onClick={handleSave}
-                 className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-               >
-                 {loading ? "Saving..." : "Save"}
-               </Button>
-             </>
-           ) : (
-             <>
-               {userType === "procurementManager" ? (
-                 <>
-                   <Button
-                     onClick={() => router.push("/pm/generate-rfq")} 
-                     className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-                   >
-                     Generate RFQ
-                   </Button>
-                   <Button
-                     onClick={() => router.push(backPath)}
-                     className="bg-[#DE1216] hover:bg-[#0b154b] text-white flex-1 py-6"
-                   >
-                     Close
-                   </Button>
-                 </>
-               ) : (
-                 <>
-                   <Button className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6 cursor-pointer">
-                     Approve
-                   </Button>
-                   <Button
-                     onClick={() => router.push(backPath)}
-                     className="bg-[#DE1216] hover:bg-[#0b154b] text-white flex-1 py-6"
-                   >
-                     Close
-                   </Button>
-                 </>
-               )}
-           
-               {(userType === "user" || user?.id === formData.requester?._id) && (
-                 <Button
-                   onClick={() => onEditModeChange(true)}
-                   className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-                 >
-                   Edit
-                 </Button>
-               )}
+                <>
+                  <Button
+                    onClick={() => onEditModeChange(false)}
+                    className="border border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
+                  >
+                    Cancel Edit
+                  </Button>
+                  <Button
+                    disabled={loading}
+                    onClick={handleSave}
+                    className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
+                  >
+                    {loading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {(userType === "user" ||
+                    user?.id === formData.requester?._id) && (
+                    <Button
+                      onClick={() => onEditModeChange(true)}
+                      className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6 w-full"
+                    >
+                      Edit
+                    </Button>
+                  )}
                   {userType === "hod" && formData.status === "submitted" && (
                     <>
                       <Dialog
@@ -624,8 +671,8 @@ export default function ViewEditRequest({
                 >
                   <DialogTrigger className="bg-white max-w-2xl" asChild>
                     <Button
-                      variant="outline"
-                      className="border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
+                      variant="destructive"
+                      className="flex-1 py-6 bg-red-600 hover:bg-red-700"
                     >
                       Cancel Request
                     </Button>
@@ -667,58 +714,48 @@ export default function ViewEditRequest({
         </div>
 
         <div className="flex flex-col gap-8">
-          {userType === "hod" || "procurementManager" && (
-            <div className="flex flex-col w-full bg-white border border-[#E5E5E5] p-5 rounded-md shadow-md gap">
-              <div className="flex gap-3">
-                <Select>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Bulk Actions" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white">
-                    <SelectItem value="product">Product</SelectItem>
-                    <SelectItem value="service">Service</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button className="bg-[#0F1E7A] text-white cursor-pointer capitalize">
-                  Apply
-                </Button>
-              </div>
-              <div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>
-                        <Checkbox />
-                      </TableHead>
-                      <TableHead>Item Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>
-                        <Checkbox />
-                      </TableCell>
-                      <TableCell>New Microphones</TableCell>
-                      <TableCell>Product</TableCell>
-                      <TableCell className="text-[#F59313]">Pending</TableCell>
-                      <TableCell>
-                        <Button className="bg-[#0F1E7A] h-[35px] text-white cursor-pointer capitalize">
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
-
-          {/* To decide on who can make comments on bids  */}
+          {/* {isEditMode ? ( */}
+          <>
+            <ItemsList
+              isEditMode={isEditMode}
+              items={items}
+              onAddNewItem={() => {
+                resetCurrentItem();
+                setIsItemDialogOpen(true);
+              }}
+              onEditItem={(item) => {
+                setCurrentItem(item);
+                setEditingItemId(item.id);
+                setIsItemDialogOpen(true);
+              }}
+              onViewItem={(item) => {
+                setViewingItem(item);
+                setIsItemViewDialogOpen(true);
+              }}
+              onDeleteItem={handleDeleteItem}
+            />
+            <ItemFormDialog
+              vendors={vendors}
+              isOpen={isItemDialogOpen}
+              currentItem={currentItem}
+              handleAddItem={handleAddItem}
+              editingItemId={editingItemId}
+              vendorsLoading={vendorsLoading}
+              onOpenChange={setIsItemDialogOpen}
+              handleItemFormChange={handleItemFormChange}
+            />
+            {viewingItem && (
+              <ItemViewDialog
+                isOpen={isItemViewDialogOpen}
+                onOpenChange={setIsItemViewDialogOpen}
+                currentItem={viewingItem}
+                vendors={vendors}
+              />
+            )}
+          </>
+          {/* ) : ( */}
           <Comments entityId={requisitionId} entityType="requisitions" />
+          {/* )} */}
         </div>
       </div>
     </div>

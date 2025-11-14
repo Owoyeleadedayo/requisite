@@ -5,6 +5,24 @@ export type UserTypes =
   | "procurementManager"
   | "vendor";
 
+export type ItemType = "product" | "service" | "";
+
+export interface Item {
+  id: number; // for local tracking
+  itemName: string;
+  itemType: ItemType;
+  preferredBrand: string;
+  itemDescription: string;
+  uploadImage: File | null;
+  units: number | "";
+  status?: string;
+  uploadedImageUrl?: string; // Which is for image url?
+  imageUrl?: string; // Which is for image url?
+  UOM: string;
+  recommendedVendor: string;
+  isWorkTool: boolean | string;
+}
+
 export interface RequestData {
   _id: string;
   title: string;
@@ -44,6 +62,11 @@ export interface RequestData {
   createdAt?: string;
   updatedAt?: string;
   __v?: number;
+}
+
+export interface Vendor {
+  _id: string;
+  name: string;
 }
 
 export interface ViewEditRequestProps {

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import ApprovalModal from "./ApprovalModal";
 import DenialModal from "./DenialModal";
 import CancelRequestModal from "./CancelRequestModal";
-import { RequestActionsProps } from "./types";
+import { RequestActionsProps } from "../types";
 
 export default function RequestActions({
   isEditMode,
@@ -39,9 +39,9 @@ export default function RequestActions({
       {isEditMode ? (
         <>
           <Button
-            onClick={() => onEditModeChange(false)}
             variant="outline"
             className="flex-1 py-6"
+            onClick={() => onEditModeChange(false)}
           >
             Cancel Edit
           </Button>

@@ -27,8 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={montserrat.className}>
+    <html lang="en" className={montserrat.variable}>
+      <body className={`${montserrat.className} font-sans`}>
         {children}
         <Toaster
           closeButton
