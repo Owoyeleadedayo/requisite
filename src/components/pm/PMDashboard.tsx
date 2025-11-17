@@ -72,6 +72,11 @@ export default function PMDashboard({
       render: (value) => value.length,
     },
     {
+      key: "department",
+      label: "Department",
+      render: (value) => value.name,
+    },
+    {
       key: "createdAt",
       label: "Date Submitted",
       render: (value) => {
@@ -94,11 +99,6 @@ export default function PMDashboard({
           ? "You"
           : `${row.requester.firstName} ${row.requester.lastName}`;
       },
-    },
-    {
-      key: "department",
-      label: "Department",
-      render: (value) => value.name,
     },
     {
       key: "deliveryLocation",
@@ -290,7 +290,7 @@ export default function PMDashboard({
             asChild
             className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
           >
-            <Link href="/pm/my-request/create-new">
+            <Link href="/pm/my-requests/create-new">
               <Plus size={22} />{" "}
               <span className="hidden lg:flex">New Request</span>
             </Link>
