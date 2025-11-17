@@ -117,7 +117,6 @@ export default function HDODashboard({
   const token = getToken();
   const authdata = getAuthData();
   const departmentId = authdata?.user?.department?._id;
-  console.log("departmentId: ", departmentId);
 
   const dashboardCardItems = [
     {

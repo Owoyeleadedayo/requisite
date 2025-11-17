@@ -255,6 +255,8 @@ export default function CreateNewRequest({
             href={
               page === "hod"
                 ? "/hod/my-requests"
+                : page === "pm"
+                ? "/pm/my-requests"
                 : page === "user"
                 ? "/user/requisition"
                 : ""
