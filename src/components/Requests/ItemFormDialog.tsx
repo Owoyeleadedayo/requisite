@@ -45,7 +45,7 @@ interface ItemFormDialogProps {
     value: string | number | boolean | File | null
   ) => void;
   handleAddItem: () => void;
-  editingItemId: number | null;
+  editingItemId: string | null;
   vendors: Vendor[];
   vendorsLoading: boolean;
 }

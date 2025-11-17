@@ -111,11 +111,11 @@ export default function ViewEditRequest({
   const [viewingItem, setViewingItem] = useState<Item | null>(null);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [vendorsLoading, setVendorsLoading] = useState(true);
-  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [dateStart, setDateStart] = useState<Date | undefined>();
 
   const [currentItem, setCurrentItem] = useState<Item>({
-    id: 0,
+    _id: "",
     itemName: "",
     itemType: "",
     preferredBrand: "",
@@ -250,11 +250,11 @@ export default function ViewEditRequest({
 
     if (editingItemId !== null) {
       setItems(
-        items.map((item) => (item.id === editingItemId ? currentItem : item))
+        items.map((item) => (item._id === editingItemId ? currentItem : item))
       );
       toast.success("Item updated successfully!");
     } else {
-      setItems([...items, { ...currentItem, id: Date.now() }]);
+      setItems([...items, { ...currentItem, _id: Date.now().toString() }]);
       toast.success("Item added successfully!");
     }
 
@@ -263,7 +263,7 @@ export default function ViewEditRequest({
   };
 
   const handleDeleteItem = (id: number | string) => {
-    setItems(items.filter((item) => item.id !== id));
+    setItems(items.filter((item) => item._id !== id));
     toast.success("Item removed.");
   };
 
@@ -279,7 +279,7 @@ export default function ViewEditRequest({
         body: JSON.stringify({
           ...formData,
           urgency: priorityMap[urgency[0]],
-          items: items.map(({ id, uploadImage, ...rest }) => {
+          items: items.map(({ _id, uploadImage, ...rest }) => {
             const { recommendedVendor, ...itemPayload } = rest;
             if (recommendedVendor) {
               return { ...itemPayload, recommendedVendor };
@@ -305,7 +305,7 @@ export default function ViewEditRequest({
 
   const resetCurrentItem = () => {
     setCurrentItem({
-      id: 0,
+      _id: "",
       itemName: "",
       itemType: "",
       preferredBrand: "",
@@ -725,7 +725,7 @@ export default function ViewEditRequest({
               }}
               onEditItem={(item) => {
                 setCurrentItem(item);
-                setEditingItemId(item.id);
+                setEditingItemId(item._id);
                 setIsItemDialogOpen(true);
               }}
               onViewItem={(item) => {

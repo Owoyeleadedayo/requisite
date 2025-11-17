@@ -15,7 +15,7 @@ import { Item } from "./types";
 interface ItemsListProps {
   items: Item[];
   onEditItem: (item: Item) => void;
-  onDeleteItem: (id: number) => void;
+  onDeleteItem: (id: string) => void;
   onAddNewItem: () => void;
   onViewItem: (item: Item) => void;
   isEditMode?: boolean;
@@ -65,7 +65,7 @@ export default function ItemsList({
         </TableHeader>
         <TableBody>
           {items.map((item) => (
-            <TableRow key={item.id}>
+            <TableRow key={item._id}>
               <TableCell>{item.itemName}</TableCell>
               <TableCell>{item.units || "N/A"}</TableCell>
               <TableCell>
@@ -97,7 +97,7 @@ export default function ItemsList({
                   variant="ghost"
                   className="!px-2 !lg:px-1"
                   disabled={!isEditMode}
-                  onClick={() => onDeleteItem(item.id)}
+                  onClick={() => onDeleteItem(item._id)}
                 >
                   <Trash2 size={24} className="!text-red-500" />
                 </Button>

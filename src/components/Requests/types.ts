@@ -8,7 +8,7 @@ export type UserTypes =
 export type ItemType = "product" | "service" | "";
 
 export interface Item {
-  id: number; // for local tracking
+  _id: string; // for local tracking
   itemName: string;
   itemType: ItemType;
   preferredBrand: string;
