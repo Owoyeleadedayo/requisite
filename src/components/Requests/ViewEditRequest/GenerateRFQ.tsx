@@ -310,7 +310,9 @@ const GenerateRFQ = () => {
                           </div>
                         </div>
                         <div>
-                        <Button className="bg-[#0F1E7A] text-white cursor-pointer">Add Vendor</Button>
+                          <Button className="bg-[#0F1E7A] text-white cursor-pointer">
+                            Add Vendor
+                          </Button>
                         </div>
                       </div>
                     </div>
