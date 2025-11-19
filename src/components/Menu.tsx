@@ -41,8 +41,9 @@ const menuItems: Record<string, MenuItem[]> = {
   ],
   hhra: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
-    { icon: FileCog, label: "Request", href: "/hhra/request" },
-    { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
+    { icon: FileCog, label: "Requisitions", href: "/hhra/requisitions" },
+    { icon: FileCog, label: "Request", href: "/hhra/my-requests" },
+    // { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
     // { icon: User, label: "Profile", href: "/hhra/profile" },
   ],
   pm: [
