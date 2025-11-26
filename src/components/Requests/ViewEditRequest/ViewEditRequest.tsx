@@ -72,7 +72,7 @@ type BackendItem = Omit<Item, "id"> & { _id: string };
 
 interface ViewEditRequestProps {
   requisitionId: string;
-  userType: "user" | "hod" | "hhra" | "procurementManager" | "vendor";
+  userType: "user" | "hod" | "hhra" | "admin" | "procurementManager" | "vendor";
   isEditMode: boolean;
   onEditModeChange: (mode: boolean) => void;
 }
@@ -146,7 +146,13 @@ export default function ViewEditRequest({
   };
 
   const backPath =
-    userType === "hod" ? "/hod/requisitions" : "/user/requisition";
+    userType === "hod"
+      ? "/hod/requisitions"
+      : userType === "procurementManager"
+      ? "/pm/requisitions"
+      : userType === "admin"
+      ? "/hhra/requisitions"
+      : "/user/requisition";
 
   useEffect(() => {
     const urgencyMap: Record<string, number> = {
