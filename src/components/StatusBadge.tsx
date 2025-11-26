@@ -41,6 +41,10 @@ const statusMap: Record<string, StatusMap> = {
     label: "Rejected by HOD",
     color: "bg-red-100 text-red-800",
   },
+  hrReview: {
+    label: "Approved by HOD (hr review)",
+    color: "bg-blue-100 text-blue-800",
+  },
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
   vendorBidding: {
     label: "Active Bidding Ongoing",

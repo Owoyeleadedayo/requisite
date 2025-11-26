@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import Image from "next/image";
-import { Item, Vendor } from "./types";
+import { Item, UserTypes, Vendor } from "./types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,13 +12,22 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogTrigger,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import StatusBadge from "@/components/StatusBadge";
 
 interface ItemViewDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   currentItem: Item;
   vendors: Vendor[];
+  userType: UserTypes;
+  approveRequisitionItem: (item: string) => Promise<void>;
+  rejectRequisitionItem: (item: string) => Promise<void>;
+  itemComment: string;
+  setItemComment: Dispatch<SetStateAction<string>>;
+  isItemRequestLoading: boolean;
 }
 
 export default function ItemViewDialog({
@@ -26,8 +35,17 @@ export default function ItemViewDialog({
   onOpenChange,
   currentItem,
   vendors,
+  userType,
+  approveRequisitionItem,
+  rejectRequisitionItem,
+  itemComment,
+  setItemComment,
+  isItemRequestLoading,
 }: ItemViewDialogProps) {
   const noImage = "/no-image.svg";
+
+  const [approveItemDialogOpen, setApproveItemDialogOpen] = useState(false);
+  const [rejectItemDialogOpen, setRejectItemDialogOpen] = useState(false);
 
   const getVendorName = (vendorId: string) => {
     const vendor = vendors.find((v) => v._id === vendorId);
@@ -66,10 +84,14 @@ export default function ItemViewDialog({
             <div className="w-full space-y-2">
               <Label className="font-bold">Status</Label>
               <div className="p-4 rounded-md text-gray-700">
-                {currentItem.status
-                  ? currentItem.status[0].toUpperCase() +
-                    currentItem.status.slice(1).toLowerCase()
-                  : "N/A"}
+                {currentItem.status ? (
+                  <StatusBadge
+                    status={currentItem.status}
+                    className="text-sm px-2 py-1"
+                  />
+                ) : (
+                  "N/A"
+                )}
               </div>
             </div>
           </div>
@@ -127,9 +149,105 @@ export default function ItemViewDialog({
           </div>
         </div>
 
-        <div className="w-full mt-4 flex-shrink-0">
+        <div className="flex gap-2 w-full mt-4">
+          {userType === "hod" && (
+            <>
+              <Dialog
+                open={approveItemDialogOpen}
+                onOpenChange={(open) => {
+                  setItemComment("");
+                  setApproveItemDialogOpen(open);
+                }}>
+                <DialogTrigger asChild>
+                  <Button
+                    disabled={currentItem.status !== "pending"}
+                    className="bg-green-600 hover:bg-green-700 text-white flex-1">
+                    Approve
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl bg-white">
+                  <DialogHeader>
+                    <DialogTitle>Approve Item</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Approval Comment</Label>
+                      <Textarea
+                        value={itemComment}
+                        onChange={(e) => setItemComment(e.target.value)}
+                        placeholder="Add a comment for approval"
+                        className="mt-2"
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <Button
+                        onClick={() =>
+                          approveRequisitionItem(currentItem._id).then(() => {
+                            setApproveItemDialogOpen(false);
+                            onOpenChange(false);
+                          })
+                        }
+                        disabled={isItemRequestLoading}
+                        className="bg-green-600 hover:bg-green-700 text-white">
+                        {isItemRequestLoading ? "Approving..." : "Approve"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+              <Dialog
+                open={rejectItemDialogOpen}
+                onOpenChange={(open) => {
+                  setItemComment("");
+                  setRejectItemDialogOpen(open);
+                }}>
+                <DialogTrigger asChild>
+                  <Button
+                    disabled={currentItem.status !== "pending"}
+                    className="bg-red-600 hover:bg-red-700 text-white flex-1">
+                    Deny
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl bg-white">
+                  <DialogHeader>
+                    <DialogTitle>Deny Item</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Reason for Denial</Label>
+                      <Textarea
+                        value={itemComment}
+                        onChange={(e) => setItemComment(e.target.value)}
+                        placeholder="Please provide a reason for denying this request"
+                        className="mt-2"
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <Button
+                        onClick={() =>
+                          rejectRequisitionItem(currentItem._id).then(() => {
+                            setRejectItemDialogOpen(false);
+                            onOpenChange(false);
+                          })
+                        }
+                        disabled={isItemRequestLoading}
+                        className="bg-red-600 hover:bg-red-700 text-white">
+                        {isItemRequestLoading ? "Denying..." : "Deny"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
           <DialogClose asChild>
-            <Button type="button" className="w-full bg-[#0F1E7A] text-white">
+            <Button type="button" className="flex-1 bg-[#0F1E7A] text-white">
               Close
             </Button>
           </DialogClose>

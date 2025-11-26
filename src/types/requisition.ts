@@ -1,3 +1,5 @@
+import {Item, RequestData} from "@/components/Requests/types";
+
 export type Location = {
   _id: string;
   name: string;
@@ -59,3 +61,23 @@ export type RequisitionShape = {
   updatedAt: string;
   __v: number;
 };
+
+export type RequisitionHandleComment = {
+    itemIds?: string[];
+    comments: string;
+}
+
+export type HandledRequisitionItem = {
+    message: string;
+    success: boolean;
+    data: {
+        item: Item;
+        requisition: RequestData;
+    }
+}
+
+export type HandledRequisition = {
+    message: string;
+    success: boolean;
+    data: RequestData
+}
