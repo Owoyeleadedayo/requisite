@@ -549,6 +549,25 @@ export default function ViewEditRequest({
               isEditMode={isEditMode}
             />
 
+            {formData.status === "departmentApproved" &&
+              userType === "procurementManager" && (
+                <div className="flex flex-col sm:flex-row gap-3 pt-6">
+                  <Button
+                    type="button"
+                    className="font-bold text-base bg-[#0F1E7A] hover:bg-[#0b154b] text-white py-6 px-10"
+                  >
+                    Generate RFQ
+                  </Button>
+
+                  <Button
+                    type="button"
+                    className="font-bold text-base bg-red-600 hover:bg-red-700 text-white py-6 px-10"
+                  >
+                    Close
+                  </Button>
+                </div>
+              )}
+
             <div className="flex flex-col sm:flex-row gap-3 pt-6">
               {isEditMode ? (
                 <>

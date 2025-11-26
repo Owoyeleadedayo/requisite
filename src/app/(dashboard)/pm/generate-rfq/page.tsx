@@ -1,13 +1,12 @@
-import GenerateRFQ from '@/components/Requests/ViewEditRequest/GenerateRFQ'
-import React from 'react'
+import GenerateRFQ from "@/components/Requests/ViewEditRequest/GenerateRFQ";
+import React from "react";
 
 const page = () => {
-
   return (
     <>
-        <GenerateRFQ />
+      <GenerateRFQ />
     </>
-  )
-}
+  );
+};
 
-export default page
+export default page;

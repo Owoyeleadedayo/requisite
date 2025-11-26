@@ -41,6 +41,7 @@ export interface RequestData {
     lastName: string;
     email: string;
   };
+  items: Item[];
   department?: {
     _id: string;
     name: string;
