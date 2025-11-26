@@ -67,17 +67,16 @@ export type RequisitionHandleComment = {
     comments: string;
 }
 
-export type HandledRequisitionItem = {
-    message: string;
-    success: boolean;
-    data: {
-        item: Item;
-        requisition: RequestData;
-    }
+export type ApiResponse<T> = {
+  success: boolean;
+  message: string;
+  data: T;
 }
 
-export type HandledRequisition = {
-    message: string;
-    success: boolean;
-    data: RequestData
+export type HandledRequisitionItem = {
+  item: Item;
+  requisition: RequestData;
 }
+
+export type HandledRequisitionItemResponse = ApiResponse<HandledRequisitionItem>;
+export type HandledRequisitionResponse = ApiResponse<RequestData>;
