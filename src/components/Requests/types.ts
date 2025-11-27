@@ -2,6 +2,7 @@ export type UserTypes =
   | "user"
   | "hod"
   | "hhra"
+  | "admin"
   | "procurementManager"
   | "vendor";
 
@@ -32,7 +33,9 @@ export interface RequestData {
   estimatedUnitPrice: number;
   justification: string;
   requisitionNumber: string;
+  deliveryLocation: string;
   image: string;
+  items: Item[];
   priority: "low" | "medium" | "high";
   attachment?: string;
   requester?: {
