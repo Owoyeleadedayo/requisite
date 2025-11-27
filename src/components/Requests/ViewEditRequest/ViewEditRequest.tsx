@@ -40,7 +40,7 @@ import ItemsList from "../ItemsList";
 import ItemViewDialog from "../ItemViewDialog";
 import { Textarea } from "@/components/ui/textarea";
 import RequestForm from "../RequestForm";
-import { Item, Vendor } from "../types";
+import { Item, UserTypes, Vendor } from "../types";
 import { formatStatus } from "@/lib/statusFormatter";
 import {requisitionService} from "@/services/requisitionService";
 import {CONSTANTS} from "@/lib/constants";
@@ -72,7 +72,7 @@ type BackendItem = Omit<Item, "id"> & { _id: string };
 
 interface ViewEditRequestProps {
   requisitionId: string;
-  userType: "user" | "hod" | "hhra" | "admin" | "procurementManager" | "vendor";
+  userType: UserTypes
   isEditMode: boolean;
   onEditModeChange: (mode: boolean) => void;
 }
@@ -361,6 +361,32 @@ export default function ViewEditRequest({
     } finally {
       setShowCancelModal(false);
       setCancelReason("");
+    }
+  };
+
+  const handleItemCheck = (itemId: string, checked: string | boolean) => {
+    if (formData.status === 'cancelled') {
+      toast.warning("Cannot act on items in a cancelled requisition");
+      return
+    }
+    if (itemId === 'header-checkbox') {
+      if (checked) {
+        const updatedSelection: string[] = []
+        for (let i = 0; i < items.length; i++) { // For loop was used due to the `continue` feature to avoid returning types like null, undefined or Boolean
+          if (items[i].status === 'pending') {
+            updatedSelection.push(items[i]._id)
+          }
+        }
+        setSelectedItems(updatedSelection);
+      } else {
+        setSelectedItems([]);
+      }
+    } else {
+      const updatedItems = checked
+        ? [...selectedItems, itemId]
+        : selectedItems.filter((item) => item !== itemId);
+      setSelectedItems(updatedItems)
+
     }
   };
 
@@ -875,12 +901,12 @@ export default function ViewEditRequest({
               isEditMode={isEditMode}
               items={items}
               selectedItems={selectedItems}
-              setSelectedItems={setSelectedItems}
               approveBulkRequisitionItems={approveBulkRequisitionItems}
               rejectBulkRequisitionItems={rejectBulkRequisitionItems}
               isItemRequestLoading={isItemRequestLoading}
               itemComment={itemComment}
               setItemComment={setItemComment}
+              handleItemCheck={handleItemCheck}
               onAddNewItem={() => {
                 resetCurrentItem();
                 setIsItemDialogOpen(true);

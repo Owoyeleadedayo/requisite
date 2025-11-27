@@ -14,37 +14,53 @@ import { Item, UserTypes } from "./types";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import StatusBadge from "@/components/StatusBadge";
 
-interface ItemsListProps {
+type ItemsListProps = ViewItemsListProps | CreateItemsListProps;
+
+interface BaseItemsListProps {
   items: Item[];
+  onEditItem: (item: Item) => void;
+  onDeleteItem: (id: string) => void;
+  onAddNewItem: () => void;
+  onViewItem: (item: Item) => void;
+  isEditMode?: boolean;
+}
+
+interface ViewItemsListProps extends BaseItemsListProps{
   selectedItems: string[];
-  setSelectedItems: Dispatch<SetStateAction<string[]>>;
   approveBulkRequisitionItems: () => Promise<void>;
   rejectBulkRequisitionItems: () => Promise<void>;
   isItemRequestLoading: boolean;
   itemComment: string;
   setItemComment: Dispatch<SetStateAction<string>>;
-  onEditItem: (item: Item) => void;
-  onDeleteItem: (id: string) => void;
-  onAddNewItem: () => void;
-  onViewItem: (item: Item) => void;
+  handleItemCheck: (itemId: string, checked:string | boolean) => void;
   userType: UserTypes;
-  isEditMode?: boolean;
+}
+
+interface CreateItemsListProps extends BaseItemsListProps{
+  selectedItems?: never;
+  approveBulkRequisitionItems?: never;
+  rejectBulkRequisitionItems?: never;
+  isItemRequestLoading?: never;
+  itemComment?: never;
+  setItemComment?: never;
+  handleItemCheck?: never;
+  userType?: never;
 }
 
 export default function ItemsList({
   items,
   selectedItems,
-  setSelectedItems,
   approveBulkRequisitionItems,
   rejectBulkRequisitionItems,
   isItemRequestLoading,
   itemComment,
   setItemComment,
+  handleItemCheck,
   onEditItem,
   onDeleteItem,
   onAddNewItem,
@@ -77,28 +93,6 @@ export default function ItemsList({
       </div>
     );
   }
-
-  const handleItemCheck = (itemId: string, checked: string | boolean) => {
-    if (itemId === 'header-checkbox') {
-      if (checked) {
-        const updatedSelection: string[] = []
-        for (let i = 0; i < items.length; i++) { // For loop was used due to the `continue` feature to avoid returning types like null, undefined or Boolean
-          if (items[i].status === 'pending') {
-            updatedSelection.push(items[i]._id)
-          }
-        }
-        setSelectedItems(updatedSelection);
-      } else {
-        setSelectedItems([]);
-      }
-    } else {
-      const updatedItems = checked
-        ? [...selectedItems, itemId]
-        : selectedItems.filter((item) => item !== itemId);
-      setSelectedItems(updatedItems)
-
-    }
-  };
 
     return (
     <div className="w-full bg-white border-2 border-[#e5e5e5e5] rounded-xl shadow-xl p-5">
@@ -236,7 +230,7 @@ export default function ItemsList({
               </TableCell>
               <TableCell className="flex gap-0">
                 {/* Todo: make reusable isHod() and other methods based on user data. keep in auth*/}
-                {userType === 'hod' ? (<Button
+                {userType === 'hod' && !isEditMode ? (<Button
                   variant="default"
                   className="px-6 py-4 bg-[#0F1E7A] text-md text-white cursor-pointer capitalize"
                   onClick={() => onViewItem(item)}

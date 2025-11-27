@@ -38,21 +38,21 @@ export const apiClient = {
             method: "GET"
         });
     },
-    post: <T>(url: string, body?: any, options?: RequestInit): Promise<T> => {
+    post: <T>(url: string, body?: unknown, options?: RequestInit): Promise<T> => {
         return request<T>(url, {
             ...options,
             method: "POST",
             body: body ? JSON.stringify(body) : undefined
         });
     },
-    put: <T>(url: string, body?: any, options?: RequestInit): Promise<T> => {
+    put: <T>(url: string, body?: unknown, options?: RequestInit): Promise<T> => {
         return request<T>(url, {
             ...options,
             method: "PUT",
             body: body ? JSON.stringify(body) : undefined
         });
     },
-    patch: <T>(url: string, body?: any, options?: RequestInit): Promise<T> => {
+    patch: <T>(url: string, body?: unknown, options?: RequestInit): Promise<T> => {
         return request<T>(url, {
             ...options,
             method: "PATCH",
