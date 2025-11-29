@@ -40,10 +40,12 @@ import ItemsList from "../ItemsList";
 import ItemViewDialog from "../ItemViewDialog";
 import { Textarea } from "@/components/ui/textarea";
 import RequestForm from "../RequestForm";
-import { Item, Vendor } from "../types";
+import { Item, UserTypes, Vendor } from "../types";
 import { formatStatus } from "@/lib/statusFormatter";
 import PMItemsList from "../PMItemsList";
 import Related from "./Related";
+import { requisitionService } from "@/services/requisitionService";
+import { CONSTANTS } from "@/lib/constants";
 
 interface RequestData {
   _id: string;
@@ -72,7 +74,7 @@ type BackendItem = Omit<Item, "id"> & { _id: string };
 
 interface ViewEditRequestProps {
   requisitionId: string;
-  userType: "user" | "hod" | "hhra" | "admin" | "procurementManager" | "vendor";
+  userType: UserTypes;
   isEditMode: boolean;
   onEditModeChange: (mode: boolean) => void;
 }
@@ -137,6 +139,8 @@ export default function ViewEditRequest({
   const [denialReason, setDenialReason] = useState("");
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [showItemsError, setShowItemsError] = useState(false);
+  const [itemComment, setItemComment] = useState("");
+  const [isItemRequestLoading, setIsItemRequestLoading] = useState(false);
 
   const priorityMap: Record<number, RequestData["priority"]> = {
     0: "low",
@@ -363,6 +367,236 @@ export default function ViewEditRequest({
     }
   };
 
+  const handleItemCheck = (itemId: string, checked: string | boolean) => {
+    if (formData.status === "cancelled") {
+      toast.warning("Cannot act on items in a cancelled requisition");
+      return;
+    }
+    if (itemId === "header-checkbox") {
+      if (checked) {
+        const updatedSelection: string[] = [];
+        for (let i = 0; i < items.length; i++) {
+          // For loop was used due to the `continue` feature to avoid returning types like null, undefined or Boolean
+          if (items[i].status === "pending") {
+            updatedSelection.push(items[i]._id);
+          }
+        }
+        setSelectedItems(updatedSelection);
+      } else {
+        setSelectedItems([]);
+      }
+    } else {
+      const updatedItems = checked
+        ? [...selectedItems, itemId]
+        : selectedItems.filter((item) => item !== itemId);
+      setSelectedItems(updatedItems);
+    }
+  };
+
+  const approveBulkRequisitionItems = async () => {
+    if (!itemComment.trim()) {
+      // Errors were thrown to allow the modal close only when the request is successful
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN
+      );
+    }
+
+    const body = {
+      itemIds: selectedItems,
+      comments:
+        itemComment.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
+    };
+
+    setIsItemRequestLoading(true);
+    try {
+      const data = await requisitionService.approveBulkRequisitionItems(
+        requisitionId,
+        body
+      );
+      if (data.success) {
+        toast.success(
+          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS
+        );
+        setItems(data.data.requisition.items); // update state on items table
+        setViewingItem(data.data.item); // update state on item view dialog
+      } else {
+        throw toast.error(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL
+        );
+      }
+    } catch (error) {
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_ERROR
+      );
+    } finally {
+      setIsItemRequestLoading(false);
+    }
+  };
+
+  const rejectBulkRequisitionItems = async () => {
+    if (!itemComment.trim()) {
+      // Errors were thrown to allow the modal close only when the request is successful
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN
+      );
+    }
+
+    const body = {
+      itemIds: selectedItems,
+      comments:
+        itemComment.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_REJECTION,
+    };
+
+    setIsItemRequestLoading(true);
+    try {
+      const data = await requisitionService.rejectBulkRequisitionItems(
+        requisitionId,
+        body
+      );
+      if (data.success) {
+        toast.success(
+          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS
+        );
+        setItems(data.data.requisition.items); // update state on items table
+        setViewingItem(data.data.item); // update state on item view dialog
+      } else {
+        throw toast.error(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL
+        );
+      }
+    } catch (error) {
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_ERROR
+      );
+    } finally {
+      setIsItemRequestLoading(false);
+    }
+  };
+
+  const approveRequisitionItem = async (itemId: string) => {
+    if (!itemComment.trim()) {
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN
+      );
+    }
+
+    const body = {
+      comments:
+        itemComment.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
+    };
+
+    setIsItemRequestLoading(true);
+    try {
+      const data = await requisitionService.approveRequisitionItem(
+        requisitionId,
+        itemId,
+        body
+      );
+      console.log(data);
+      if (data.success) {
+        toast.success(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS
+        );
+        setItems(data.data.requisition.items); // update state on items table
+        setViewingItem(data.data.item); // update state on item view dialog
+      } else {
+        throw toast.error(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_ERROR
+      );
+    } finally {
+      setIsItemRequestLoading(false);
+    }
+  };
+
+  const rejectRequisitionItem = async (itemId: string) => {
+    if (!itemComment.trim()) {
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN
+      );
+    }
+
+    const body = {
+      comments:
+        itemComment.trim() ||
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN,
+    };
+
+    setIsItemRequestLoading(true);
+    try {
+      const data = await requisitionService.rejectRequisitionItem(
+        requisitionId,
+        itemId,
+        body
+      );
+      if (data.success) {
+        toast.success(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS
+        );
+        setItems(data.data.requisition.items); // update state on items table
+        setViewingItem(data.data.item); // update state on item view dialog
+      } else {
+        throw toast.error(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_ERROR
+      );
+    } finally {
+      setIsItemRequestLoading(false);
+    }
+  };
+
+  const rejectRequisition = async () => {
+    setApprovalLoading(true);
+
+    const body = {
+      comments:
+        denialReason.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
+    };
+
+    try {
+      const data = await requisitionService.rejectRequisition(
+        requisitionId,
+        body
+      );
+      if (data.success) {
+        toast.success(
+          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_SUCCESS
+        );
+        setFormData(data.data);
+        setShowDenialModal(false);
+      } else {
+        toast.error(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_FAIL
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ERROR
+      );
+    } finally {
+      setApprovalLoading(false);
+      setDenialReason("");
+    }
+  };
+
   const handleApproval = async () => {
     setApprovalLoading(true);
     try {
@@ -439,8 +673,10 @@ export default function ViewEditRequest({
       setTimeout(() => setShowItemsError(false), 10000);
       return;
     }
-    const selectedItemsParam = selectedItems.join(',');
-    router.push(`/pm/requisitions/${requisitionId}/generate-rfq?selectedItems=${selectedItemsParam}`);
+    const selectedItemsParam = selectedItems.join(",");
+    router.push(
+      `/pm/requisitions/${requisitionId}/generate-rfq?selectedItems=${selectedItemsParam}`
+    );
   };
 
   if (notFound)
@@ -612,14 +848,31 @@ export default function ViewEditRequest({
                       Edit
                     </Button>
                   )}
-                  {userType === "hod" && formData.status === "submitted" && (
+                  {userType === "hod" && (
                     <>
                       <Dialog
                         open={showApprovalModal}
-                        onOpenChange={setShowApprovalModal}
+                        onOpenChange={(open) => {
+                          if (
+                            items!.some(
+                              (item) =>
+                                item.status === "departmentApproved" ||
+                                item.status === "hrReview"
+                            )
+                          ) {
+                            setShowApprovalModal(open);
+                          } else {
+                            toast.error(
+                              "Approve at least one item before proceeding"
+                            );
+                          }
+                        }}
                       >
                         <DialogTrigger asChild>
-                          <Button className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6">
+                          <Button
+                            disabled={formData.status !== "submitted"}
+                            className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
+                          >
                             Approve
                           </Button>
                         </DialogTrigger>
@@ -630,6 +883,13 @@ export default function ViewEditRequest({
                           <div className="space-y-4">
                             <div>
                               <Label>Approval Comment</Label>
+                              {userType === "hod" && (
+                                <span className="flex text-xs pt-2 leading-none">
+                                  Confirm that all relevant items have been
+                                  approved before proceeding, as the process
+                                  cannot be reversed.
+                                </span>
+                              )}
                               <Textarea
                                 value={approvalComment}
                                 onChange={(e) =>
@@ -662,7 +922,11 @@ export default function ViewEditRequest({
                         onOpenChange={setShowDenialModal}
                       >
                         <DialogTrigger asChild>
-                          <Button className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6">
+                          {/* Todo: refactor status check */}
+                          <Button
+                            disabled={formData.status !== "submitted"}
+                            className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
+                          >
                             Deny
                           </Button>
                         </DialogTrigger>
@@ -690,7 +954,7 @@ export default function ViewEditRequest({
                                 Cancel
                               </Button>
                               <Button
-                                onClick={handleDenial}
+                                onClick={rejectRequisition}
                                 disabled={approvalLoading}
                                 className="bg-red-600 hover:bg-red-700 text-white"
                               >
@@ -761,6 +1025,13 @@ export default function ViewEditRequest({
               <ItemsList
                 isEditMode={isEditMode}
                 items={items}
+                selectedItems={selectedItems}
+                approveBulkRequisitionItems={approveBulkRequisitionItems}
+                rejectBulkRequisitionItems={rejectBulkRequisitionItems}
+                isItemRequestLoading={isItemRequestLoading}
+                itemComment={itemComment}
+                setItemComment={setItemComment}
+                handleItemCheck={handleItemCheck}
                 onAddNewItem={() => {
                   resetCurrentItem();
                   setIsItemDialogOpen(true);
@@ -775,6 +1046,7 @@ export default function ViewEditRequest({
                   setIsItemViewDialogOpen(true);
                 }}
                 onDeleteItem={handleDeleteItem}
+                userType={userType}
               />
             ) : (
               <div className="flex flex-col gap-10">
@@ -817,7 +1089,6 @@ export default function ViewEditRequest({
                 />
               </div>
             )}
-
             <ItemFormDialog
               vendors={vendors}
               isOpen={isItemDialogOpen}
@@ -834,6 +1105,12 @@ export default function ViewEditRequest({
                 onOpenChange={setIsItemViewDialogOpen}
                 currentItem={viewingItem}
                 vendors={vendors}
+                userType={userType}
+                approveRequisitionItem={approveRequisitionItem}
+                rejectRequisitionItem={rejectRequisitionItem}
+                itemComment={itemComment}
+                setItemComment={setItemComment}
+                isItemRequestLoading={isItemRequestLoading}
               />
             )}
           </>
