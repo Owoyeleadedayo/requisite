@@ -35,7 +35,6 @@ export interface RequestData {
   requisitionNumber: string;
   deliveryLocation: string;
   image: string;
-  items: Item[];
   priority: "low" | "medium" | "high";
   attachment?: string;
   requester?: {
@@ -44,6 +43,7 @@ export interface RequestData {
     lastName: string;
     email: string;
   };
+  items: Item[];
   department?: {
     _id: string;
     name: string;

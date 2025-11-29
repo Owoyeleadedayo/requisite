@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Slider, SliderProps } from "@mui/material";
-import { log } from "console";
+// import page from "@/app/(dashboard)/pm/generate-rfq/page";
 
 interface RequestFormProps<
   T extends { title: string; justification: string; deliveryLocation: string }
@@ -55,6 +55,7 @@ function formatDate(date: Date | undefined) {
 }
 
 const marks = [{ value: 0 }, { value: 1 }, { value: 2 }];
+
 export default function RequestForm<
   T extends { title: string; justification: string; deliveryLocation: string }
 >({
@@ -104,7 +105,9 @@ export default function RequestForm<
       className="w-full bg-white space-y-5 border-2 border-[#e5e5e5e5] shadow-xl p-5 rounded-xl"
     >
       <div className="space-y-2 mb-6">
-        <Label>Request Title <span className="compulsory-field">*</span></Label>
+        <Label>
+          Request Title <span className="compulsory-field">*</span>
+        </Label>
         <Input
           placeholder="Request title"
           className="!p-4 rounded-md border shadow-sm bg-white"
@@ -116,7 +119,9 @@ export default function RequestForm<
       </div>
 
       <div className="space-y-2 mb-6">
-        <Label>Urgency <span className="compulsory-field">*</span></Label>
+        <Label>
+          Urgency <span className="compulsory-field">*</span>
+        </Label>
         <div className="w-full py-3 shadow-md rounded-md bg-white">
           <div className="pl-3 pr-6">
             <Slider
@@ -158,7 +163,9 @@ export default function RequestForm<
       </div>
 
       <div className="space-y-2 mb-6">
-        <Label>Justification <span className="compulsory-field">*</span></Label>
+        <Label>
+          Justification <span className="compulsory-field">*</span>
+        </Label>
         <Textarea
           placeholder="Justification"
           className="rounded-md min-h-[100px] border shadow-sm bg-white"
@@ -172,7 +179,9 @@ export default function RequestForm<
       </div>
 
       <div className="space-y-2 mb-6">
-        <Label>Delivery Location <span className="compulsory-field">*</span></Label>
+        <Label>
+          Delivery Location <span className="compulsory-field">*</span>
+        </Label>
         <Select
           // className="w-full"
           value={formData.deliveryLocation}
@@ -202,7 +211,9 @@ export default function RequestForm<
       </div>
 
       <div className="flex flex-col gap-1">
-        <Label>Preferred Delivery Date <span className="compulsory-field">*</span></Label>
+        <Label>
+          Preferred Delivery Date <span className="compulsory-field">*</span>
+        </Label>
         <div className="relative flex gap-2">
           <Input
             id="date-start"

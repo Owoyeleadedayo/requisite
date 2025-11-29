@@ -133,7 +133,7 @@ export default function PMDashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/pm/requests/${row._id}`}>View</Link>
+            <Link href={`/pm/requisitions/${row._id}`}>View</Link>
           </Button>
           {/* <Button
           asChild
