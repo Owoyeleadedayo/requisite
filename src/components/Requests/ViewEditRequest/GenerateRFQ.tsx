@@ -55,6 +55,7 @@ import {
   TableHead,
   TableHeader,
 } from "@/components/ui/table";
+import { toast } from "sonner";
 
 interface Location {
   _id: string;
@@ -104,9 +105,18 @@ const GenerateRFQ = () => {
   const [monthStart, setMonthStart] = useState<Date | undefined>(today);
   const [requestData, setRequestData] = useState<RequestData | null>(null);
   const [dialogSelectedItems, setDialogSelectedItems] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check if requisitionId exists and selectedItems are provided
+    if (!requisitionId || !searchParams.get("selectedItems")) {
+      toast.error("Invalid requisition ID or no items selected.");
+      router.push("/pm/requisitions");
+      return;
+    }
+
     const fetchData = async () => {
+      setIsLoading(true);
       const token = getToken();
 
       // Fetch locations
@@ -189,11 +199,13 @@ const GenerateRFQ = () => {
         }
       } catch (error) {
         console.error("Failed to fetch requisition", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [requisitionId, searchParams]);
+  }, [requisitionId, searchParams, router]);
 
   const handleCompleteRFQ = () => {
     console.log("ToDo: Complete RFQ");
@@ -913,6 +925,16 @@ const GenerateRFQ = () => {
           </Dialog>
         </div>
       </div>
+
+      {/* Loading Dialog */}
+      <Dialog open={isLoading}>
+        <DialogContent className="sm:max-w-md bg-white flex flex-col items-center">
+          <div className="flex flex-col items-center gap-4 py-6">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F1E7A]"></div>
+            <p className="text-lg font-semibold">Preparing page...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
