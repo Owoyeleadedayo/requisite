@@ -14,7 +14,7 @@ import ItemFormDialog from "../ItemFormDialog";
 import { Item, Vendor } from "../types";
 
 interface CreateNewRequestProps {
-  page: "user" | "hod" | "pm";
+  page: "user" | "hod" | "pm" | "hhra";
   data: unknown[];
 }
 
@@ -87,7 +87,7 @@ export default function CreateNewRequest({
     setLoading(true);
 
     try {
-      // Create requisition
+      // Step 1: Create requisition as draft for all users
       const createResponse = await fetch(`${API_BASE_URL}/requisitions/`, {
         method: "POST",
         headers: {
@@ -100,35 +100,34 @@ export default function CreateNewRequest({
       const createData = await createResponse.json();
 
       if (createData.success) {
-        if (page === "hod") {
-          // For HOD: Requisition is already approved in response
-          toast.success("Requisition created!");
-          router.push("/hod/my-requests/");
-        } else if (page == "pm") {
-          // For PM: Requisition is created as a draft
-          toast.success("Requisition created!");
-          router.push("/pm/my-requests/");
-        } else {
-          // For user: Submit requisition
-          const submitResponse = await fetch(
-            `${API_BASE_URL}/requisitions/${createData.data._id}/submit`,
-            {
-              method: "PUT",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          const submitData = await submitResponse.json();
-
-          if (submitData.success) {
-            toast.success("Requisition created and submitted successfully!");
-            router.push("/user/requisition/");
-          } else {
-            toast.error("Failed to submit requisition");
+        // Step 2: Submit requisition for all users
+        const submitResponse = await fetch(
+          `${API_BASE_URL}/requisitions/${createData.data._id}/submit`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
+        );
+
+        const submitData = await submitResponse.json();
+
+        if (submitData.success) {
+          toast.success("Requisition created and submitted successfully!");
+          // Navigate based on user type
+          const redirectPath =
+            page === "hod"
+              ? "/hod/my-requests/"
+              : page === "pm"
+              ? "/pm/my-requests/"
+              : page === "hhra"
+              ? "/hhra/my-requests/"
+              : "/user/requisition/";
+          router.push(redirectPath);
+        } else {
+          toast.error("Failed to submit requisition");
         }
       } else {
         if (createData.errors) {
@@ -257,9 +256,9 @@ export default function CreateNewRequest({
                 ? "/hod/my-requests"
                 : page === "pm"
                 ? "/pm/my-requests"
-                : page === "user"
-                ? "/user/requisition"
-                : ""
+                : page === "hhra"
+                ? "/hhra/my-requests"
+                : "/user/requisition"
             }
             className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-1"
           >
