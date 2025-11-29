@@ -42,6 +42,8 @@ import { Textarea } from "@/components/ui/textarea";
 import RequestForm from "../RequestForm";
 import { Item, Vendor } from "../types";
 import { formatStatus } from "@/lib/statusFormatter";
+import PMItemsList from "../PMItemsList";
+import Related from "./Related";
 
 interface RequestData {
   _id: string;
@@ -86,6 +88,7 @@ export default function ViewEditRequest({
   const user = getUser();
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
   const [formData, setFormData] = useState<RequestData>({
     _id: "",
@@ -133,6 +136,7 @@ export default function ViewEditRequest({
   const [approvalComment, setApprovalComment] = useState("");
   const [denialReason, setDenialReason] = useState("");
   const [approvalLoading, setApprovalLoading] = useState(false);
+  const [showItemsError, setShowItemsError] = useState(false);
 
   const priorityMap: Record<number, RequestData["priority"]> = {
     0: "low",
@@ -428,6 +432,17 @@ export default function ViewEditRequest({
     }
   };
 
+  const handleGenerateRFQ = async () => {
+    if (selectedItems.length === 0) {
+      toast.error("Please select at least one item to generate RFQ");
+      setShowItemsError(true);
+      setTimeout(() => setShowItemsError(false), 10000);
+      return;
+    }
+    const selectedItemsParam = selectedItems.join(',');
+    router.push(`/pm/requisitions/${requisitionId}/generate-rfq?selectedItems=${selectedItemsParam}`);
+  };
+
   if (notFound)
     return (
       <div className="w-full flex flex-col justify-center items-center h-[80vh] text-center">
@@ -554,6 +569,7 @@ export default function ViewEditRequest({
                 <div className="flex flex-col sm:flex-row gap-3 pt-6">
                   <Button
                     type="button"
+                    onClick={handleGenerateRFQ}
                     className="font-bold text-base bg-[#0F1E7A] hover:bg-[#0b154b] text-white py-6 px-10"
                   >
                     Generate RFQ
@@ -741,24 +757,67 @@ export default function ViewEditRequest({
         <div className="flex flex-col gap-8">
           {/* {isEditMode ? ( */}
           <>
-            <ItemsList
-              isEditMode={isEditMode}
-              items={items}
-              onAddNewItem={() => {
-                resetCurrentItem();
-                setIsItemDialogOpen(true);
-              }}
-              onEditItem={(item) => {
-                setCurrentItem(item);
-                setEditingItemId(item._id);
-                setIsItemDialogOpen(true);
-              }}
-              onViewItem={(item) => {
-                setViewingItem(item);
-                setIsItemViewDialogOpen(true);
-              }}
-              onDeleteItem={handleDeleteItem}
-            />
+            {userType !== "procurementManager" ? (
+              <ItemsList
+                isEditMode={isEditMode}
+                items={items}
+                onAddNewItem={() => {
+                  resetCurrentItem();
+                  setIsItemDialogOpen(true);
+                }}
+                onEditItem={(item) => {
+                  setCurrentItem(item);
+                  setEditingItemId(item._id);
+                  setIsItemDialogOpen(true);
+                }}
+                onViewItem={(item) => {
+                  setViewingItem(item);
+                  setIsItemViewDialogOpen(true);
+                }}
+                onDeleteItem={handleDeleteItem}
+              />
+            ) : (
+              <div className="flex flex-col gap-10">
+                <PMItemsList
+                  items={items}
+                  selectedItems={selectedItems}
+                  onSelectionChange={setSelectedItems}
+                  onViewItem={(item) => {
+                    setViewingItem(item);
+                    setIsItemViewDialogOpen(true);
+                  }}
+                  showError={showItemsError}
+                />
+
+                <Related
+                  requests={[
+                    {
+                      _id: "1",
+                      title: "Request for Microphones",
+                      department: "IT Dept",
+                    },
+                  ]}
+                  rfqs={[
+                    {
+                      _id: "2",
+                      title: "RFQ for Equipment",
+                      department: "HR Dept",
+                    },
+                  ]}
+                  pos={[
+                    {
+                      _id: "2",
+                      title: "RFQ for Equipment",
+                      department: "HR Dept",
+                    },
+                  ]}
+                  onViewItem={(item, type) => {
+                    console.log("View", type, item);
+                  }}
+                />
+              </div>
+            )}
+
             <ItemFormDialog
               vendors={vendors}
               isOpen={isItemDialogOpen}

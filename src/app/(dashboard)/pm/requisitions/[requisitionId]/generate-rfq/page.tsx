@@ -1,7 +1,7 @@
 import GenerateRFQ from "@/components/Requests/ViewEditRequest/GenerateRFQ";
 import React from "react";
 
-const page = () => {
+const GenerateRFQPage = () => {
   return (
     <>
       <GenerateRFQ />
@@ -9,4 +9,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default GenerateRFQPage;
