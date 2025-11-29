@@ -1,5 +1,5 @@
 "use client";
-import { Item, Vendor, ItemType } from "../types";
+import { Item, Vendor, ItemType } from "../../types";
 import {
   Command,
   CommandEmpty,

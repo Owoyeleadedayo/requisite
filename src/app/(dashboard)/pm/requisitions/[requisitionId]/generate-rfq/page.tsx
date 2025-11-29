@@ -1,5 +1,4 @@
-import GenerateRFQ from "@/components/Requests/ViewEditRequest/GenerateRFQ";
-import React from "react";
+import GenerateRFQ from "@/components/Requests/ViewEditRequest/GenerateRFQ/index";
 
 const GenerateRFQPage = () => {
   return (
