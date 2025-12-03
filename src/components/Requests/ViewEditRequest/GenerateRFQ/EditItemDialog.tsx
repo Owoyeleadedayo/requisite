@@ -9,11 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogHeader,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogContent } from "@/components/ui/dialog";
 import {
   Select,
   SelectItem,
@@ -30,6 +26,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Item, ItemType, Vendor } from "../../types";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface EditItemDialogProps {
   isOpen: boolean;
@@ -50,7 +48,32 @@ export default function EditItemDialog({
   vendorsLoading,
   onUpdateItem,
 }: EditItemDialogProps) {
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
   if (!editingItem) return null;
+
+  const validateForm = () => {
+    const newErrors: {[key: string]: string} = {};
+    
+    if (!editingItem.itemName?.trim()) {
+      newErrors.itemName = "Item Description is required";
+    }
+    
+    if (!editingItem.itemDescription?.trim()) {
+      newErrors.itemDescription = "Details Specification is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleUpdateItem = () => {
+    if (validateForm()) {
+      onUpdateItem();
+    } else {
+      toast.error("Please fill in all required fields");
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -64,197 +87,104 @@ export default function EditItemDialog({
         <div className="flex flex-col w-full max-w-xl space-y-5 overflow-y-auto flex-1 px-1">
           <div className="space-y-2">
             <Label>
-              Name of Item <span className="compulsory-field">*</span>
+              Item Description <span className="compulsory-field">*</span>
             </Label>
             <Input
               placeholder="e.g., A4 Paper"
               value={editingItem.itemName}
-              onChange={(e) =>
+              onChange={(e) => {
                 setEditingItem({
                   ...editingItem,
                   itemName: e.target.value,
+                });
+                if (errors.itemName) {
+                  setErrors({...errors, itemName: ""});
+                }
+              }}
+              className={`!p-4 rounded-md border shadow-sm bg-white ${
+                errors.itemName ? "border-red-500" : ""
+              }`}
+            />
+            {errors.itemName && (
+              <p className="text-red-500 text-sm">{errors.itemName}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Brand</Label>
+            <Input
+              placeholder="e.g., HP"
+              value={editingItem.preferredBrand || ""}
+              onChange={(e) =>
+                setEditingItem({
+                  ...editingItem,
+                  preferredBrand: e.target.value,
                 })
               }
               className="!p-4 rounded-md border shadow-sm bg-white"
             />
           </div>
-          <div className="w-full flex gap-3">
-            <div className="w-full space-y-2">
-              <Label>
-                Item Type <span className="compulsory-field">*</span>
-              </Label>
-              <Select
-                value={editingItem.itemType}
-                onValueChange={(value: ItemType) =>
-                  setEditingItem({ ...editingItem, itemType: value })
-                }
-              >
-                <SelectTrigger className="w-full bg-white border border-[#9f9f9f]">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="product">Product</SelectItem>
-                  <SelectItem value="service">Service</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-full space-y-2">
-              <Label>Brand</Label>
-              <Input
-                placeholder="e.g., HP"
-                value={editingItem.preferredBrand || ""}
-                onChange={(e) =>
-                  setEditingItem({
-                    ...editingItem,
-                    preferredBrand: e.target.value,
-                  })
-                }
-                className="!p-4 rounded-md border shadow-sm bg-white"
-              />
-            </div>
-          </div>
+
           <div className="space-y-2">
-            <Label>
-              Item Description{" "}
-              <span className="compulsory-field">*</span>
-            </Label>
-            <Textarea
-              value={editingItem.itemDescription}
+            <Label>Quantity</Label>
+            <Input
+              type="number"
+              placeholder="e.g., 10"
+              value={editingItem.units}
               onChange={(e) =>
                 setEditingItem({
                   ...editingItem,
-                  itemDescription: e.target.value,
+                  units: e.target.value ? parseInt(e.target.value) : "",
                 })
               }
-              className="min-h-[100px] rounded-md border shadow-sm bg-white"
+              className="!p-4 rounded-md border shadow-sm bg-white"
             />
           </div>
-          <div className="w-full flex gap-3">
-            <div className="w-full space-y-2">
-              <Label>Units</Label>
-              <Input
-                type="number"
-                placeholder="e.g., 10"
-                value={editingItem.units}
-                onChange={(e) =>
-                  setEditingItem({
-                    ...editingItem,
-                    units: e.target.value
-                      ? parseInt(e.target.value)
-                      : "",
-                  })
-                }
-                className="!p-4 rounded-md border shadow-sm bg-white"
-              />
-            </div>
-            <div className="w-full space-y-2">
-              <Label>UOM (Unit of Measure)</Label>
-              <Input
-                placeholder="e.g., Reams, Pieces, Packs"
-                value={editingItem.UOM || ""}
-                onChange={(e) =>
-                  setEditingItem({
-                    ...editingItem,
-                    UOM: e.target.value,
-                  })
-                }
-                className="!p-4 rounded-md border shadow-sm bg-white"
-              />
-            </div>
+
+          <div className="space-y-2">
+            <Label>Unit of Measure (UoM))</Label>
+            <Input
+              placeholder="e.g., Reams, Pieces, Packs"
+              value={editingItem.UOM || ""}
+              onChange={(e) =>
+                setEditingItem({
+                  ...editingItem,
+                  UOM: e.target.value,
+                })
+              }
+              className="!p-4 rounded-md border shadow-sm bg-white"
+            />
           </div>
-          <div className="w-full flex gap-3">
-            <div className="w-full space-y-2">
-              <Label>Recommended Vendor</Label>
-              <Popover>
-                <PopoverTrigger className="!bg-white" asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    className="w-full justify-between bg-white hover:bg-white border border-[#9f9f9f]"
-                  >
-                    {editingItem.recommendedVendor
-                      ? vendors.find(
-                          (vendor) =>
-                            vendor._id === editingItem.recommendedVendor
-                        )?.name
-                      : vendorsLoading
-                      ? "Loading vendors..."
-                      : "Select vendor..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[350px] p-0 bg-white">
-                  <Command>
-                    <CommandInput placeholder="Search vendor..." />
-                    <CommandList>
-                      <CommandEmpty>No vendor found.</CommandEmpty>
-                      <CommandGroup>
-                        {vendors.map((vendor) => (
-                          <CommandItem
-                            key={vendor._id}
-                            value={vendor.name}
-                            onSelect={() => {
-                              setEditingItem({
-                                ...editingItem,
-                                recommendedVendor:
-                                  vendor._id ===
-                                  editingItem.recommendedVendor
-                                    ? ""
-                                    : vendor._id,
-                              });
-                            }}
-                          >
-                            <Check
-                              className={`mr-2 h-4 w-4 ${
-                                editingItem.recommendedVendor ===
-                                vendor._id
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              }`}
-                            />
-                            {vendor.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="w-full space-y-2">
-              <Label>
-                Is this a worktool?{" "}
-                <span className="compulsory-field">*</span>
-              </Label>
-              <Select
-                value={
-                  typeof editingItem.isWorkTool === "boolean"
-                    ? editingItem.isWorkTool.toString()
-                    : ""
+
+          <div className="space-y-2">
+            <Label>
+              Details Specification <span className="compulsory-field">*</span>
+            </Label>
+            <Textarea
+              value={editingItem.itemDescription}
+              onChange={(e) => {
+                setEditingItem({
+                  ...editingItem,
+                  itemDescription: e.target.value,
+                });
+                if (errors.itemDescription) {
+                  setErrors({...errors, itemDescription: ""});
                 }
-                onValueChange={(value) =>
-                  setEditingItem({
-                    ...editingItem,
-                    isWorkTool: value === "true",
-                  })
-                }
-              >
-                <SelectTrigger className="w-full bg-white border border-[#9f9f9f]">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent className="bg-white">
-                  <SelectItem value="true">Yes</SelectItem>
-                  <SelectItem value="false">No</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              }}
+              className={`min-h-[100px] rounded-md border shadow-sm bg-white ${
+                errors.itemDescription ? "border-red-500" : ""
+              }`}
+            />
+            {errors.itemDescription && (
+              <p className="text-red-500 text-sm">{errors.itemDescription}</p>
+            )}
           </div>
         </div>
         <div className="w-full flex gap-3 mt-4 flex-shrink-0">
           <div className="w-1/2">
             <Button
               className="w-full bg-[#0F1E7A] text-white cursor-pointer"
-              onClick={onUpdateItem}
+              onClick={handleUpdateItem}
             >
               Update Item
             </Button>
