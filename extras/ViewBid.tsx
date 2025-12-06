@@ -11,9 +11,9 @@ import {
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { Textarea } from "../ui/textarea";
+import { Badge } from "../src/components/ui/badge";
+import { Button } from "../src/components/ui/button";
+import { Textarea } from "../src/components/ui/textarea";
 
 const ViewBid = () => {
   const [expanded, setExpanded] = useState(false);

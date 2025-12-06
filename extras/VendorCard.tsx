@@ -1,6 +1,6 @@
 import { FilePen, CircleCheck, ShieldBan, CircleX } from "lucide-react";
 import React from "react";
-import { Card } from "../ui/card";
+import { Card } from "../src/components/ui/card";
 
 const VendorCard = () => {
   const cardItems = [

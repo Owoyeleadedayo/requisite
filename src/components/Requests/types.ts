@@ -70,6 +70,23 @@ export interface RequestData {
 export interface Vendor {
   _id: string;
   name: string;
+  contactPerson: string;
+  phone: string;
+  email: string;
+  address: string;
+  categories?: { _id: string; name: string }[];
+  isVerified?: boolean;
+  isActive?: boolean;
+  status?: string;
+  // documents?: File[];
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+  cacDocument?: { uploadedAt: string };
+  // missing from response
+  website?: string;
+  dateOfIncorporation?: string;
+  contactPersonDesignation?: string;
 }
 
 export interface ViewEditRequestProps {
