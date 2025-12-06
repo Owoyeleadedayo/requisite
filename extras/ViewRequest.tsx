@@ -2,9 +2,9 @@
 import { Ellipsis, Send, Upload } from "lucide-react";
 import Image from "next/image";
 import React, { useRef, useState } from "react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { Button } from "../src/components/ui/button";
+import { Input } from "../src/components/ui/input";
+import { Label } from "../src/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -12,9 +12,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Slider } from "../ui/slider";
-import { Textarea } from "../ui/textarea";
+} from "../src/components/ui/select";
+import { Slider } from "../src/components/ui/slider";
+import { Textarea } from "../src/components/ui/textarea";
 
 const ViewRequest = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
