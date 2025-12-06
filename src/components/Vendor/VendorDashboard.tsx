@@ -27,7 +27,7 @@ export default function VendorDashboard() {
     total: 0,
     pending: 0,
     approved: 0,
-    bidding: 0,
+    deactivated: 0,
   });
 
   const token = getToken();
@@ -116,23 +116,69 @@ export default function VendorDashboard() {
       imgSrc: "/current-bids.svg",
       title: "Approved Vendors",
       color: "#0F1E7A",
-      value: dashboardStats.pending,
+      value: dashboardStats.approved,
     },
     {
       key: 3,
       imgSrc: "/requisition-requests.svg",
-      title: "Pendng Vendors",
+      title: "Pending Vendors",
       color: "#0F1E7A",
-      value: dashboardStats.approved,
+      value: dashboardStats.pending,
     },
     {
       key: 4,
       imgSrc: "/pm-requests.svg",
       title: "Deactivated Vendors",
       color: "#0F1E7A",
-      value: dashboardStats.bidding,
+      value: dashboardStats.deactivated,
     },
   ];
+
+  const fetchAllVendorsForStats = useCallback(async () => {
+    try {
+      let allVendors: Vendor[] = [];
+      let currentPage = 1;
+      let totalPages = 1;
+
+      do {
+        const response = await fetch(
+          `${API_BASE_URL}/vendors?page=${currentPage}&limit=100`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        const data = await response.json();
+        
+        if (data.success) {
+          allVendors = [...allVendors, ...data.data];
+          totalPages = data.pagination.pages;
+          currentPage++;
+        } else {
+          break;
+        }
+      } while (currentPage <= totalPages);
+
+      const stats = {
+        total: allVendors.length,
+        pending: 0,
+        approved: 0,
+        deactivated: 0,
+      };
+
+      allVendors.forEach((vendor: Vendor) => {
+        if (vendor.status === "pending") stats.pending++;
+        else if (vendor.status === "approved") stats.approved++;
+        if (!vendor.isActive) stats.deactivated++;
+      });
+
+      setDashboardStats(stats);
+    } catch (error) {
+      console.error("Error fetching vendors for stats:", error);
+    }
+  }, [token]);
 
   const fetchVendors = useCallback(
     async (pageNum: number = 1) => {
@@ -157,21 +203,6 @@ export default function VendorDashboard() {
             setTotalPages(data.pagination.pages);
             setTotalCount(data.pagination.total);
           }
-
-          const stats = {
-            total: data.pagination?.total || data.total,
-            pending: 0,
-            approved: 0,
-            bidding: 0,
-          };
-
-          data.data.forEach((vendor: Vendor) => {
-            if (vendor.status === "pending") stats.pending++;
-            else if (vendor.status === "approved") stats.approved++;
-            if (vendor.isVerified) stats.bidding++;
-          });
-
-          setDashboardStats(stats);
         }
       } catch (error) {
         console.error("Error fetching vendors:", error);
@@ -186,8 +217,9 @@ export default function VendorDashboard() {
     if (token) {
       fetchLocations();
       fetchVendors(1);
+      fetchAllVendorsForStats();
     }
-  }, [token, fetchVendors, fetchLocations]);
+  }, [token, fetchVendors, fetchLocations, fetchAllVendorsForStats]);
 
   const handlePageChange = (page: number) => {
     fetchVendors(page);
@@ -242,7 +274,10 @@ export default function VendorDashboard() {
         </p>
 
         <AddVendorDialog
-          onVendorAdded={() => fetchVendors(1)}
+          onVendorAdded={() => {
+            fetchVendors(1);
+            fetchAllVendorsForStats();
+          }}
           trigger={
             <Button className="bg-[#0F1E7A] text-white cursor-pointer">
               <Plus size={22} /> Add New Vendor
