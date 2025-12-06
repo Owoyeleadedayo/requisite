@@ -2,13 +2,14 @@ export type UserTypes =
   | "user"
   | "hod"
   | "hhra"
+  | "admin"
   | "procurementManager"
   | "vendor";
 
 export type ItemType = "product" | "service" | "";
 
 export interface Item {
-  id: number; // for local tracking
+  _id: string; // for local tracking
   itemName: string;
   itemType: ItemType;
   preferredBrand: string;
@@ -32,6 +33,7 @@ export interface RequestData {
   estimatedUnitPrice: number;
   justification: string;
   requisitionNumber: string;
+  deliveryLocation: string;
   image: string;
   priority: "low" | "medium" | "high";
   attachment?: string;
@@ -41,6 +43,7 @@ export interface RequestData {
     lastName: string;
     email: string;
   };
+  items: Item[];
   department?: {
     _id: string;
     name: string;

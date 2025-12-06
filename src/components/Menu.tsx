@@ -39,18 +39,19 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: Package, label: "My Requests", href: "/hod/my-requests" },
     // { icon: User, label: "Profile", href: "/hod/profile" },
   ],
-  hhra: [
-    { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
-    { icon: FileCog, label: "Request", href: "/hhra/request" },
-    { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
-    // { icon: User, label: "Profile", href: "/hhra/profile" },
-  ],
   pm: [
     { icon: LayoutGrid, label: "Dashboard", href: "/pm" },
-    { icon: FileCog, label: "Requests", href: "/pm/requests" },
+    { icon: FileCog, label: "Requisitions", href: "/pm/requisitions" },
     { icon: Package, label: "My Requests", href: "/pm/my-requests" },
     // { icon: ShoppingCart, label: "Vendors", href: "/pm/vendors" },
     // { icon: Gavel, label: "Bids", href: "/pm/bids" },
+  ],
+  hhra: [
+    { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
+    { icon: FileCog, label: "Requisitions", href: "/hhra/requisitions" },
+    { icon: FileCog, label: "Request", href: "/hhra/my-requests" },
+    // { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
+    // { icon: User, label: "Profile", href: "/hhra/profile" },
   ],
 };
 

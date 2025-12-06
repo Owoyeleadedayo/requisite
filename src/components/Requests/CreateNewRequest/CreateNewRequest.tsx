@@ -14,7 +14,7 @@ import ItemFormDialog from "../ItemFormDialog";
 import { Item, Vendor } from "../types";
 
 interface CreateNewRequestProps {
-  page: "user" | "hod" | "pm";
+  page: "user" | "hod" | "pm" | "hhra";
   data: unknown[];
 }
 
@@ -29,7 +29,7 @@ export default function CreateNewRequest({
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [vendorsLoading, setVendorsLoading] = useState(true);
-  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -38,7 +38,7 @@ export default function CreateNewRequest({
   });
 
   const [currentItem, setCurrentItem] = useState<Item>({
-    id: 0,
+    _id: "",
     itemName: "",
     itemType: "",
     preferredBrand: "",
@@ -73,7 +73,7 @@ export default function CreateNewRequest({
       justification: formData.justification,
       deliveryLocation: formData.deliveryLocation,
       deliveryDate: formattedDate,
-      items: items.map(({ id, uploadImage, ...rest }) => {
+      items: items.map(({ _id, uploadImage, ...rest }) => {
         const { recommendedVendor, ...itemPayload } = rest;
         if (recommendedVendor) {
           return { ...itemPayload, recommendedVendor };
@@ -87,7 +87,7 @@ export default function CreateNewRequest({
     setLoading(true);
 
     try {
-      // Create requisition
+      // Step 1: Create requisition as draft for all users
       const createResponse = await fetch(`${API_BASE_URL}/requisitions/`, {
         method: "POST",
         headers: {
@@ -100,35 +100,34 @@ export default function CreateNewRequest({
       const createData = await createResponse.json();
 
       if (createData.success) {
-        if (page === "hod") {
-          // For HOD: Requisition is already approved in response
-          toast.success("Requisition created!");
-          router.push("/hod/my-requests/");
-        } else if (page == "pm") {
-          // For PM: Requisition is created as a draft
-          toast.success("Requisition created!");
-          router.push("/pm/my-requests/");
-        } else {
-          // For user: Submit requisition
-          const submitResponse = await fetch(
-            `${API_BASE_URL}/requisitions/${createData.data._id}/submit`,
-            {
-              method: "PUT",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          const submitData = await submitResponse.json();
-
-          if (submitData.success) {
-            toast.success("Requisition created and submitted successfully!");
-            router.push("/user/requisition/");
-          } else {
-            toast.error("Failed to submit requisition");
+        // Step 2: Submit requisition for all users
+        const submitResponse = await fetch(
+          `${API_BASE_URL}/requisitions/${createData.data._id}/submit`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
+        );
+
+        const submitData = await submitResponse.json();
+
+        if (submitData.success) {
+          toast.success("Requisition created and submitted successfully!");
+          // Navigate based on user type
+          const redirectPath =
+            page === "hod"
+              ? "/hod/my-requests/"
+              : page === "pm"
+              ? "/pm/my-requests/"
+              : page === "hhra"
+              ? "/hhra/my-requests/"
+              : "/user/requisition/";
+          router.push(redirectPath);
+        } else {
+          toast.error("Failed to submit requisition");
         }
       } else {
         if (createData.errors) {
@@ -205,12 +204,12 @@ export default function CreateNewRequest({
     if (editingItemId !== null) {
       // Update existing item
       setItems(
-        items.map((item) => (item.id === editingItemId ? currentItem : item))
+        items.map((item) => (item._id === editingItemId ? currentItem : item))
       );
       toast.success("Item updated successfully!");
     } else {
       // Add new item
-      setItems([...items, { ...currentItem, id: Date.now() }]);
+      setItems([...items, { ...currentItem, _id: Date.now().toString() }]);
       toast.success("Item added successfully!");
     }
 
@@ -220,7 +219,7 @@ export default function CreateNewRequest({
 
   const resetCurrentItem = () => {
     setCurrentItem({
-      id: 0,
+      _id: "",
       itemName: "",
       itemType: "",
       preferredBrand: "",
@@ -234,8 +233,8 @@ export default function CreateNewRequest({
     setEditingItemId(null);
   };
 
-  const handleDeleteItem = (id: number) => {
-    setItems(items.filter((item) => item.id !== id));
+  const handleDeleteItem = (id: string) => {
+    setItems(items.filter((item) => item._id !== id));
     toast.success("Item removed.");
   };
 
@@ -255,9 +254,11 @@ export default function CreateNewRequest({
             href={
               page === "hod"
                 ? "/hod/my-requests"
-                : page === "user"
-                ? "/user/requisition"
-                : ""
+                : page === "pm"
+                ? "/pm/my-requests"
+                : page === "hhra"
+                ? "/hhra/my-requests"
+                : "/user/requisition"
             }
             className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-1"
           >
@@ -292,7 +293,7 @@ export default function CreateNewRequest({
             }}
             onEditItem={(item) => {
               setCurrentItem(item);
-              setEditingItemId(item.id);
+              setEditingItemId(item._id);
               setIsItemDialogOpen(true);
             }}
             onViewItem={(item) => {

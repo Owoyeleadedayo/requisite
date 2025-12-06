@@ -15,14 +15,14 @@ import getLocationName from "@/lib/getLocationName";
 
 interface ProcurementManagerDashboardProps {
   page?:
-    | "procurementDashboard"
-    | "procurementRequisitions"
-    | "pmRequests"
+    | "hhraDashboard"
+    | "hhraRequisitions"
+    | "hhraRequests"
     | "procurementBids";
 }
 
-export default function PMDashboard({
-  page = "procurementDashboard",
+export default function HHRADashboard({
+  page = "hhraDashboard",
 }: ProcurementManagerDashboardProps = {}) {
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
@@ -89,9 +89,9 @@ export default function PMDashboard({
     },
     {
       key: "requester",
-      label: page === "pmRequests" ? "Requisition Number" : "Staff",
+      label: page === "hhraRequests" ? "Requisition Number" : "Staff",
       render: (_, row) => {
-        if (page === "pmRequests") {
+        if (page === "hhraRequests") {
           return row.requisitionNumber;
         }
         const currentUser = authdata?.user;
@@ -133,7 +133,7 @@ export default function PMDashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/pm/requisitions/${row._id}`}>View</Link>
+            <Link href={`/hhra/requests/${row._id}`}>View</Link>
           </Button>
           {/* <Button
           asChild
@@ -183,7 +183,7 @@ export default function PMDashboard({
 
       try {
         const endpoint =
-          page === "procurementDashboard" || page === "procurementRequisitions"
+          page === "hhraDashboard" || page === "hhraRequisitions"
             ? `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
             : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
 
@@ -245,7 +245,7 @@ export default function PMDashboard({
 
   return (
     <div className="flex flex-col gap-4 p-6 lg:p-12 !pb-16">
-      {page === "procurementDashboard" && (
+      {page === "hhraDashboard" && (
         <div className="flex flex-col gap-4">
           <p className="text-2xl text-[#0F1E7A] font-semibold font-normal">
             Summary
@@ -280,17 +280,17 @@ export default function PMDashboard({
         <p className="text-md md:text-2xl text-[#0F1E7A] font-semibold leading-5">
           {page === "procurementBids"
             ? "Bid Management"
-            : page === "pmRequests"
+            : page === "hhraRequests"
             ? "My Requests"
             : "Requests"}
         </p>
 
-        {page !== "procurementRequisitions" && (
+        {page !== "hhraRequisitions" && (
           <Button
             asChild
             className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
           >
-            <Link href="/pm/my-requests/create-new">
+            <Link href="/hhra/my-requests/create-new">
               <Plus size={22} />{" "}
               <span className="hidden lg:flex">New Request</span>
             </Link>
