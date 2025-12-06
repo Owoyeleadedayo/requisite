@@ -74,6 +74,15 @@ export interface Vendor {
   phone: string;
   email: string;
   address: string;
+  categories?: { _id: string; name: string }[];
+  isVerified?: boolean;
+  isActive?: boolean;
+  status?: string;
+  // documents?: File[];
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+  cacDocument?: { uploadedAt: string };
 }
 
 export interface ViewEditRequestProps {

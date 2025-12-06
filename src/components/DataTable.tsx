@@ -39,6 +39,10 @@ interface DataTableProps<T> {
   currentPage?: number;
   onPageChange?: (page: number) => void;
   loading?: boolean;
+  search?: boolean;
+  searchEndpoint?: string;
+  onSearchResults?: (results: unknown[], totalPages: number) => void;
+  onClearSearch?: () => void;
 }
 
 export default function DataTable<T extends { id?: string | number }>({
@@ -49,6 +53,10 @@ export default function DataTable<T extends { id?: string | number }>({
   currentPage: serverCurrentPage,
   onPageChange,
   loading = false,
+  search = true,
+  searchEndpoint,
+  onSearchResults,
+  onClearSearch,
 }: DataTableProps<T>) {
   const [currentPage, setCurrentPage] = React.useState(serverCurrentPage || 1);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -118,12 +126,15 @@ export default function DataTable<T extends { id?: string | number }>({
     const trimmed = searchQuery.trim();
     if (!trimmed) return applyFilters();
 
-    // perform server-side search to /requisitions?page=1&limit=itemsPerPage&title={trimmed}
+    // Use custom endpoint if provided, otherwise default to requisitions
+    const endpoint = searchEndpoint || "/requisitions";
+    const searchParam = searchEndpoint ? "search" : "title";
+
     try {
       setLocalLoading(true);
       const token = getToken();
       const res = await fetch(
-        `${API_BASE_URL}/requisitions?page=1&limit=${itemsPerPage}&title=${encodeURIComponent(
+        `${API_BASE_URL}${endpoint}?page=1&limit=${itemsPerPage}&${searchParam}=${encodeURIComponent(
           trimmed
         )}`,
         {
@@ -136,6 +147,10 @@ export default function DataTable<T extends { id?: string | number }>({
         setServerResults(json.data);
         if (json.pagination) {
           setServerSearchTotalPages(json.pagination.pages);
+        }
+        // Call parent callback if provided
+        if (onSearchResults) {
+          onSearchResults(json.data, json.pagination?.pages || 1);
         }
       } else {
         // Fallback for other response shapes
@@ -210,6 +225,11 @@ export default function DataTable<T extends { id?: string | number }>({
     setSearchQuery(""); // Clear the search input as well
     setActiveSearchFilters(null); // Clear persisted advanced filters
     setServerSearchTotalPages(0); // Reset search total pages
+    
+    // Notify parent component to restore original data
+    if (onClearSearch) {
+      onClearSearch();
+    }
   };
 
   const getUniqueValues = (columnKey: string) => {
@@ -312,15 +332,17 @@ export default function DataTable<T extends { id?: string | number }>({
           page: String(newPage),
           limit: String(itemsPerPage),
         });
-        if (searchTitle) params.set("title", searchTitle);
+        const searchParam = searchEndpoint ? "search" : "title";
+        if (searchTitle) params.set(searchParam, searchTitle);
         if (searchCategory) params.set("category", searchCategory);
         if (searchDateRange) params.set("dateRange", searchDateRange);
 
         try {
           setLocalLoading(true);
           const token = getToken();
+          const endpoint = searchEndpoint || "/requisitions";
           const res = await fetch(
-            `${API_BASE_URL}/requisitions?${params.toString()}`,
+            `${API_BASE_URL}${endpoint}?${params.toString()}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           const json = await res.json();
@@ -354,54 +376,61 @@ export default function DataTable<T extends { id?: string | number }>({
 
   return (
     <div className="w-full">
-      <div className="search-filter w-full flex flex-col lg:flex-row items-center gap-4 lg:gap-2 mb-8">
-        <div className=" search relative w-[100%]">
-          <Input
-            type="text"
-            value={searchQuery}
-            placeholder="Search table"
-            onKeyPress={handleKeyPress}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-[#FFFFFF] pl-4 pr-4 py-2 w-full h-12 rounded-md shadow-md"
-          />
+      {search !== false ? (
+        <div className="search-filter w-full flex flex-col lg:flex-row items-center gap-4 lg:gap-2 mb-8">
+          <div className=" search relative w-[100%]">
+            <Input
+              type="text"
+              value={searchQuery}
+              placeholder="Search table"
+              onKeyPress={handleKeyPress}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-[#FFFFFF] pl-4 pr-4 py-2 w-full h-12 rounded-md shadow-md"
+            />
 
-          <Button
-            onClick={handleSearch}
-            disabled={localLoading}
-            className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent hover:bg-transparent p-0 h-auto"
-          >
-            {localLoading ? (
-              <Loader2 className="animate-spin" color="black" size={20} />
-            ) : (
-              <Search color="black" size={20} />
-            )}
-          </Button>
-        </div>
-
-        {isServerFiltered && (
-          <Button
-            onClick={handleClearSearch}
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-md"
-          >
-            Clear
-          </Button>
-        )}
-
-        <AdvancedSearchModal
-          trigger={
             <Button
-              asChild
-              variant="default"
-              className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-sm lg:text-base text-white cursor-pointer"
+              onClick={handleSearch}
+              disabled={localLoading}
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer bg-transparent hover:bg-transparent p-0 h-auto"
             >
-              <div className="flex items-center gap-2">
-                <span>Advanced Search</span>
-              </div>
+              {localLoading ? (
+                <Loader2 className="animate-spin" color="black" size={20} />
+              ) : (
+                <Search color="black" size={20} />
+              )}
             </Button>
-          }
-          onSearch={handleAdvancedSearch}
-        />
-      </div>
+          </div>
+
+          {isServerFiltered && (
+            <Button
+              onClick={handleClearSearch}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm rounded-md"
+            >
+              Clear
+            </Button>
+          )}
+
+          <AdvancedSearchModal
+            trigger={
+              <Button
+                asChild
+                variant="default"
+                disabled={localLoading}
+                className={`px-4 md:px-6 py-4 bg-[#0F1E7A] text-sm lg:text-base text-white cursor-pointer ${localLoading ? 'opacity-50' : ''}`}
+              >
+                <div className="flex items-center gap-2">
+                  {localLoading ? (
+                    <Loader2 className="animate-spin" size={16} />
+                  ) : (
+                    <span>Advanced Search</span>
+                  )}
+                </div>
+              </Button>
+            }
+            onSearch={handleAdvancedSearch}
+          />
+        </div>
+      ) : null}
 
       <div className="overflow-x-auto rounded-md">
         <Table>
