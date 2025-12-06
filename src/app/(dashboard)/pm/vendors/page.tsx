@@ -1,4 +1,4 @@
-import VendorDashboard from "@/components/pm/VendorDashboard";
+import VendorDashboard from "@/components/Vendor/VendorDashboard";
 
 export default function VendorsPage() {
   return <VendorDashboard />;

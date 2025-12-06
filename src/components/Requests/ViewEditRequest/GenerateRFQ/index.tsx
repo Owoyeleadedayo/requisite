@@ -220,6 +220,11 @@ const GenerateRFQ = () => {
           setComboboxOpen={setComboboxOpen}
           handleCompleteRFQ={handleCompleteRFQ}
           items={items}
+          onVendorAdded={() => {
+            // Refresh vendors list when a new vendor is added
+            // You may need to implement a fetchVendors function here
+            window.location.reload(); // Temporary solution
+          }}
         />
 
         <RequestDetails

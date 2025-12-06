@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+import { Badge } from "../src/components/ui/badge";
+import { Button } from "../src/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,10 +14,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
+} from "../src/components/ui/dialog";
+import { Input } from "../src/components/ui/input";
+import { Label } from "../src/components/ui/label";
+import { Textarea } from "../src/components/ui/textarea";
 
 const MakeBid = () => {
   const router = useRouter();

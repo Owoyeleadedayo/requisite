@@ -83,6 +83,10 @@ export interface Vendor {
   updatedAt?: string;
   __v?: number;
   cacDocument?: { uploadedAt: string };
+  // missing from response
+  website?: string;
+  dateOfIncorporation?: string;
+  contactPersonDesignation?: string;
 }
 
 export interface ViewEditRequestProps {

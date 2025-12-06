@@ -1,10 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import MakeBid from "@/components/Vendor/MakeBid";
-import RequestTable from "@/components/Vendor/RequestTable";
-import ViewBid from "@/components/Vendor/ViewBid";
-import ViewRequest from "@/components/Vendor/ViewRequest";
+import MakeBid from "../../../../../extras/MakeBid";
+import RequestTable from "../../../../../extras/RequestTable";
+import ViewBid from "../../../../../extras/ViewBid";
+import ViewRequest from "../../../../../extras/ViewRequest";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";

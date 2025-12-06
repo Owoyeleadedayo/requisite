@@ -1,6 +1,6 @@
 import Link from "next/link";
 import React from "react";
-import { Button } from "../ui/button";
+import { Button } from "../src/components/ui/button";
 import {
   Table,
   TableBody,
@@ -8,7 +8,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "../src/components/ui/table";
 
 const RequestTable = () => {
   const tableItems = [

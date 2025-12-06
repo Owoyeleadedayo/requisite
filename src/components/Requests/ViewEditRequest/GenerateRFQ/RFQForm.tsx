@@ -42,6 +42,7 @@ import {
 import { parseDate } from "chrono-node";
 import { Vendor } from "../../types";
 import { useState } from "react";
+import AddVendorDialog from "@/components/Vendor/AddVendorDialog";
 
 interface Location {
   _id: string;
@@ -94,6 +95,7 @@ interface RFQFormProps {
   setComboboxOpen: (open: boolean) => void;
   handleCompleteRFQ: () => void;
   items: Item[];
+  onVendorAdded?: () => void;
 }
 
 function formatDate(date: Date | undefined) {
@@ -128,6 +130,7 @@ export default function RFQForm({
   setComboboxOpen,
   handleCompleteRFQ,
   items,
+  onVendorAdded,
 }: RFQFormProps) {
   const [selectedVendors, setSelectedVendors] = useState<SelectedVendor[]>([]);
 
@@ -358,81 +361,14 @@ export default function RFQForm({
           </div>
 
           <div className="w-full lg:w-[50%] flex justify-center lg:justify-end items-center">
-            <Dialog>
-              <DialogTrigger className="bg-white" asChild>
+            <AddVendorDialog
+              onVendorAdded={onVendorAdded || (() => {})} // fallback empty function to handle the case when onVendorAdded is undefined.
+              trigger={
                 <Button className="bg-[#0F1E7A] text-white cursor-pointer">
                   <Plus size={22} /> New Vendor
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-white max-w-[500px]">
-                <DialogHeader></DialogHeader>
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-center items-center">
-                      <p className="text-xl font-semibold text-center text-[#100A1A]">
-                        New Vendor
-                      </p>
-                    </div>
-                    <div className="flex justify-center items-center">
-                      <p className="text-md text-center font-normal">
-                        Enter the details of vendor below
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-3">
-                      <div className="space-y-2">
-                        <Label>
-                          Company Name{" "}
-                          <span className="text-red-500 -ml-1">*</span>
-                        </Label>
-                        <Input
-                          type={"text"}
-                          className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>
-                          Contact Person
-                          <span className="text-red-500 -ml-1">*</span>
-                        </Label>
-                        <Input
-                          type={"text"}
-                          className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>
-                          Phone Number
-                          <span className="text-red-500 -ml-1">*</span>
-                        </Label>
-                        <Input
-                          type={"tel"}
-                          className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Email Address</Label>
-                        <Input
-                          type={"email"}
-                          className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Address</Label>
-                        <Input
-                          type={"text"}
-                          className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Button className="bg-[#0F1E7A] text-white cursor-pointer">
-                        Add Vendor
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+              }
+            />
           </div>
         </div>
 
