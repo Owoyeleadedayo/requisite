@@ -28,9 +28,14 @@ export default function PMItemsList({
   onSelectionChange,
   showError = false,
 }: PMItemsListProps) {
+  // Filter to only show departmentApproved items
+  const approvedItems = items.filter(
+    (item) => item.status === "departmentApproved"
+  );
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      onSelectionChange(items.map((item) => item._id));
+      onSelectionChange(approvedItems.map((item) => item._id));
     } else {
       onSelectionChange([]);
     }
@@ -45,17 +50,18 @@ export default function PMItemsList({
   };
 
   const isAllSelected =
-    items.length > 0 && selectedItems.length === items.length;
+    approvedItems.length > 0 && selectedItems.length === approvedItems.length;
   const isSomeSelected =
-    selectedItems.length > 0 && selectedItems.length < items.length;
+    selectedItems.length > 0 && selectedItems.length < approvedItems.length;
 
-  if (items.length === 0) {
+  if (approvedItems.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center">
         <div className="flex flex-col items-center mt-20 lg:mt-0">
           <Folder size={80} />
           <p className="text-center max-w-sm">
-            Your item list is empty. Click the button below to create an item.
+            Your item list is empty. Please contact the department head to
+            revisit request.
           </p>
         </div>
       </div>
@@ -89,7 +95,7 @@ export default function PMItemsList({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {items.map((item) => (
+          {approvedItems.map((item) => (
             <TableRow key={item._id}>
               <TableCell>
                 <Checkbox

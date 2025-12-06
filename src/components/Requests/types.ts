@@ -70,6 +70,10 @@ export interface RequestData {
 export interface Vendor {
   _id: string;
   name: string;
+  contactPerson: string;
+  phone: string;
+  email: string;
+  address: string;
 }
 
 export interface ViewEditRequestProps {

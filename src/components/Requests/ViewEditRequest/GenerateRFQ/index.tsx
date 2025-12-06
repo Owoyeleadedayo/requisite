@@ -219,6 +219,7 @@ const GenerateRFQ = () => {
           comboboxOpen={comboboxOpen}
           setComboboxOpen={setComboboxOpen}
           handleCompleteRFQ={handleCompleteRFQ}
+          items={items}
         />
 
         <RequestDetails

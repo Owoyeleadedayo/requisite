@@ -5,6 +5,7 @@ import { getUser } from "@/lib/auth";
 import {
   SquarePen,
   LayoutGrid,
+  MapPin,
   User,
   Gavel,
   Package,
@@ -12,6 +13,9 @@ import {
   ShoppingCart,
   LogOut,
   LucideIcon,
+  CircleDollarSign,
+  FileSpreadsheet,
+  Store,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -43,6 +47,10 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: LayoutGrid, label: "Dashboard", href: "/pm" },
     { icon: FileCog, label: "Requisitions", href: "/pm/requisitions" },
     { icon: Package, label: "My Requests", href: "/pm/my-requests" },
+    { icon: CircleDollarSign, label: "RFQs", href: "/pm/rfqs" },
+    { icon: FileSpreadsheet, label: "POs", href: "/pm/pos" },
+    { icon: Store, label: "Vendors", href: "/pm/vendors" },
+    { icon: MapPin, label: "Locations", href: "/pm/locations" },
     // { icon: ShoppingCart, label: "Vendors", href: "/pm/vendors" },
     // { icon: Gavel, label: "Bids", href: "/pm/bids" },
   ],
