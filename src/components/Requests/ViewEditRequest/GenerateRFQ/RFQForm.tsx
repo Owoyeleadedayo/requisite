@@ -4,7 +4,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, Plus, ChevronsUpDown, Check } from "lucide-react";
+import {
+  CalendarIcon,
+  Plus,
+  ChevronsUpDown,
+  Check,
+  X,
+  SquarePen,
+  Trash,
+} from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -33,10 +41,34 @@ import {
 } from "@/components/ui/command";
 import { parseDate } from "chrono-node";
 import { Vendor } from "../../types";
+import { useState } from "react";
 
 interface Location {
   _id: string;
   name: string;
+}
+
+interface SuggestedVendor {
+  id: string;
+  name: string;
+  contact: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
+interface SelectedVendor {
+  id: string;
+  name: string;
+  contact: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
+interface Item {
+  _id: string;
+  recommendedVendor?: string;
 }
 
 interface RFQFormProps {
@@ -61,6 +93,7 @@ interface RFQFormProps {
   comboboxOpen: boolean;
   setComboboxOpen: (open: boolean) => void;
   handleCompleteRFQ: () => void;
+  items: Item[];
 }
 
 function formatDate(date: Date | undefined) {
@@ -94,7 +127,36 @@ export default function RFQForm({
   comboboxOpen,
   setComboboxOpen,
   handleCompleteRFQ,
+  items,
 }: RFQFormProps) {
+  const [selectedVendors, setSelectedVendors] = useState<SelectedVendor[]>([]);
+
+  // Get suggested vendors from requisition items
+  const suggestedVendors = items
+    .filter((item) => item.recommendedVendor)
+    .map((item) => {
+      const vendor = vendors.find((v) => v._id === item.recommendedVendor);
+      return vendor
+        ? {
+            id: vendor._id,
+            name: vendor.name,
+            contact: vendor.contactPerson,
+            phone: vendor.phone,
+            email: vendor.email,
+            address: vendor.address,
+          }
+        : null;
+    })
+    .filter(Boolean) as SuggestedVendor[];
+
+  const addVendorToSelected = (vendor: SuggestedVendor) => {
+    setSelectedVendors((prev) => [...prev, vendor]);
+  };
+
+  const removeSelectedVendor = (id: string) => {
+    setSelectedVendors((prev) => prev.filter((vendor) => vendor.id !== id));
+  };
+
   return (
     <div className="flex flex-col gap-6 px-4 py-6 my-5 rounded-md shadow-md bg-white">
       <div className="space-y-2">
@@ -107,7 +169,7 @@ export default function RFQForm({
           className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label>
           Location<span className="text-red-500 -ml-1">*</span>
@@ -120,9 +182,7 @@ export default function RFQForm({
         >
           <SelectTrigger className="w-full bg-white border border-[#9f9f9f]">
             <SelectValue
-              placeholder={
-                locationsLoading ? "Loading..." : "Select Location"
-              }
+              placeholder={locationsLoading ? "Loading..." : "Select Location"}
             />
           </SelectTrigger>
           <SelectContent className="bg-white">
@@ -132,14 +192,13 @@ export default function RFQForm({
                 value={location._id}
                 className="hover:bg-gray-100 data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:text-white"
               >
-                {location.name.charAt(0).toUpperCase() +
-                  location.name.slice(1)}
+                {location.name.charAt(0).toUpperCase() + location.name.slice(1)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      
+
       <div className="space-y-2">
         <Label>
           Evaluation Criteria<span className="text-red-500 -ml-1">*</span>
@@ -149,7 +208,7 @@ export default function RFQForm({
           className="min-h-[100px] rounded-xl border border-[#9f9f9f] shadow-sm"
         />
       </div>
-      
+
       <div className="space-y-2">
         <Label>
           Expected Delivery Date
@@ -206,7 +265,7 @@ export default function RFQForm({
           </Popover>
         </div>
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="itemDescription">
           Terms of Service <span className="text-red-500 -ml-1">*</span>
@@ -217,11 +276,11 @@ export default function RFQForm({
           className="min-h-[100px] rounded-xl border border-[#9f9f9f] shadow-sm"
         />
       </div>
-      
+
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">VENDOR INFORMATION</h2>
-        <div className="flex gap-10">
-          <div className="w-[50%] flex gap-4">
+        <div className="w-full flex flex-col lg:flex-row gap-10">
+          <div className="w-full lg:w-[50%] flex gap-4">
             <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
               <PopoverTrigger className="!bg-white !w-[200px]" asChild>
                 <Button
@@ -231,9 +290,8 @@ export default function RFQForm({
                   className="w-full justify-between bg-white hover:bg-white border border-[#9f9f9f]"
                 >
                   {selectedVendor
-                    ? vendors.find(
-                        (vendor) => vendor._id === selectedVendor
-                      )?.name
+                    ? vendors.find((vendor) => vendor._id === selectedVendor)
+                        ?.name
                     : vendorsLoading
                     ? "Loading vendors..."
                     : "Choose a vendor"}
@@ -252,9 +310,7 @@ export default function RFQForm({
                           value={vendor.name}
                           onSelect={() => {
                             setSelectedVendor(
-                              vendor._id === selectedVendor
-                                ? ""
-                                : vendor._id
+                              vendor._id === selectedVendor ? "" : vendor._id
                             );
                             setComboboxOpen(false);
                           }}
@@ -274,17 +330,38 @@ export default function RFQForm({
                 </Command>
               </PopoverContent>
             </Popover>
-            <Button className="bg-[#0F1E7A] text-white cursor-pointer">
+            <Button
+              className="bg-[#0F1E7A] text-white cursor-pointer"
+              onClick={() => {
+                if (selectedVendor) {
+                  const vendor = vendors.find((v) => v._id === selectedVendor);
+                  if (
+                    vendor &&
+                    !selectedVendors.find((sv) => sv.id === vendor._id)
+                  ) {
+                    const newVendor = {
+                      id: vendor._id,
+                      name: vendor.name,
+                      contact: vendor.contactPerson,
+                      phone: vendor.phone,
+                      email: vendor.email,
+                      address: vendor.address,
+                    };
+                    setSelectedVendors((prev) => [...prev, newVendor]);
+                    setSelectedVendor("");
+                  }
+                }
+              }}
+            >
               Add
             </Button>
           </div>
 
-          <div className="w-[50%] flex justify-end items-center">
+          <div className="w-full lg:w-[50%] flex justify-center lg:justify-end items-center">
             <Dialog>
               <DialogTrigger className="bg-white" asChild>
                 <Button className="bg-[#0F1E7A] text-white cursor-pointer">
-                  <Plus size={22} />{" "}
-                  <span className="hidden lg:flex">New Vendor</span>
+                  <Plus size={22} /> New Vendor
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-white max-w-[500px]">
@@ -358,6 +435,83 @@ export default function RFQForm({
             </Dialog>
           </div>
         </div>
+
+        <div className="vendor-suggestions my-3">
+          <p className="text-base font-normal">
+            {suggestedVendors.length === 1
+              ? `Suggested Vendor`
+              : `Suggested Vendors`}
+          </p>
+
+          {suggestedVendors.length === 0 ? (
+            <p className="text-center text-sm italic">
+              No suggested vendors available.
+            </p>
+          ) : (
+            <div className="suggestions w-full flex items-center gap-5 pt-1 pb-4 overflow-x-auto">
+              {suggestedVendors.map((vendor) => (
+                <div
+                  key={vendor.id}
+                  className="w-fit flex-shrink-0 flex flex-col gap-2 border border-gray-200 rounded-md shadow-sm hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer"
+                  onClick={() => addVendorToSelected(vendor)}
+                >
+                  <div className="px-3 pb-3">
+                    <h4 className="font-bold whitespace-nowrap">
+                      {vendor.name}
+                    </h4>
+                    <p className="whitespace-nowrap">{vendor.contact}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {selectedVendors.length > 0 && (
+          <div className="selected-vendors w-full flex flex-col gap-4 my-3">
+            {selectedVendors.map((vendor, index) => (
+              <div
+                key={vendor.id}
+                className={`vendor-selected-${
+                  index + 1
+                } w-full flex flex-col gap-3 p-3 border border-gray-200 rounded-md shadow-sm text-sm font-bold`}
+              >
+                <p>
+                  Company Name:{" "}
+                  <span className="font-normal">{vendor.name}</span>
+                </p>
+                <p>
+                  Contact Person:{" "}
+                  <span className="font-normal">{vendor.contact}</span>
+                </p>
+                <p>
+                  Phone No.: <span className="font-normal">{vendor.phone}</span>
+                </p>
+                <p>
+                  Email Address:{" "}
+                  <span className="font-normal">{vendor.email}</span>
+                </p>
+                <p>
+                  Address: <span className="font-normal">{vendor.address}</span>
+                </p>
+
+                <div className="selected-vendor-action-buttons flex flex-row justify-start items-center">
+                  <div className="flex gap-2">
+                    <div className="cursor-pointer">
+                      <SquarePen size={20} color="#0F1E7A" />
+                    </div>
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => removeSelectedVendor(vendor.id)}
+                    >
+                      <Trash size={20} color="#ED3237" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 pt-6">
