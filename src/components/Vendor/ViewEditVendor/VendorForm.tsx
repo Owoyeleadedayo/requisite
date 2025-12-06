@@ -48,11 +48,13 @@ export default function VendorForm({
   useEffect(() => {
     if (vendorData.dateOfIncorporation) {
       const date = new Date(vendorData.dateOfIncorporation);
-      setMydateStart(date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }));
+      setMydateStart(
+        date.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      );
       setMonthStart(date);
     }
   }, [vendorData.dateOfIncorporation]);
@@ -82,38 +84,39 @@ export default function VendorForm({
   );
 
   const selectedCategories = vendorData.categories || [];
-  const selectedCategoryIds = selectedCategories.map(cat => 
-    typeof cat === 'string' ? cat : cat._id
+  const selectedCategoryIds = selectedCategories.map((cat) =>
+    typeof cat === "string" ? cat : cat._id
   );
 
   const handleCategoryToggle = (category: Category) => {
     const isSelected = selectedCategoryIds.includes(category._id);
-    
+
     if (isSelected) {
-      setVendorData(prev => ({
+      setVendorData((prev) => ({
         ...prev,
-        categories: prev.categories?.filter(cat => 
-          (typeof cat === 'string' ? cat : cat._id) !== category._id
-        ) || []
+        categories:
+          prev.categories?.filter(
+            (cat) => (typeof cat === "string" ? cat : cat._id) !== category._id
+          ) || [],
       }));
     } else {
-      setVendorData(prev => ({
+      setVendorData((prev) => ({
         ...prev,
-        categories: [...(prev.categories || []), category]
+        categories: [...(prev.categories || []), category],
       }));
     }
   };
 
-  const handleInputChange = (field: keyof Vendor, value: any) => {
-    setVendorData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof Vendor, value: string | boolean) => {
+    setVendorData((prev) => ({ ...prev, [field]: value }));
   };
-
-
 
   return (
     <div className="space-y-6 bg-white p-6 rounded-lg border">
-      <h2 className="text-xl font-semibold text-[#0F1E7A]">Vendor Information</h2>
-      
+      <h2 className="text-xl font-semibold text-[#0F1E7A]">
+        Vendor Information
+      </h2>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="name">Vendor Name *</Label>
@@ -138,11 +141,15 @@ export default function VendorForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="contactPersonDesignation">Contact Person Designation *</Label>
+          <Label htmlFor="contactPersonDesignation">
+            Contact Person Designation *
+          </Label>
           <Input
             id="contactPersonDesignation"
             value={vendorData.contactPersonDesignation || ""}
-            onChange={(e) => handleInputChange("contactPersonDesignation", e.target.value)}
+            onChange={(e) =>
+              handleInputChange("contactPersonDesignation", e.target.value)
+            }
             disabled={!isEditMode}
             className={!isEditMode ? "bg-gray-50" : ""}
           />
@@ -200,13 +207,18 @@ export default function VendorForm({
             <Input
               value={mydateStart}
               placeholder="Select date"
-              className={`!p-4 rounded-xl border shadow-sm pr-10 ${!isEditMode ? "bg-gray-50" : "border-[#9f9f9f]"}`}
+              className={`!p-4 rounded-xl border shadow-sm pr-10 ${
+                !isEditMode ? "bg-gray-50" : "border-[#9f9f9f]"
+              }`}
               disabled={!isEditMode}
               onChange={(e) => {
                 setMydateStart(e.target.value);
                 const date = parseDate(e.target.value);
                 if (date) {
-                  setVendorData(prev => ({...prev, dateOfIncorporation: date.toISOString().split('T')[0]}));
+                  setVendorData((prev) => ({
+                    ...prev,
+                    dateOfIncorporation: date.toISOString().split("T")[0],
+                  }));
                   setMonthStart(date);
                 }
               }}
@@ -227,22 +239,34 @@ export default function VendorForm({
                   <CalendarIcon className="size-3.5" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto overflow-hidden bg-white p-0" align="end">
+              <PopoverContent
+                className="w-auto overflow-hidden bg-white p-0"
+                align="end"
+              >
                 <Calendar
                   mode="single"
-                  selected={vendorData.dateOfIncorporation ? new Date(vendorData.dateOfIncorporation) : undefined}
+                  selected={
+                    vendorData.dateOfIncorporation
+                      ? new Date(vendorData.dateOfIncorporation)
+                      : undefined
+                  }
                   captionLayout="dropdown"
                   month={monthStart}
                   onMonthChange={setMonthStart}
                   disabled={(date) => date > new Date()}
                   onSelect={(date) => {
                     if (date) {
-                      setVendorData(prev => ({...prev, dateOfIncorporation: date.toISOString().split('T')[0]}));
-                      setMydateStart(date.toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
+                      setVendorData((prev) => ({
+                        ...prev,
+                        dateOfIncorporation: date.toISOString().split("T")[0],
                       }));
+                      setMydateStart(
+                        date.toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      );
                     }
                     setOpenStart(false);
                   }}
@@ -266,7 +290,7 @@ export default function VendorForm({
                 disabled={!isEditMode}
               />
             </div>
-            
+
             {showCategoryDropdown && isEditMode && (
               <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
                 {filteredCategories.map((category) => (
@@ -290,15 +314,15 @@ export default function VendorForm({
               </div>
             )}
           </div>
-          
+
           {selectedCategories.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {selectedCategories.map((category) => (
                 <span
-                  key={typeof category === 'string' ? category : category._id}
+                  key={typeof category === "string" ? category : category._id}
                   className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full"
                 >
-                  {typeof category === 'string' ? category : category.name}
+                  {typeof category === "string" ? category : category.name}
                 </span>
               ))}
             </div>
@@ -311,7 +335,7 @@ export default function VendorForm({
               <Checkbox
                 id="isVerified"
                 checked={vendorData.isVerified}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   handleInputChange("isVerified", checked)
                 }
               />
@@ -322,7 +346,7 @@ export default function VendorForm({
               <Checkbox
                 id="isActive"
                 checked={vendorData.isActive}
-                onCheckedChange={(checked) => 
+                onCheckedChange={(checked) =>
                   handleInputChange("isActive", checked)
                 }
               />
