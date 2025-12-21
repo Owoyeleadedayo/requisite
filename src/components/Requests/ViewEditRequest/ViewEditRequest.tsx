@@ -825,7 +825,7 @@ export default function ViewEditRequest({
                 <>
                   <Button
                     onClick={() => onEditModeChange(false)}
-                    className="border border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
+                    className="border border-red-600 text-red-600 hover:bg-red-500 flex-1 py-6"
                   >
                     Cancel Edit
                   </Button>

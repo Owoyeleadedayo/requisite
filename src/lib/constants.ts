@@ -27,5 +27,24 @@ export const CONSTANTS = {
             REJECT_REQUISITION_ERROR: 'Error rejecting requisition',
             REJECT_REQUISITION_FAIL: 'Failed to reject requisition',
         }
+    },
+  LOCATION: {
+    PAGE: 'locations',
+    API: {
+      LOCATIONS: '/locations',
+      LOCATION_BY_ID: (id: string) => `/locations/${id}`,
+    },
+    NOTIFICATION: {
+      FETCH_LOCATION_ERROR: "Failed to fetch locations",
+      CREATE_LOCATION_SUCCESS: "Location created successfully",
+      CREATE_LOCATION_FAIL: "Failed to create locations",
+      CREATE_LOCATION_ERROR: "Error creating location",
+      UPDATE_LOCATION_SUCCESS: "Location updated successfully",
+      UPDATE_LOCATION_FAIL: "Failed to update locations",
+      UPDATE_LOCATION_ERROR: "Error updating location",
+      DELETE_LOCATION_SUCCESS: "Location deleted successfully",
+      DELETE_LOCATION_FAIL: "Failed to delete locations",
+      DELETE_LOCATION_ERROR: "Error deleting location",
     }
+  },
 } as const;

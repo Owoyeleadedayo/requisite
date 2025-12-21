@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Plus } from "lucide-react";
+import { Edit, Eye, Folder, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NumericFormat } from "react-number-format";
 import DashboardCard from "@/components/DashboardCard";
@@ -12,26 +12,48 @@ import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
 import { RequisitionShape } from "@/types/requisition";
 import getLocationName from "@/lib/getLocationName";
+import LocationsFormDialog from "@/components/pm/LocationsFormDialog";
+import { locationService } from "@/services/locationService";
+import { Location } from "@/lib/getLocationName";
+import { toast } from "sonner";
+import { CONSTANTS } from "@/lib/constants";
+
+const PAGE_CAN_ROUTE_TO_NEW_REQUEST: string[] = [
+  "procurementDashboard",
+  "pmRequests",
+  "procurementBids",
+];
 
 interface ProcurementManagerDashboardProps {
   page?:
     | "procurementDashboard"
     | "procurementRequisitions"
     | "pmRequests"
-    | "procurementBids";
+    | "procurementBids"
+    | "locations";
+}
+
+const newLocation: Location = {
+  name: '',
+  address: '',
+  contactPerson: '',
+  phoneNumber: '',
+  email: '',
+  _id: ''
 }
 
 export default function PMDashboard({
   page = "procurementDashboard",
 }: ProcurementManagerDashboardProps = {}) {
   const [loading, setLoading] = useState(false);
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   // const [locations, setLocations] = useState<{ _id: string; name: string }[]>(
   //   []
   // );
-  const [locations, setLocations] = useState<{ _id: string; name: string }[]>(
+  const [locations, setLocations] = useState<Location[]>(
     []
   );
   const [totalCount, setTotalCount] = useState(0);
@@ -42,6 +64,8 @@ export default function PMDashboard({
     bidding: 0,
   });
 
+  const [currentLocation, setCurrentLocation] = useState<Location>(newLocation)
+  const loadingContext =  page === CONSTANTS.LOCATION.PAGE ? CONSTANTS.LOCATION.PAGE : 'requisitions';
   const itemsPerPage: number = 10;
 
   const userId = getUserId();
@@ -49,20 +73,78 @@ export default function PMDashboard({
   const authdata = getAuthData();
 
   const fetchLocations = useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/locations`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
+      const data = await locationService.fetchLocations()
       if (data) {
         setLocations(data);
       }
     } catch (error) {
-      console.error("Failed to fetch locations", error);
+      console.error(CONSTANTS.LOCATION.NOTIFICATION.FETCH_LOCATION_ERROR, error);
+    } finally {
+      setLoading(false);
     }
-  }, [token]);
+  }, []);
+
+  const createLocation = async () => {
+    setIsLocationLoading(true)
+    try {
+      const data = await locationService.createLocation(currentLocation);
+      if (data) {
+        setLocations([...locations, data]);
+        toast.success(CONSTANTS.LOCATION.NOTIFICATION.CREATE_LOCATION_SUCCESS);
+      } else {
+        throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.CREATE_LOCATION_FAIL);
+      }
+    } catch (error) {
+      console.error(CONSTANTS.LOCATION.NOTIFICATION.CREATE_LOCATION_ERROR, error);
+      throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.CREATE_LOCATION_ERROR);
+    } finally {
+      setIsLocationLoading(false)
+    }
+  }
+
+  const updateLocation = async () => {
+    setIsLocationLoading(true)
+    try {
+      const data = await locationService.updateLocation(currentLocation);
+      if (data) {
+        const updatedLocations: Location[] = locations.map((location) => {
+          if(location._id === data._id) {
+            return data;
+          }
+          return location;
+        })
+        setLocations(updatedLocations);
+        toast.success(CONSTANTS.LOCATION.NOTIFICATION.UPDATE_LOCATION_SUCCESS);
+      } else {
+        throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.UPDATE_LOCATION_FAIL);
+      }
+    } catch (error) {
+      console.error(CONSTANTS.LOCATION.NOTIFICATION.UPDATE_LOCATION_ERROR, error);
+      throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.UPDATE_LOCATION_ERROR);
+    } finally {
+      setIsLocationLoading(false)
+    }
+  }
+
+  const deleteLocation = async (locationId:string) => {
+    setIsLocationLoading(true)
+    try {
+      const data = await locationService.deleteLocation(locationId);
+      if (data) {
+        setLocations(locations.filter((location) => location._id !== locationId));
+        toast.success(data.message || CONSTANTS.LOCATION.NOTIFICATION.DELETE_LOCATION_SUCCESS);
+      } else {
+        throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.DELETE_LOCATION_FAIL);
+      }
+    } catch (error) {
+      console.error(CONSTANTS.LOCATION.NOTIFICATION.DELETE_LOCATION_ERROR, error);
+      throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.DELETE_LOCATION_ERROR);
+    } finally {
+      setIsLocationLoading(false)
+    }
+  }
 
   const columns: Column<RequisitionShape>[] = [
     { key: "title", label: "Request Title" },
@@ -145,6 +227,64 @@ export default function PMDashboard({
       ),
     },
   ];
+
+  const locationsColumns: Column<Location>[] = [
+    {key:'name', label:'Name'},
+    {key:'address', label:'Address'},
+    {key:'contactPerson', label:'Contact Person'},
+    {key:'phoneNumber', label:'Phone Number'},
+    {key:'email', label:'Email'},
+    {
+      key: "_id",
+      label: "Action",
+      render: (_, row) => (
+        <div className="flex gap-2 items-center">
+          <LocationsFormDialog
+            handleLocationFormChange={handleLocationFormChange}
+            currentLocation={row}
+            mode='view'
+            isLocationLoading={isLocationLoading}
+          >
+          <Button
+          variant="ghost"
+          className="!px-2 !lg:px-1"
+        >
+          <Eye size={24} className="!text-[#0F1E7A]" />
+        </Button>
+          </LocationsFormDialog>
+          <LocationsFormDialog
+            handleLocationFormChange={handleLocationFormChange}
+            currentLocation={currentLocation}
+            submit={updateLocation}
+            mode='edit'
+            isLocationLoading={isLocationLoading}
+          >
+          <Button
+            variant="ghost"
+            className="!px-2 !lg:px-1"
+            onClick={() => {setCurrentLocation(row);}}
+          >
+            <Edit size={24} className="!text-[#0F1E7A]" />
+          </Button>
+          </LocationsFormDialog>
+          <LocationsFormDialog
+            handleLocationFormChange={handleLocationFormChange}
+            currentLocation={row}
+            submit={deleteLocation}
+            mode='delete'
+            isLocationLoading={isLocationLoading}
+          >
+          <Button
+            variant="ghost"
+            className="!px-2 !lg:px-1"
+          >
+            <Trash2 size={24} className="!text-red-500" />
+          </Button>
+          </LocationsFormDialog>
+        </div>
+      ),
+    },
+  ]
 
   const dashboardCardItems = [
     {
@@ -235,12 +375,21 @@ export default function PMDashboard({
   useEffect(() => {
     if (token) {
       fetchLocations();
-      fetchRequisitions(1);
+      if (page !== CONSTANTS.LOCATION.PAGE) {
+        fetchRequisitions(1);
+      }
     }
   }, [token, fetchRequisitions, fetchLocations]);
 
   const handlePageChange = (page: number) => {
     fetchRequisitions(page);
+  };
+
+  const handleLocationFormChange = (
+    field: keyof Location,
+    value: string | null
+  ) => {
+    setCurrentLocation((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -282,10 +431,12 @@ export default function PMDashboard({
             ? "Bid Management"
             : page === "pmRequests"
             ? "My Requests"
+            : page === CONSTANTS.LOCATION.PAGE
+            ? "List of Locations"
             : "Requests"}
         </p>
 
-        {page !== "procurementRequisitions" && (
+        {PAGE_CAN_ROUTE_TO_NEW_REQUEST.includes(page) && (
           <Button
             asChild
             className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
@@ -296,22 +447,66 @@ export default function PMDashboard({
             </Link>
           </Button>
         )}
+        <LocationsFormDialog
+          handleLocationFormChange={handleLocationFormChange}
+          currentLocation={currentLocation}
+          submit={createLocation}
+          mode='create'
+          isLocationLoading={isLocationLoading}
+        >{/* Todo: use enums for the modes */}
+          {page === CONSTANTS.LOCATION.PAGE && (
+            <Button
+              asChild
+              className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
+              onClick={() => {setCurrentLocation(newLocation);}}
+            >
+            <span>
+              <Plus size={22} />{" "}
+              <span className="hidden lg:flex">New Location</span>
+            </span>
+            </Button>
+          )}
+        </LocationsFormDialog>
       </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F1E7A]"></div>
-          <span className="ml-2 text-gray-600">Loading requisitions...</span>
+          <span className="ml-2 text-gray-600">Loading {loadingContext}...</span>
         </div>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={requisitions}
+      ) : (!locations.length ? (<div className="w-full h-full flex items-center justify-center">
+            <div className="flex flex-col items-center mt-20 lg:mt-0">
+              <Folder size={80} />
+              <p className="text-center max-w-sm">
+                Your item list is empty. Click the button below to create an item.
+              </p>
+              <div>
+                <LocationsFormDialog
+                  handleLocationFormChange={handleLocationFormChange}
+                  currentLocation={currentLocation}
+                  submit={createLocation}
+                  mode='create'
+                  isLocationLoading={isLocationLoading}
+                >
+                <Button
+                  asChild
+                  className="flex flex-row border border-[#0F1E7A] mt-5 cursor-pointer bg-white text-[#0F1E7A] hover:bg-gray-100"
+                  onClick={() => {setCurrentLocation(newLocation);}}
+                >
+                  <span><Plus /> Add New Location</span>
+                </Button>
+                </LocationsFormDialog>
+              </div>
+            </div>
+          </div>):
+          (<DataTable
+          columns={page === CONSTANTS.LOCATION.PAGE ? locationsColumns : columns}
+          data={page === CONSTANTS.LOCATION.PAGE ? locations : requisitions}
           totalPages={totalPages}
           currentPage={currentPage}
           onPageChange={handlePageChange}
           loading={loading}
-        />
+        />)
       )}
     </div>
   );

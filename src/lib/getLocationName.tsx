@@ -1,7 +1,11 @@
-type Location = {
+export type Location = {
   _id: string;
-  name: string;
-};
+  name: string
+  address: string
+  contactPerson: string
+  phoneNumber: string
+  email: string
+}
 
 const getLocationName = (
   location: string | { _id: string; name: string },
