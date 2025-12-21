@@ -12,8 +12,8 @@ import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId } from "@/lib/auth";
 import { formatUrgencyText, UrgencyDisplay } from "@/lib/urgencyFormatter";
 import { formatStatus } from "@/lib/statusFormatter";
-import getLocationName from "@/lib/getLocationName";
-import { RequisitionShape, Location } from "@/types/requisition";
+import getLocationName, { Location } from "@/lib/getLocationName";
+import { RequisitionShape } from "@/types/requisition";
 
 interface UserDashboardProps {
   page?: "userDashboard" | "userRequisition";

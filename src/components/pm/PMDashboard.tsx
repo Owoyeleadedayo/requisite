@@ -379,7 +379,7 @@ export default function PMDashboard({
         fetchRequisitions(1);
       }
     }
-  }, [token, fetchRequisitions, fetchLocations]);
+  }, [token, fetchRequisitions, fetchLocations, page]);
 
   const handlePageChange = (page: number) => {
     fetchRequisitions(page);
