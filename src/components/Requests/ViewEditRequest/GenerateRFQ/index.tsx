@@ -240,6 +240,8 @@ const GenerateRFQ = () => {
           handleCompleteRFQ={handleCompleteRFQ}
           items={items}
           recommendedVendors={recommendedVendors}
+          selectedItems={selectedItems}
+          requisitionId={requisitionId}
           onVendorAdded={() => {
             // Refresh vendors list when a new vendor is added
             // You may need to implement a fetchVendors function here
