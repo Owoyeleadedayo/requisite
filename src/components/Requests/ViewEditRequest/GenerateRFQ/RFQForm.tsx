@@ -95,6 +95,7 @@ interface RFQFormProps {
   setComboboxOpen: (open: boolean) => void;
   handleCompleteRFQ: () => void;
   items: Item[];
+  recommendedVendors?: Vendor[];
   onVendorAdded?: () => void;
 }
 
@@ -130,30 +131,29 @@ export default function RFQForm({
   setComboboxOpen,
   handleCompleteRFQ,
   items,
+  recommendedVendors = [],
   onVendorAdded,
 }: RFQFormProps) {
   const [selectedVendors, setSelectedVendors] = useState<SelectedVendor[]>([]);
 
-  // Get suggested vendors from requisition items
-  const suggestedVendors = items
-    .filter((item) => item.recommendedVendor)
-    .map((item) => {
-      const vendor = vendors.find((v) => v._id === item.recommendedVendor);
-      return vendor
-        ? {
-            id: vendor._id,
-            name: vendor.name,
-            contact: vendor.contactPerson,
-            phone: vendor.phone,
-            email: vendor.email,
-            address: vendor.address,
-          }
-        : null;
-    })
-    .filter(Boolean) as SuggestedVendor[];
+  // Convert recommended vendors to suggested vendors format, filtering out selected ones
+  const suggestedVendors: SuggestedVendor[] = recommendedVendors
+    .filter(vendor => 
+      !selectedVendors.some(sv => sv.id === vendor._id)
+    )
+    .map(vendor => ({
+      id: vendor._id,
+      name: vendor.name,
+      contact: vendor.contactPerson,
+      phone: vendor.phone,
+      email: vendor.email,
+      address: vendor.address,
+    }));
 
   const addVendorToSelected = (vendor: SuggestedVendor) => {
-    setSelectedVendors((prev) => [...prev, vendor]);
+    if (!selectedVendors.some(sv => sv.id === vendor.id)) {
+      setSelectedVendors((prev) => [...prev, vendor]);
+    }
   };
 
   const removeSelectedVendor = (id: string) => {
@@ -333,29 +333,29 @@ export default function RFQForm({
                 </Command>
               </PopoverContent>
             </Popover>
-            <Button
-              className="bg-[#0F1E7A] text-white cursor-pointer"
-              onClick={() => {
-                if (selectedVendor) {
-                  const vendor = vendors.find((v) => v._id === selectedVendor);
-                  if (
-                    vendor &&
-                    !selectedVendors.find((sv) => sv.id === vendor._id)
-                  ) {
-                    const newVendor = {
-                      id: vendor._id,
-                      name: vendor.name,
-                      contact: vendor.contactPerson,
-                      phone: vendor.phone,
-                      email: vendor.email,
-                      address: vendor.address,
-                    };
-                    setSelectedVendors((prev) => [...prev, newVendor]);
-                    setSelectedVendor("");
+              <Button
+                className="bg-[#0F1E7A] text-white cursor-pointer"
+                onClick={() => {
+                  if (selectedVendor) {
+                    const vendor = vendors.find((v) => v._id === selectedVendor);
+                    if (
+                      vendor &&
+                      !selectedVendors.find((sv) => sv.id === vendor._id)
+                    ) {
+                      const newVendor = {
+                        id: vendor._id,
+                        name: vendor.name,
+                        contact: vendor.contactPerson,
+                        phone: vendor.phone,
+                        email: vendor.email,
+                        address: vendor.address,
+                      };
+                      setSelectedVendors((prev) => [...prev, newVendor]);
+                      setSelectedVendor("");
+                    }
                   }
-                }
-              }}
-            >
+                }}
+              >
               Add
             </Button>
           </div>
@@ -372,18 +372,14 @@ export default function RFQForm({
           </div>
         </div>
 
-        <div className="vendor-suggestions my-3">
-          <p className="text-base font-normal">
-            {suggestedVendors.length === 1
-              ? `Suggested Vendor`
-              : `Suggested Vendors`}
-          </p>
-
-          {suggestedVendors.length === 0 ? (
-            <p className="text-center text-sm italic">
-              No suggested vendors available.
+        {suggestedVendors.length > 0 && (
+          <div className="vendor-suggestions my-3">
+            <p className="text-base font-normal">
+              {suggestedVendors.length === 1
+                ? `Suggested Vendor`
+                : `Suggested Vendors`}
             </p>
-          ) : (
+
             <div className="suggestions w-full flex items-center gap-5 pt-1 pb-4 overflow-x-auto">
               {suggestedVendors.map((vendor) => (
                 <div
@@ -391,7 +387,7 @@ export default function RFQForm({
                   className="w-fit flex-shrink-0 flex flex-col gap-2 border border-gray-200 rounded-md shadow-sm hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer"
                   onClick={() => addVendorToSelected(vendor)}
                 >
-                  <div className="px-3 pb-3">
+                  <div className="p-3">
                     <h4 className="font-bold whitespace-nowrap">
                       {vendor.name}
                     </h4>
@@ -400,8 +396,8 @@ export default function RFQForm({
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {selectedVendors.length > 0 && (
           <div className="selected-vendors w-full flex flex-col gap-4 my-3">
