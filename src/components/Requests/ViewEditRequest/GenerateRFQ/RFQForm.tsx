@@ -43,6 +43,10 @@ import { parseDate } from "chrono-node";
 import { Vendor } from "../../types";
 import { useState } from "react";
 import AddVendorDialog from "@/components/Vendor/AddVendorDialog";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { getToken } from "@/lib/auth";
+import { API_BASE_URL } from "@/lib/config";
 
 interface Location {
   _id: string;
@@ -95,6 +99,9 @@ interface RFQFormProps {
   setComboboxOpen: (open: boolean) => void;
   handleCompleteRFQ: () => void;
   items: Item[];
+  recommendedVendors?: Vendor[];
+  selectedItems: string[];
+  requisitionId: string;
   onVendorAdded?: () => void;
 }
 
@@ -130,34 +137,103 @@ export default function RFQForm({
   setComboboxOpen,
   handleCompleteRFQ,
   items,
+  recommendedVendors = [],
+  selectedItems,
+  requisitionId,
   onVendorAdded,
 }: RFQFormProps) {
+  const router = useRouter();
   const [selectedVendors, setSelectedVendors] = useState<SelectedVendor[]>([]);
+  const [evaluationCriteria, setEvaluationCriteria] = useState("");
+  const [termsOfService, setTermsOfService] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get suggested vendors from requisition items
-  const suggestedVendors = items
-    .filter((item) => item.recommendedVendor)
-    .map((item) => {
-      const vendor = vendors.find((v) => v._id === item.recommendedVendor);
-      return vendor
-        ? {
-            id: vendor._id,
-            name: vendor.name,
-            contact: vendor.contactPerson,
-            phone: vendor.phone,
-            email: vendor.email,
-            address: vendor.address,
-          }
-        : null;
-    })
-    .filter(Boolean) as SuggestedVendor[];
+  // Convert recommended vendors to suggested vendors format, filtering out selected ones
+  const suggestedVendors: SuggestedVendor[] = recommendedVendors
+    .filter(vendor => 
+      !selectedVendors.some(sv => sv.id === vendor._id)
+    )
+    .map(vendor => ({
+      id: vendor._id,
+      name: vendor.name,
+      contact: vendor.contactPerson,
+      phone: vendor.phone,
+      email: vendor.email,
+      address: vendor.address,
+    }));
 
   const addVendorToSelected = (vendor: SuggestedVendor) => {
-    setSelectedVendors((prev) => [...prev, vendor]);
+    if (!selectedVendors.some(sv => sv.id === vendor.id)) {
+      setSelectedVendors((prev) => [...prev, vendor]);
+    }
   };
 
   const removeSelectedVendor = (id: string) => {
     setSelectedVendors((prev) => prev.filter((vendor) => vendor.id !== id));
+  };
+
+  const handleCompleteRFQSubmit = async () => {
+    // Validation
+    if (!rfqTitle.trim()) {
+      toast.error("RFQ Title is required");
+      return;
+    }
+    if (!selectedLocation) {
+      toast.error("Location is required");
+      return;
+    }
+    if (!evaluationCriteria.trim()) {
+      toast.error("Evaluation Criteria is required");
+      return;
+    }
+    if (!dateStart) {
+      toast.error("Expected Delivery Date is required");
+      return;
+    }
+    if (!termsOfService.trim()) {
+      toast.error("Terms of Service is required");
+      return;
+    }
+    if (selectedVendors.length === 0) {
+      toast.error("At least one vendor must be selected");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const token = getToken();
+      const payload = {
+        vendors: selectedVendors.map(v => v.id),
+        itemIds: selectedItems,
+        evaluationCriteria,
+        termsOfService,
+        title: rfqTitle,
+        deliveryLocation: selectedLocation,
+        expectedDeliveryDate: dateStart.toISOString().split('T')[0]
+      };
+
+      const response = await fetch(`${API_BASE_URL}/requisitions/${requisitionId}/rfqs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success("RFQ generated successfully!");
+        router.push("/pm/rfqs");
+      } else {
+        toast.error(data.message || "Failed to generate RFQ");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("An error occurred while generating RFQ");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -208,6 +284,8 @@ export default function RFQForm({
         </Label>
         <Textarea
           id="criteria"
+          value={evaluationCriteria}
+          onChange={(e) => setEvaluationCriteria(e.target.value)}
           className="min-h-[100px] rounded-xl border border-[#9f9f9f] shadow-sm"
         />
       </div>
@@ -276,6 +354,8 @@ export default function RFQForm({
         <Textarea
           id="itemDescription"
           name="itemDescription"
+          value={termsOfService}
+          onChange={(e) => setTermsOfService(e.target.value)}
           className="min-h-[100px] rounded-xl border border-[#9f9f9f] shadow-sm"
         />
       </div>
@@ -333,29 +413,29 @@ export default function RFQForm({
                 </Command>
               </PopoverContent>
             </Popover>
-            <Button
-              className="bg-[#0F1E7A] text-white cursor-pointer"
-              onClick={() => {
-                if (selectedVendor) {
-                  const vendor = vendors.find((v) => v._id === selectedVendor);
-                  if (
-                    vendor &&
-                    !selectedVendors.find((sv) => sv.id === vendor._id)
-                  ) {
-                    const newVendor = {
-                      id: vendor._id,
-                      name: vendor.name,
-                      contact: vendor.contactPerson,
-                      phone: vendor.phone,
-                      email: vendor.email,
-                      address: vendor.address,
-                    };
-                    setSelectedVendors((prev) => [...prev, newVendor]);
-                    setSelectedVendor("");
+              <Button
+                className="bg-[#0F1E7A] text-white cursor-pointer"
+                onClick={() => {
+                  if (selectedVendor) {
+                    const vendor = vendors.find((v) => v._id === selectedVendor);
+                    if (
+                      vendor &&
+                      !selectedVendors.find((sv) => sv.id === vendor._id)
+                    ) {
+                      const newVendor = {
+                        id: vendor._id,
+                        name: vendor.name,
+                        contact: vendor.contactPerson,
+                        phone: vendor.phone,
+                        email: vendor.email,
+                        address: vendor.address,
+                      };
+                      setSelectedVendors((prev) => [...prev, newVendor]);
+                      setSelectedVendor("");
+                    }
                   }
-                }
-              }}
-            >
+                }}
+              >
               Add
             </Button>
           </div>
@@ -372,18 +452,14 @@ export default function RFQForm({
           </div>
         </div>
 
-        <div className="vendor-suggestions my-3">
-          <p className="text-base font-normal">
-            {suggestedVendors.length === 1
-              ? `Suggested Vendor`
-              : `Suggested Vendors`}
-          </p>
-
-          {suggestedVendors.length === 0 ? (
-            <p className="text-center text-sm italic">
-              No suggested vendors available.
+        {suggestedVendors.length > 0 && (
+          <div className="vendor-suggestions my-3">
+            <p className="text-base font-normal">
+              {suggestedVendors.length === 1
+                ? `Suggested Vendor`
+                : `Suggested Vendors`}
             </p>
-          ) : (
+
             <div className="suggestions w-full flex items-center gap-5 pt-1 pb-4 overflow-x-auto">
               {suggestedVendors.map((vendor) => (
                 <div
@@ -391,7 +467,7 @@ export default function RFQForm({
                   className="w-fit flex-shrink-0 flex flex-col gap-2 border border-gray-200 rounded-md shadow-sm hover:border-blue-400 hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer"
                   onClick={() => addVendorToSelected(vendor)}
                 >
-                  <div className="px-3 pb-3">
+                  <div className="p-3">
                     <h4 className="font-bold whitespace-nowrap">
                       {vendor.name}
                     </h4>
@@ -400,8 +476,8 @@ export default function RFQForm({
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {selectedVendors.length > 0 && (
           <div className="selected-vendors w-full flex flex-col gap-4 my-3">
@@ -453,10 +529,11 @@ export default function RFQForm({
       <div className="flex flex-col sm:flex-row gap-3 pt-6">
         <Button
           type="button"
-          onClick={handleCompleteRFQ}
+          onClick={handleCompleteRFQSubmit}
+          disabled={isSubmitting}
           className="font-bold text-base bg-[#0F1E7A] hover:bg-[#0b154b] text-white py-6 px-10"
         >
-          Complete RFQ
+          {isSubmitting ? "Generating..." : "Complete RFQ"}
         </Button>
 
         <Button

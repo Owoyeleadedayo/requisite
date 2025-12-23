@@ -62,6 +62,7 @@ const GenerateRFQ = () => {
   const [monthStart, setMonthStart] = useState<Date | undefined>(today);
   const [requestData, setRequestData] = useState<RequestData | null>(null);
   const [dialogSelectedItems, setDialogSelectedItems] = useState<string[]>([]);
+  const [recommendedVendors, setRecommendedVendors] = useState<Vendor[]>([]);
 
   useEffect(() => {
     // Check if requisitionId exists and selectedItems are provided
@@ -131,6 +132,7 @@ const GenerateRFQ = () => {
         const data = await res.json();
         if (data.success) {
           const req = data.data;
+          console.log('Requisition details fetched:', req);
           setRequestData(req);
           setRfqTitle(req.title);
           setSelectedLocation(req.deliveryLocation);
@@ -144,6 +146,23 @@ const GenerateRFQ = () => {
 
           if (req.items) {
             setItems(req.items);
+
+            // Extract recommended vendors and merge with existing vendors
+            const recommendedVendors: Vendor[] = [];
+            req.items.forEach((item: Item) => {
+              if (item.recommendedVendor && typeof item.recommendedVendor === 'object') {
+                recommendedVendors.push(item.recommendedVendor as Vendor);
+              }
+            });
+            console.log('Recommended vendors extracted:', recommendedVendors);
+            setRecommendedVendors(recommendedVendors);
+
+            // Merge with existing vendors, avoiding duplicates
+            setVendors(currentVendors => {
+              const vendorIds = new Set(currentVendors.map(v => v._id));
+              const uniqueRecommended = recommendedVendors.filter(v => !vendorIds.has(v._id));
+              return [...currentVendors, ...uniqueRecommended];
+            });
 
             // Get selected items from URL params
             const selectedItemsParam = searchParams.get("selectedItems");
@@ -220,6 +239,9 @@ const GenerateRFQ = () => {
           setComboboxOpen={setComboboxOpen}
           handleCompleteRFQ={handleCompleteRFQ}
           items={items}
+          recommendedVendors={recommendedVendors}
+          selectedItems={selectedItems}
+          requisitionId={requisitionId}
           onVendorAdded={() => {
             // Refresh vendors list when a new vendor is added
             // You may need to implement a fetchVendors function here
