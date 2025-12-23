@@ -11,7 +11,7 @@ import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
 import { RequisitionShape } from "@/types/requisition";
-import getLocationName from "@/lib/getLocationName";
+import getLocationName, { Location } from "@/lib/getLocationName";
 
 interface ProcurementManagerDashboardProps {
   page?:
@@ -31,7 +31,7 @@ export default function HHRADashboard({
   // const [locations, setLocations] = useState<{ _id: string; name: string }[]>(
   //   []
   // );
-  const [locations, setLocations] = useState<{ _id: string; name: string }[]>(
+  const [locations, setLocations] = useState<Location[]>(
     []
   );
   const [totalCount, setTotalCount] = useState(0);

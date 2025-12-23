@@ -1,10 +1,5 @@
 import {Item, RequestData} from "@/components/Requests/types";
 
-export type Location = {
-  _id: string;
-  name: string;
-};
-
 export type ItemShape = {
   _id: string;
   itemName: string;

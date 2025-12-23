@@ -10,7 +10,7 @@ import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
-import getLocationName from "@/lib/getLocationName";
+import getLocationName, { Location } from "@/lib/getLocationName";
 import { RequisitionShape } from "@/types/requisition";
 
 interface HDODashboardProps {
@@ -99,7 +99,7 @@ export default function HDODashboard({
   ];
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
-  const [locations, setLocations] = useState<{ _id: string; name: string }[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
