@@ -1,7 +1,7 @@
 "use client";
 
-import RFQDashboard from "@/components/pm/RFQDashboard";
+import PMDashboard from "@/components/pm/PMDashboard";
 
 export default function RFQsPage() {
-  return <RFQDashboard />;
+  return <PMDashboard page="rfqs" />;
 }
