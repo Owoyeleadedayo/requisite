@@ -506,7 +506,6 @@ export default function PMDashboard({
 
         if (data.success) {
           setRfqs(data.data);
-          console.log("RFQs data: ", data.data);
           setCurrentPage(data.currentPage);
           setTotalPages(data.totalPages);
           setTotalCount(data.total);
