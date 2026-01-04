@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={montserrat.variable}>
-      <body className={`${montserrat.className} font-sans`}>
+      <body className={`${montserrat.className} font-sans`} suppressHydrationWarning={true}>
         {children}
         <Toaster
           closeButton
