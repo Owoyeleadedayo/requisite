@@ -1,6 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface POItemData {
   itemDescription: string;
@@ -26,16 +35,28 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
   itemData,
 }) => {
   const [formData, setFormData] = useState<POItemData>({
-    itemDescription: itemData?.itemDescription || "HV DC disconnect (>=80A...",
-    brand: itemData?.brand || "Pieces",
-    quantity: itemData?.quantity || 12,
-    uom: itemData?.uom || "Pieces",
-    unitPrice: itemData?.unitPrice || 120000,
-    totalPrice: itemData?.totalPrice || 1440000,
-    detailsSpecification:
-      itemData?.detailsSpecification ||
-      "Our team requires new laptops with high performance specification to replace the old ones",
+    itemDescription: itemData?.itemDescription || "",
+    brand: itemData?.brand || "",
+    quantity: itemData?.quantity || 0,
+    uom: itemData?.uom || "",
+    unitPrice: itemData?.unitPrice || 0,
+    totalPrice: itemData?.totalPrice || 0,
+    detailsSpecification: itemData?.detailsSpecification || "",
   });
+
+  useEffect(() => {
+    if (itemData) {
+      setFormData({
+        itemDescription: itemData.itemDescription || "",
+        brand: itemData.brand || "",
+        quantity: itemData.quantity || 0,
+        uom: itemData.uom || "",
+        unitPrice: itemData.unitPrice || 0,
+        totalPrice: itemData.totalPrice || 0,
+        detailsSpecification: itemData.detailsSpecification || "",
+      });
+    }
+  }, [itemData]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -64,134 +85,126 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header with dotted border */}
-        <div className="border-2 border-dashed border-blue-900 rounded-t-lg p-6">
-          <h2 className="text-2xl md:text-3xl font-bold text-[#0F1E7A]">
-            Edit PO Item
-          </h2>
-        </div>
-
-        {/* Form Content with dotted border */}
-        <div className="border-x-2 border-b-2 border-dashed border-blue-900 rounded-b-lg p-6">
-          <div className="space-y-6">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="bg-white max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <div className="flex justify-center items-center">
+            <p className="text-xl font-semibold text-center text-[#100A1A]">
+              Edit PO Item
+            </p>
+          </div>
+          <div className="flex justify-center items-center">
+            <p className="text-md text-center font-normal">
+              Update the details of the item below
+            </p>
+          </div>
+        </DialogHeader>
+        <div className="space-y-4 overflow-y-auto flex-1 p-1">
+          <div className="flex flex-col gap-3">
             {/* Item Description */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Item Description
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label>Item Description</Label>
+              <Input
                 type="text"
                 name="itemDescription"
                 value={formData.itemDescription}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
             {/* Brand */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">Brand</label>
-              <input
+            <div className="space-y-2">
+              <Label>Brand</Label>
+              <Input
                 type="text"
                 name="brand"
                 value={formData.brand}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg text-sm text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-900"
+                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
             {/* Quantity */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Quantity
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label>Quantity</Label>
+              <Input
                 type="number"
                 name="quantity"
                 value={formData.quantity}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
-            {/* UMO */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">UMO</label>
-              <input
+            {/* UOM */}
+            <div className="space-y-2">
+              <Label>UOM</Label>
+              <Input
                 type="text"
                 name="uom"
                 value={formData.uom}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg text-sm text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-900"
+                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
             {/* Unit Price */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Unit Price
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label>Unit Price</Label>
+              <Input
                 type="number"
                 name="unitPrice"
                 value={formData.unitPrice}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
 
             {/* Total Price */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Total Price
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label>Total Price</Label>
+              <Input
                 type="text"
                 name="totalPrice"
                 value={formData.totalPrice.toLocaleString()}
                 readOnly
-                className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg text-sm bg-gray-50 focus:outline-none"
+                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm bg-gray-50"
               />
             </div>
 
             {/* Details Specification */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Details Specification
-              </label>
-              <textarea
+            <div className="space-y-2">
+              <Label>Details Specification</Label>
+              <Textarea
                 name="detailsSpecification"
                 value={formData.detailsSpecification}
                 onChange={handleInputChange}
-                rows={4}
-                className="w-full px-4 py-3 border-2 border-gray-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 resize-none"
+                className="min-h-[80px] rounded-xl border border-[#9f9f9f] shadow-sm resize-none"
               />
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <button
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button
                 onClick={handleUpdate}
-                className="flex-1 px-8 py-3 bg-[#0F1E7A] text-white rounded-lg font-semibold text-lg hover:bg-blue-800 transition-colors"
+                className="flex-1 bg-[#0F1E7A] text-white hover:bg-blue-800"
               >
                 Update
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={onClose}
-                className="flex-1 px-8 py-3 bg-red-600 text-white rounded-lg font-semibold text-lg hover:bg-red-700 transition-colors"
+                variant="outline"
+                className="flex-1 border-red-600 text-red-600 hover:bg-red-50"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
