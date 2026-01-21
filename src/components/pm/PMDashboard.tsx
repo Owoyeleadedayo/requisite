@@ -382,8 +382,8 @@ export default function PMDashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`#`}>View</Link>
-            {/* <Link href={`/pm/rfqs/${row._id}`}>View</Link> */}
+            {/* <Link href={`#`}>View</Link> */}
+            <Link href={`/pm/rfqs/${row._id}`}>View</Link>
           </Button>
         </div>
       ),

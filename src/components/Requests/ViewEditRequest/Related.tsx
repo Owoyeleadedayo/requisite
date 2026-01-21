@@ -44,7 +44,7 @@ export default function Related({
   const activeData = tabs.find((tab) => tab.id === activeTab)?.data || [];
 
   return (
-    <div className="w-full bg-white p-6 rounded-xl shadow-xl border-2 border-[#e5e5e5e5]">
+    <div className="w-full bg-white p-6 rounded-xl shadow-sm border border-gray-200">
       {/* Section Header */}
       <h2 className="text-xl font-bold mb-6">Related</h2>
 
