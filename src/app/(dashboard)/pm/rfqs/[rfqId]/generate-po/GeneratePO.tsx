@@ -1,12 +1,21 @@
 "use client";
 
 import { toast } from "sonner";
+import EditPOItem from "./EditPOItem";
 import { getToken } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/config";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Edit2, Trash2, Upload } from "lucide-react";
-import EditPOItem from "./EditPOItem";
+import { ArrowLeft, Edit2, Trash2, Upload, CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface POItem {
   id: string;
@@ -35,6 +44,8 @@ interface VendorCard {
   phoneNo: string;
   emailAddress: string;
   address: string;
+  phone?: string;
+  email?: string;
 }
 
 interface RequestItem {
@@ -104,6 +115,13 @@ interface POItemData {
   detailsSpecification: string;
 }
 
+interface Location {
+  _id: string;
+  name: string;
+  contactPerson: string;
+  phoneNumber: string;
+}
+
 const GeneratePO = () => {
   const params = useParams();
   const router = useRouter();
@@ -117,6 +135,8 @@ const GeneratePO = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [editingItem, setEditingItem] = useState<POItem | null>(null);
   const [vendorInfo, setVendorInfo] = useState<VendorInfo | null>(null);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [date, setDate] = useState<Date | undefined>();
 
   const [formData, setFormData] = useState({
     poTitle: "",
@@ -124,13 +144,31 @@ const GeneratePO = () => {
     shipping: "",
     deliveryContact: "",
     evaluationCriteria: "",
-    expectedDeliveryDate: "",
     termsOfService: "",
     paymentTerms: "",
-    totalAmount: "",
   });
 
   const [items, setItems] = useState<POItem[]>([]);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE_URL}/locations`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          setLocations(data);
+        } else if (data.success) {
+          setLocations(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching locations:", error);
+      }
+    };
+    fetchLocations();
+  }, []);
 
   useEffect(() => {
     const poData = localStorage.getItem("poData");
@@ -155,8 +193,8 @@ const GeneratePO = () => {
       setVendorInfo({
         companyName: vendor.companyName,
         contactPerson: vendor.contactPerson,
-        phoneNo: vendor.phoneNo,
-        emailAddress: vendor.emailAddress,
+        phoneNo: vendor.phoneNo || vendor.phone || "",
+        emailAddress: vendor.emailAddress || vendor.email || "",
         address: vendor.address,
       });
       setVendorId(selectedVendor);
@@ -181,13 +219,12 @@ const GeneratePO = () => {
         shipping: rfqData.deliveryLocation?.name || "",
         deliveryContact: "",
         evaluationCriteria: rfqData.evaluationCriteria || "",
-        expectedDeliveryDate: rfqData.expectedDeliveryDate
-          ? new Date(rfqData.expectedDeliveryDate).toLocaleDateString()
-          : "",
         termsOfService: rfqData.termsAndConditions || "",
         paymentTerms: "",
-        totalAmount: "",
       });
+      if (rfqData.expectedDeliveryDate) {
+        setDate(new Date(rfqData.expectedDeliveryDate));
+      }
     } catch (error) {
       console.error("Error parsing PO data:", error);
       router.push("/pm/rfqs");
@@ -222,6 +259,8 @@ const GeneratePO = () => {
     }));
   };
 
+  const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
+
   const handleCompletePO = async () => {
     if (!requisitionId || !vendorId) return;
     try {
@@ -235,23 +274,17 @@ const GeneratePO = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            vendorId,
             items: items.map((item) => ({
-              itemId: item.id,
+              name: item.itemDescription,
+              description: item.detailsSpecification || "",
               quantity: item.quantity,
               unitPrice: item.unitPrice,
-              total: item.total,
+              totalPrice: item.total,
             })),
-            // Add other form data as needed
-            poTitle: formData.poTitle,
-            deliveryLocation: formData.deliveryLocation,
-            shipping: formData.shipping,
-            deliveryContact: formData.deliveryContact,
-            evaluationCriteria: formData.evaluationCriteria,
-            expectedDeliveryDate: formData.expectedDeliveryDate,
-            termsOfService: formData.termsOfService,
+            totalPrice: totalAmount,
+            deliveryDate: date ? format(date, "yyyy-MM-dd") : "",
             paymentTerms: formData.paymentTerms,
-            totalAmount: formData.totalAmount,
+            notes: formData.termsOfService,
           }),
         },
       );
@@ -429,9 +462,12 @@ const GeneratePO = () => {
                         onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
                       >
-                        <option value="Alimosho">Alimosho</option>
-                        <option value="Ikeja">Ikeja</option>
-                        <option value="Lekki">Lekki</option>
+                        <option value="">Select Location</option>
+                        {locations.map((loc) => (
+                          <option key={loc._id} value={loc.name}>
+                            {loc.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
@@ -445,9 +481,12 @@ const GeneratePO = () => {
                         onChange={handleInputChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
                       >
-                        <option value="Alimosho">Alimosho</option>
-                        <option value="Ikeja">Ikeja</option>
-                        <option value="Lekki">Lekki</option>
+                        <option value="">Select Location</option>
+                        {locations.map((loc) => (
+                          <option key={loc._id} value={loc.name}>
+                            {loc.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -463,9 +502,15 @@ const GeneratePO = () => {
                       onChange={handleInputChange}
                       className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
                     >
-                      <option value="">Delivery Contact</option>
-                      <option value="contact1">Contact 1</option>
-                      <option value="contact2">Contact 2</option>
+                      <option value="">Select Delivery Contact</option>
+                      {locations.map((loc) => (
+                        <option
+                          key={loc._id}
+                          value={`${loc.contactPerson[0].toUpperCase() + loc.contactPerson.slice(1)} - ${loc.phoneNumber}`}
+                        >
+                          {loc.contactPerson} - {loc.phoneNumber || "N/A"}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -489,14 +534,36 @@ const GeneratePO = () => {
                       Expected Delivery Date{" "}
                       <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="text"
-                      name="expectedDeliveryDate"
-                      value={formData.expectedDeliveryDate}
-                      onChange={handleInputChange}
-                      placeholder="MM/DD/YYYY"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-between text-left font-normal px-4 py-2 border border-gray-300 rounded-md text-sm h-auto hover:bg-transparent bg-white",
+                            !date && "text-muted-foreground",
+                          )}
+                        >
+                          {date ? (
+                            format(date, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-white" align="center">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={setDate}
+                          initialFocus
+                          classNames={{
+                            day_selected:
+                              "!bg-[#0F1E7A] !text-white hover:!bg-[#0F1E7A] hover:!text-white focus:!bg-[#0F1E7A] focus:!text-white",
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   {/* Terms of Service */}
@@ -555,10 +622,9 @@ const GeneratePO = () => {
                     </label>
                     <input
                       type="text"
-                      name="totalAmount"
-                      value={formData.totalAmount}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                      value={`₦ ${totalAmount.toLocaleString()}`}
+                      readOnly
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm bg-gray-50 focus:outline-none"
                     />
                   </div>
                 </div>
