@@ -150,10 +150,8 @@ export default function RFQForm({
 
   // Convert recommended vendors to suggested vendors format, filtering out selected ones
   const suggestedVendors: SuggestedVendor[] = recommendedVendors
-    .filter(vendor => 
-      !selectedVendors.some(sv => sv.id === vendor._id)
-    )
-    .map(vendor => ({
+    .filter((vendor) => !selectedVendors.some((sv) => sv.id === vendor._id))
+    .map((vendor) => ({
       id: vendor._id,
       name: vendor.name,
       contact: vendor.contactPerson,
@@ -163,7 +161,7 @@ export default function RFQForm({
     }));
 
   const addVendorToSelected = (vendor: SuggestedVendor) => {
-    if (!selectedVendors.some(sv => sv.id === vendor.id)) {
+    if (!selectedVendors.some((sv) => sv.id === vendor.id)) {
       setSelectedVendors((prev) => [...prev, vendor]);
     }
   };
@@ -203,23 +201,26 @@ export default function RFQForm({
     try {
       const token = getToken();
       const payload = {
-        vendors: selectedVendors.map(v => v.id),
+        vendors: selectedVendors.map((v) => v.id),
         itemIds: selectedItems,
         evaluationCriteria,
         termsOfService,
         title: rfqTitle,
         deliveryLocation: selectedLocation,
-        expectedDeliveryDate: dateStart.toISOString().split('T')[0]
+        expectedDeliveryDate: dateStart.toISOString().split("T")[0],
       };
 
-      const response = await fetch(`${API_BASE_URL}/requisitions/${requisitionId}/rfqs`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/requisitions/${requisitionId}/rfqs`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
       const data = await response.json();
       if (data.success) {
@@ -413,29 +414,29 @@ export default function RFQForm({
                 </Command>
               </PopoverContent>
             </Popover>
-              <Button
-                className="bg-[#0F1E7A] text-white cursor-pointer"
-                onClick={() => {
-                  if (selectedVendor) {
-                    const vendor = vendors.find((v) => v._id === selectedVendor);
-                    if (
-                      vendor &&
-                      !selectedVendors.find((sv) => sv.id === vendor._id)
-                    ) {
-                      const newVendor = {
-                        id: vendor._id,
-                        name: vendor.name,
-                        contact: vendor.contactPerson,
-                        phone: vendor.phone,
-                        email: vendor.email,
-                        address: vendor.address,
-                      };
-                      setSelectedVendors((prev) => [...prev, newVendor]);
-                      setSelectedVendor("");
-                    }
+            <Button
+              className="bg-[#0F1E7A] text-white cursor-pointer"
+              onClick={() => {
+                if (selectedVendor) {
+                  const vendor = vendors.find((v) => v._id === selectedVendor);
+                  if (
+                    vendor &&
+                    !selectedVendors.find((sv) => sv.id === vendor._id)
+                  ) {
+                    const newVendor = {
+                      id: vendor._id,
+                      name: vendor.name,
+                      contact: vendor.contactPerson,
+                      phone: vendor.phone,
+                      email: vendor.email,
+                      address: vendor.address,
+                    };
+                    setSelectedVendors((prev) => [...prev, newVendor]);
+                    setSelectedVendor("");
                   }
-                }}
-              >
+                }
+              }}
+            >
               Add
             </Button>
           </div>

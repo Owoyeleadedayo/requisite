@@ -31,10 +31,48 @@ interface ProcurementManagerDashboardProps {
     | "pmRequests"
     | "procurementBids"
     | "locations"
-    | "rfqs";
+    | "rfqs"
+    | "pos";
 }
 
 interface RFQShape {
+  _id: string;
+  rfqNumber: string;
+  title: string;
+  requisition: {
+    _id: string;
+    title: string;
+    requisitionNumber: string;
+  };
+  vendor: {
+    _id: string;
+    name: string;
+    contactPerson: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+  deliveryLocation: {
+    _id: string;
+    name: string;
+    address: string;
+  };
+  createdBy: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  requester?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  createdAt: string;
+  status: string;
+}
+
+interface POShape {
   _id: string;
   rfqNumber: string;
   title: string;
@@ -87,6 +125,7 @@ export default function PMDashboard({
   const [isLocationLoading, setIsLocationLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
   const [rfqs, setRfqs] = useState<RFQShape[]>([]);
+  const [pos, setPos] = useState<POShape[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -103,8 +142,10 @@ export default function PMDashboard({
     page === CONSTANTS.LOCATION.PAGE
       ? CONSTANTS.LOCATION.PAGE
       : page === "rfqs"
-      ? "RFQs"
-      : "requisitions";
+        ? "RFQs"
+        : page === "pos"
+          ? "Purchase Orders"
+          : "requisitions";
   const itemsPerPage: number = 10;
 
   const userId = getUserId();
@@ -121,7 +162,7 @@ export default function PMDashboard({
     } catch (error) {
       console.error(
         CONSTANTS.LOCATION.NOTIFICATION.FETCH_LOCATION_ERROR,
-        error
+        error,
       );
     } finally {
       setLoading(false);
@@ -141,7 +182,7 @@ export default function PMDashboard({
     } catch (error) {
       console.error(
         CONSTANTS.LOCATION.NOTIFICATION.CREATE_LOCATION_ERROR,
-        error
+        error,
       );
       throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.CREATE_LOCATION_ERROR);
     } finally {
@@ -168,7 +209,7 @@ export default function PMDashboard({
     } catch (error) {
       console.error(
         CONSTANTS.LOCATION.NOTIFICATION.UPDATE_LOCATION_ERROR,
-        error
+        error,
       );
       throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.UPDATE_LOCATION_ERROR);
     } finally {
@@ -182,11 +223,11 @@ export default function PMDashboard({
       const data = await locationService.deleteLocation(locationId);
       if (data) {
         setLocations(
-          locations.filter((location) => location._id !== locationId)
+          locations.filter((location) => location._id !== locationId),
         );
         toast.success(
           data.message ||
-            CONSTANTS.LOCATION.NOTIFICATION.DELETE_LOCATION_SUCCESS
+            CONSTANTS.LOCATION.NOTIFICATION.DELETE_LOCATION_SUCCESS,
         );
       } else {
         throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.DELETE_LOCATION_FAIL);
@@ -194,7 +235,7 @@ export default function PMDashboard({
     } catch (error) {
       console.error(
         CONSTANTS.LOCATION.NOTIFICATION.DELETE_LOCATION_ERROR,
-        error
+        error,
       );
       throw toast.error(CONSTANTS.LOCATION.NOTIFICATION.DELETE_LOCATION_ERROR);
     } finally {
@@ -349,6 +390,77 @@ export default function PMDashboard({
     },
   ];
 
+  const poColumns: Column<POShape>[] = [
+    { key: "title", label: "PO Title" },
+    { key: "rfqNumber", label: "PO Number" },
+    {
+      key: "deliveryLocation",
+      label: "Location",
+      render: (location) => location?.name || "N/A",
+    },
+    {
+      key: "createdAt",
+      label: "Date Created",
+      render: (value) => {
+        const date = new Date(value);
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = date.toLocaleString("default", { month: "long" });
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      },
+    },
+    {
+      key: "vendor",
+      label: "Vendor",
+      render: (vendor) => vendor?.name || "N/A",
+    },
+    {
+      key: "requester",
+      label: "Staff",
+      render: (_, row) => {
+        if (!row.requester) return "N/A";
+        const currentUser = authdata?.user;
+        return currentUser?.id === row.requester._id
+          ? "You"
+          : `${row.requester.firstName} ${row.requester.lastName}`;
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => {
+        const statusColors: Record<string, string> = {
+          draft: "text-gray-500",
+          pending: "text-orange-500",
+          submitted: "text-blue-500",
+          approved: "text-green-500",
+          rejected: "text-red-500",
+          cancelled: "text-red-500",
+        };
+        return (
+          <span className={statusColors[value] ?? "text-gray-500"}>
+            {value}
+          </span>
+        );
+      },
+    },
+    {
+      key: "_id",
+      label: "Action",
+      render: (_, row) => (
+        <div className="flex gap-2 items-center">
+          <Button
+            asChild
+            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+          >
+            <Link href={`#`}>View</Link>
+            {/* <Link href={`/pm/pos/${row._id}`}>View</Link> */}
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   const locationsColumns: Column<Location>[] = [
     { key: "name", label: "Name" },
     { key: "address", label: "Address" },
@@ -486,7 +598,7 @@ export default function PMDashboard({
         setLoading(false);
       }
     },
-    [token, page, userId]
+    [token, page, userId],
   );
 
   const fetchRFQs = useCallback(
@@ -517,7 +629,38 @@ export default function PMDashboard({
         setLoading(false);
       }
     },
-    [token]
+    [token],
+  );
+
+  const fetchPOs = useCallback(
+    async (pageNum: number = 1) => {
+      setLoading(true);
+
+      try {
+        const endpoint = `${API_BASE_URL}/purchase-orders?page=${pageNum}&limit=${itemsPerPage}`;
+
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          setPos(data.data);
+          setCurrentPage(data.currentPage);
+          setTotalPages(data.totalPages);
+          setTotalCount(data.total);
+        }
+      } catch (error) {
+        console.error("Error fetching POs:", error);
+        toast.error("Failed to fetch Purchase Orders");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token],
   );
 
   useEffect(() => {
@@ -525,11 +668,13 @@ export default function PMDashboard({
       fetchLocations();
       if (page === "rfqs") {
         fetchRFQs(1);
+      } else if (page === "pos") {
+        fetchPOs(1);
       } else if (page !== CONSTANTS.LOCATION.PAGE) {
         fetchRequisitions(1);
       }
     }
-  }, [token, fetchRequisitions, fetchRFQs, fetchLocations, page]);
+  }, [token, fetchRequisitions, fetchRFQs, fetchPOs, fetchLocations, page]);
 
   const handlePageChange = (pageNum: number) => {
     if (page === "rfqs") {
@@ -541,7 +686,7 @@ export default function PMDashboard({
 
   const handleLocationFormChange = (
     field: keyof Location,
-    value: string | null
+    value: string | null,
   ) => {
     setCurrentLocation((prev) => ({ ...prev, [field]: value }));
   };
@@ -584,12 +729,14 @@ export default function PMDashboard({
           {page === "procurementBids"
             ? "Bid Management"
             : page === "pmRequests"
-            ? "My Requests"
-            : page === CONSTANTS.LOCATION.PAGE
-            ? "List of Locations"
-            : page === "rfqs"
-            ? "Generated RFQs"
-            : "Requests"}
+              ? "My Requests"
+              : page === CONSTANTS.LOCATION.PAGE
+                ? "List of Locations"
+                : page === "rfqs"
+                  ? "Generated RFQs"
+                  : page === "pos"
+                    ? "Purchase Orders"
+                    : "Requests"}
         </p>
 
         {PAGE_CAN_ROUTE_TO_NEW_REQUEST.includes(page) && (
@@ -672,15 +819,19 @@ export default function PMDashboard({
             page === CONSTANTS.LOCATION.PAGE
               ? locationsColumns
               : page === "rfqs"
-              ? rfqColumns
-              : columns
+                ? rfqColumns
+                : page === "pos"
+                  ? poColumns
+                  : columns
           }
           data={
             page === CONSTANTS.LOCATION.PAGE
               ? locations
               : page === "rfqs"
-              ? rfqs
-              : requisitions
+                ? rfqs
+                : page === "pos"
+                  ? pos
+                  : requisitions
           }
           totalPages={totalPages}
           currentPage={currentPage}
