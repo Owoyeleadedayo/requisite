@@ -3,7 +3,7 @@
 import { getToken } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/config";
 import { Button } from "@/components/ui/button";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -64,6 +64,44 @@ const GenerateRFQ = () => {
   const [dialogSelectedItems, setDialogSelectedItems] = useState<string[]>([]);
   const [recommendedVendors, setRecommendedVendors] = useState<Vendor[]>([]);
 
+  const fetchVendors = useCallback(async () => {
+    setVendorsLoading(true);
+    const token = getToken();
+    try {
+      let allVendors: Vendor[] = [];
+      let currentPage = 1;
+      let totalPages = 1;
+
+      do {
+        const response = await fetch(
+          `${API_BASE_URL}/vendors?page=${currentPage}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        const data = await response.json();
+        if (data.success) {
+          allVendors = [...allVendors, ...data.data];
+          totalPages = data.pagination.pages;
+          currentPage++;
+        } else {
+          break;
+        }
+      } while (currentPage <= totalPages);
+
+      // Merge with existing recommended vendors to ensure they aren't lost
+      const vendorIds = new Set(allVendors.map((v) => v._id));
+      const uniqueRecommended = recommendedVendors.filter(
+        (v) => !vendorIds.has(v._id),
+      );
+      setVendors([...allVendors, ...uniqueRecommended]);
+    } catch (error) {
+      console.error("Failed to fetch vendors", error);
+    } finally {
+      setVendorsLoading(false);
+    }
+  }, [recommendedVendors]);
+
   useEffect(() => {
     // Check if requisitionId exists and selectedItems are provided
     if (!requisitionId || !searchParams.get("selectedItems")) {
@@ -92,34 +130,7 @@ const GenerateRFQ = () => {
       }
 
       // Fetch vendors
-      try {
-        let allVendors: Vendor[] = [];
-        let currentPage = 1;
-        let totalPages = 1;
-
-        do {
-          const response = await fetch(
-            `${API_BASE_URL}/vendors?page=${currentPage}`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            },
-          );
-          const data = await response.json();
-          if (data.success) {
-            allVendors = [...allVendors, ...data.data];
-            totalPages = data.pagination.pages;
-            currentPage++;
-          } else {
-            break;
-          }
-        } while (currentPage <= totalPages);
-
-        setVendors(allVendors);
-      } catch (error) {
-        console.error("Failed to fetch vendors", error);
-      } finally {
-        setVendorsLoading(false);
-      }
+      await fetchVendors();
 
       // Fetch requisition details
       try {
@@ -185,6 +196,10 @@ const GenerateRFQ = () => {
     };
 
     fetchData();
+    // The dependency on fetchVendors is omitted to prevent an infinite loop.
+    // fetchVendors depends on recommendedVendors, which is set inside this effect.
+    // The effect corrects the vendor list after fetching, so the stale fetchVendors is acceptable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requisitionId, searchParams, router]);
 
   const handleCompleteRFQ = () => {
@@ -249,11 +264,7 @@ const GenerateRFQ = () => {
           recommendedVendors={recommendedVendors}
           selectedItems={selectedItems}
           requisitionId={requisitionId}
-          onVendorAdded={() => {
-            // Refresh vendors list when a new vendor is added
-            // You may need to implement a fetchVendors function here
-            window.location.reload(); // Temporary solution
-          }}
+          onVendorAdded={fetchVendors}
         />
 
         <RequestDetails
