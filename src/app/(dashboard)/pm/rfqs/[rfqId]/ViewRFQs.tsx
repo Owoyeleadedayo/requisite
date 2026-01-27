@@ -94,7 +94,7 @@ const ViewRFQs = () => {
 
   useEffect(() => {
     if (!rfqId) {
-      router.push('/pm/rfqs');
+      router.push("/pm/rfqs");
       return;
     }
     const fetchRFQData = async () => {
@@ -161,13 +161,16 @@ const ViewRFQs = () => {
   const generatePO = () => {
     if (!selectedVendor || selectedItems.length === 0 || !rfqData) return;
     // Store data in localStorage for GeneratePO component
-    localStorage.setItem('poData', JSON.stringify({
-      selectedVendor,
-      selectedItems,
-      rfqData,
-      vendors,
-      items
-    }));
+    localStorage.setItem(
+      "poData",
+      JSON.stringify({
+        selectedVendor,
+        selectedItems,
+        rfqData,
+        vendors,
+        items,
+      }),
+    );
     router.push(`/pm/rfqs/${rfqId}/generate-po`);
   };
 
@@ -296,9 +299,9 @@ const ViewRFQs = () => {
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row items-start justify-between gap-6 mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
               {/* Request Details */}
-              <div className="h-auto w-full md:flex-1 bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+              <div className="lg:col-span-2 h-auto w-full bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <div>
                   <h2 className="text-xl font-bold mb-4">REQUEST DETAILS</h2>
 
@@ -336,7 +339,7 @@ const ViewRFQs = () => {
               </div>
 
               {/* Items Table */}
-              <div className="w-full md:w-auto bg-white rounded-lg border border-gray-200 p-6 overflow-x-auto shadow-sm">
+              <div className="lg:col-span-2 w-full bg-white rounded-lg border border-gray-200 p-6 overflow-x-auto shadow-sm">
                 <div className="flex gap-2 justify-end mb-4">
                   <select
                     value={bulkAction}
