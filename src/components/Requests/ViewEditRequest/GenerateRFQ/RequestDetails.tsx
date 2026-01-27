@@ -25,7 +25,9 @@ export default function RequestDetails({
   onEditItem,
 }: RequestDetailsProps) {
   // Filter to only work with departmentApproved items
-  const approvedItems = items.filter(item => item.status === 'departmentApproved');
+  const approvedItems = items.filter(
+    (item) => item.status === "departmentApproved",
+  );
 
   const handleDeleteItem = (itemId: string) => {
     setSelectedItems(selectedItems.filter((id) => id !== itemId));
@@ -39,7 +41,7 @@ export default function RequestDetails({
     if (dialogSelectedItems.length === 0) {
       return;
     }
-    setSelectedItems([...dialogSelectedItems]);
+    setSelectedItems([...selectedItems, ...dialogSelectedItems]);
     setIsDialogOpen(false);
   };
 
@@ -47,9 +49,8 @@ export default function RequestDetails({
     <div className="flex flex-col gap-2">
       <p className="text-md font-bold">REQUEST DETAILS</p>
       <p className="text-md font-normal text-[#4F7396]">
-        Choose the items that you would like to add to the RFQ below. Note
-        that you can edit any of the items to fit the relevant
-        specifications.
+        Choose the items that you would like to add to the RFQ below. Note that
+        you can edit any of the items to fit the relevant specifications.
       </p>
 
       <ItemsTable
