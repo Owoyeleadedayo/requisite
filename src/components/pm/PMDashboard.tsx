@@ -290,6 +290,7 @@ export default function PMDashboard({
       render: (value) => {
         const statusColors: Record<string, string> = {
           draft: "text-gray-500",
+          issued: "text-green-500",
           departmentApproved: "text-green-500",
           procurementApproved: "text-blue-500",
           cancelled: "text-red-500",
@@ -365,6 +366,7 @@ export default function PMDashboard({
           approved: "text-green-500",
           rejected: "text-red-500",
           cancelled: "text-red-500",
+          issued: "text-white bg-green-500",
         };
         return (
           <span className={statusColors[value] ?? "text-gray-500"}>

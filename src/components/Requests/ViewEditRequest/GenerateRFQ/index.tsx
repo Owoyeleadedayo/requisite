@@ -102,7 +102,7 @@ const GenerateRFQ = () => {
             `${API_BASE_URL}/vendors?page=${currentPage}`,
             {
               headers: { Authorization: `Bearer ${token}` },
-            }
+            },
           );
           const data = await response.json();
           if (data.success) {
@@ -127,12 +127,12 @@ const GenerateRFQ = () => {
           `${API_BASE_URL}/requisitions/${requisitionId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         const data = await res.json();
         if (data.success) {
           const req = data.data;
-          console.log('Requisition details fetched:', req);
+          console.log("Requisition details fetched:", req);
           setRequestData(req);
           setRfqTitle(req.title);
           setSelectedLocation(req.deliveryLocation);
@@ -150,17 +150,22 @@ const GenerateRFQ = () => {
             // Extract recommended vendors and merge with existing vendors
             const recommendedVendors: Vendor[] = [];
             req.items.forEach((item: Item) => {
-              if (item.recommendedVendor && typeof item.recommendedVendor === 'object') {
+              if (
+                item.recommendedVendor &&
+                typeof item.recommendedVendor === "object"
+              ) {
                 recommendedVendors.push(item.recommendedVendor as Vendor);
               }
             });
-            console.log('Recommended vendors extracted:', recommendedVendors);
+            console.log("Recommended vendors extracted:", recommendedVendors);
             setRecommendedVendors(recommendedVendors);
 
             // Merge with existing vendors, avoiding duplicates
-            setVendors(currentVendors => {
-              const vendorIds = new Set(currentVendors.map(v => v._id));
-              const uniqueRecommended = recommendedVendors.filter(v => !vendorIds.has(v._id));
+            setVendors((currentVendors) => {
+              const vendorIds = new Set(currentVendors.map((v) => v._id));
+              const uniqueRecommended = recommendedVendors.filter(
+                (v) => !vendorIds.has(v._id),
+              );
               return [...currentVendors, ...uniqueRecommended];
             });
 
@@ -194,7 +199,9 @@ const GenerateRFQ = () => {
   const handleUpdateItem = () => {
     if (editingItem) {
       setItems(
-        items.map((item) => (item._id === editingItem._id ? editingItem : item))
+        items.map((item) =>
+          item._id === editingItem._id ? editingItem : item,
+        ),
       );
       setIsEditDialogOpen(false);
     }

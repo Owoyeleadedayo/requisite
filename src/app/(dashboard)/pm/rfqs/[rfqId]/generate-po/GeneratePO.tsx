@@ -262,6 +262,45 @@ const GeneratePO = () => {
   const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
 
   const handleCompletePO = async () => {
+    // New Implementation
+    if (!rfqId) return;
+
+    try {
+      const token = getToken();
+      const payload = {
+        selectedItemIds: items.map((item) => item.id),
+        deliveryDate: date ? format(date, "yyyy-MM-dd") : "",
+        deliveryLocation: formData.deliveryLocation,
+        deliveryContact: formData.deliveryContact,
+        shipping: formData.shipping,
+        generalTerms: formData.termsOfService,
+      };
+
+      const response = await fetch(
+        `${API_BASE_URL}/rfqs/${rfqId}/purchase-order`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Purchase Order created successfully");
+        localStorage.removeItem("poData"); // Clean up
+        router.push("/pm/pos");
+      } else {
+        toast.error(data.message || "Failed to create Purchase Order");
+      }
+    } catch (error) {
+      console.error("Error creating PO:", error);
+      toast.error("Failed to create Purchase Order");
+    }
+
+    /* Old Implementation
     if (!requisitionId || !vendorId) return;
     try {
       const token = getToken();
@@ -300,6 +339,7 @@ const GeneratePO = () => {
       console.error("Error creating PO:", error);
       toast.error("Failed to create Purchase Order");
     }
+    */
   };
 
   const handleCancel = () => {
@@ -551,7 +591,10 @@ const GeneratePO = () => {
                           <CalendarIcon className="mr-2 h-4 w-4" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 bg-white" align="center">
+                      <PopoverContent
+                        className="w-auto p-0 bg-white"
+                        align="center"
+                      >
                         <Calendar
                           mode="single"
                           selected={date}
