@@ -31,8 +31,17 @@ import { toast } from "sonner";
 import { parseDate } from "chrono-node";
 import { Calendar } from "@/components/ui/calendar";
 
+interface VendorData {
+  _id: string;
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
 interface AddVendorDialogProps {
-  onVendorAdded: (vendor?: any) => void;
+  onVendorAdded: (vendor?: VendorData) => void;
   trigger: React.ReactNode;
 }
 
