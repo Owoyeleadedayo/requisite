@@ -166,6 +166,23 @@ export default function RFQForm({
     }
   };
 
+  const handleVendorAdded = (newVendor?: Vendor) => {
+    if (onVendorAdded) {
+      onVendorAdded();
+    }
+    if (newVendor) {
+      const vendorToAdd: SelectedVendor = {
+        id: newVendor._id,
+        name: newVendor.name,
+        contact: newVendor.contactPerson,
+        phone: newVendor.phone,
+        email: newVendor.email,
+        address: newVendor.address,
+      };
+      setSelectedVendors((prev) => [...prev, vendorToAdd]);
+    }
+  };
+
   const removeSelectedVendor = (id: string) => {
     setSelectedVendors((prev) => prev.filter((vendor) => vendor.id !== id));
   };
@@ -455,7 +472,7 @@ export default function RFQForm({
 
           <div className="w-full lg:w-[50%] flex justify-center lg:justify-end items-center">
             <AddVendorDialog
-              onVendorAdded={onVendorAdded || (() => {})} // fallback empty function to handle the case when onVendorAdded is undefined.
+              onVendorAdded={handleVendorAdded}
               trigger={
                 <Button className="bg-[#0F1E7A] text-white cursor-pointer">
                   <Plus size={22} /> New Vendor
