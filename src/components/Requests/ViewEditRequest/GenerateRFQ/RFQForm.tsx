@@ -222,7 +222,19 @@ export default function RFQForm({
         }
       );
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type");
+      let data;
+      
+      if (contentType?.includes("application/json")) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        const match = text.match(/<pre>\s*([\s\S]*?)\s*<\/pre>/i);
+        let errorMessage = match ? match[1].replace(/<br>|&nbsp;/gi, " ").trim() : text;
+        errorMessage = errorMessage.split(" at ")[0].trim();
+        data = { success: false, message: errorMessage };
+      }
+
       if (data.success) {
         toast.success("RFQ generated successfully!");
         router.push("/pm/rfqs");
