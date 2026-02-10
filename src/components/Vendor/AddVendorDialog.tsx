@@ -31,8 +31,17 @@ import { toast } from "sonner";
 import { parseDate } from "chrono-node";
 import { Calendar } from "@/components/ui/calendar";
 
+interface VendorData {
+  _id: string;
+  name: string;
+  contactPerson: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
 interface AddVendorDialogProps {
-  onVendorAdded: () => void;
+  onVendorAdded: (vendor?: VendorData) => void;
   trigger: React.ReactNode;
 }
 
@@ -160,7 +169,7 @@ export default function AddVendorDialog({ onVendorAdded, trigger }: AddVendorDia
         });
         setMydateStart("");
         setValidationErrors([]);
-        onVendorAdded();
+        onVendorAdded(data.data);
       } else {
         toast.error(data.message || "Failed to add vendor");
       }
