@@ -222,6 +222,8 @@ const GenerateRFQ = () => {
     }
   };
 
+  console.log("Items: ", items);
+
   return (
     <div className="flex flex-col pt-8 pb-16 px-4 lg:px-12 gap-6">
       <div className="w-full flex items-center justify-start lg:justify-between gap-4">
