@@ -29,9 +29,10 @@ export default function PMItemsList({
   showError = false,
 }: PMItemsListProps) {
   // Filter to only show departmentApproved items
-  const approvedItems = items.filter(
-    (item) => item.status === "departmentApproved"
-  );
+  const approvedItems = items;
+  // const approvedItems = items.filter(
+  //   (item) => item.status === "departmentApproved"
+  // );
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {

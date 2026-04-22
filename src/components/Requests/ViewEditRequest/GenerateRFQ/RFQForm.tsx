@@ -73,6 +73,8 @@ interface SelectedVendor {
 
 interface Item {
   _id: string;
+  units: number | "";
+  UOM?: string;
   recommendedVendor?: string;
 }
 
@@ -220,6 +222,13 @@ export default function RFQForm({
       const payload = {
         vendors: selectedVendors.map((v) => v.id),
         itemIds: selectedItems,
+        items: items
+          .filter((item) => selectedItems.includes(item._id))
+          .map((item) => ({
+            itemId: item._id,
+            quantity: item.units || 0,
+            ...(item.UOM && { uom: item.UOM }),
+          })),
         evaluationCriteria,
         termsOfService,
         title: rfqTitle,
