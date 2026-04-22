@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown, X, Loader2, CalendarIcon, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { parseDate } from "chrono-node";
+import { parseDate } from "@/lib/parseDate";
 import { Calendar } from "@/components/ui/calendar";
 
 interface VendorData {

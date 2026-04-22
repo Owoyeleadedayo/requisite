@@ -24,10 +24,7 @@ export default function RequestDetails({
   setIsDialogOpen,
   onEditItem,
 }: RequestDetailsProps) {
-  // Filter to only work with departmentApproved items
-  const approvedItems = items.filter(
-    (item) => item.status === "departmentApproved",
-  );
+  const availableItems = items.filter((item) => Boolean(item?._id));
 
   const handleDeleteItem = (itemId: string) => {
     setSelectedItems(selectedItems.filter((id) => id !== itemId));
@@ -41,7 +38,9 @@ export default function RequestDetails({
     if (dialogSelectedItems.length === 0) {
       return;
     }
-    setSelectedItems([...selectedItems, ...dialogSelectedItems]);
+    setSelectedItems(
+      Array.from(new Set([...selectedItems, ...dialogSelectedItems])),
+    );
     setIsDialogOpen(false);
   };
 
@@ -54,7 +53,7 @@ export default function RequestDetails({
       </p>
 
       <ItemsTable
-        items={approvedItems}
+        items={availableItems}
         selectedItems={selectedItems}
         onEditItem={onEditItem}
         onDeleteItem={handleDeleteItem}
@@ -64,7 +63,7 @@ export default function RequestDetails({
       <AddItemDialog
         isOpen={isDialogOpen}
         setIsOpen={setIsDialogOpen}
-        items={approvedItems}
+        items={availableItems}
         selectedItems={selectedItems}
         dialogSelectedItems={dialogSelectedItems}
         setDialogSelectedItems={setDialogSelectedItems}

@@ -17,7 +17,7 @@ import { Input } from "../ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { Textarea } from "../ui/textarea";
-import { parseDate } from "chrono-node";
+import { parseDate } from "@/lib/parseDate";
 
 function formatDate(date: Date | undefined) {
   if (!date) return "";

@@ -4,10 +4,13 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'example.com',
+        protocol: "https",
+        hostname: "example.com",
       },
     ],
+  },
+  turbopack: {
+    root: process.cwd(),
   },
 };
 

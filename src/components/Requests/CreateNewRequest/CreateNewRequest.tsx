@@ -7,7 +7,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken } from "@/lib/auth";
-import { parseDate } from "chrono-node";
+import { parseDate } from "@/lib/parseDate";
 import RequestForm from "../RequestForm";
 import ItemsList from "../ItemsList";
 import ItemFormDialog from "../ItemFormDialog";

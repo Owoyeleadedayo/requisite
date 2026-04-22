@@ -215,7 +215,7 @@ const GeneratePO = () => {
       setItems(selectedItemDetails);
       setFormData({
         poTitle: rfqData.title,
-        deliveryLocation: rfqData.deliveryLocation?.name || "",
+        deliveryLocation: rfqData.deliveryLocation?._id || "",
         shipping: rfqData.deliveryLocation?.name || "",
         deliveryContact: "",
         evaluationCriteria: rfqData.evaluationCriteria || "",
@@ -268,7 +268,11 @@ const GeneratePO = () => {
     try {
       const token = getToken();
       const payload = {
-        selectedItemIds: items.map((item) => item.id),
+        selectedItemIds:
+          selectedItems.length > 0
+            ? selectedItems
+            : items.map((item) => item.id),
+        selectedVendorId: vendorId,
         deliveryDate: date ? format(date, "yyyy-MM-dd") : "",
         deliveryLocation: formData.deliveryLocation,
         deliveryContact: formData.deliveryContact,
@@ -504,7 +508,7 @@ const GeneratePO = () => {
                       >
                         <option value="">Select Location</option>
                         {locations.map((loc) => (
-                          <option key={loc._id} value={loc.name}>
+                          <option key={loc._id} value={loc._id}>
                             {loc.name}
                           </option>
                         ))}
