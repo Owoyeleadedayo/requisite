@@ -9,7 +9,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { getToken } from "@/lib/auth";
-import { parseDate } from "chrono-node";
+import { parseDate } from "@/lib/parseDate";
 import { API_BASE_URL } from "@/lib/config";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

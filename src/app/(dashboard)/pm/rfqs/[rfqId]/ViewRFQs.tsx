@@ -28,7 +28,7 @@ interface APIVendor {
 
 interface RequestItem {
   id: string;
-  itemId: string;
+  itemId: string | { _id?: string; id?: string };
   itemDescription: string;
   detailedSpecification: string;
   uom: string;
@@ -50,7 +50,8 @@ interface RFQData {
     title: string;
     requisitionNumber: string;
   };
-  vendor: APIVendor | APIVendor[];
+  vendor?: APIVendor | APIVendor[] | string;
+  vendors?: (APIVendor | string)[];
   items: RequestItem[];
   evaluationCriteria: string;
   termsAndConditions: string;
@@ -110,22 +111,119 @@ const ViewRFQs = () => {
         const data = await response.json();
         if (data.success) {
           setRfqData(data.data);
-          // Assuming vendor is an array, if single, wrap in array
-          const vendorArray = Array.isArray(data.data.vendor)
-            ? data.data.vendor
-            : [data.data.vendor];
-          setVendors(
-            vendorArray.map((v: APIVendor) => ({
-              ...v,
-              id: v._id,
-              companyName: v.name,
-            })),
-          );
+
+          const rawVendors = Array.isArray(data.data.vendors)
+            ? data.data.vendors
+            : data.data.vendor
+              ? Array.isArray(data.data.vendor)
+                ? data.data.vendor
+                : [data.data.vendor]
+              : [];
+
+          if (
+            rawVendors.length > 0 &&
+            typeof rawVendors[0] === "object" &&
+            (rawVendors[0] as APIVendor)._id
+          ) {
+            const vendorArray = rawVendors as APIVendor[];
+            setVendors(
+              vendorArray.map((v: APIVendor) => ({
+                id: v._id,
+                companyName: v.name,
+                contactPerson: v.contactPerson || "",
+                phoneNo: v.phone || "",
+                emailAddress: v.email || "",
+                address: v.address || "",
+              })),
+            );
+          } else {
+            const vendorIds = rawVendors.map((vendor: string | APIVendor) =>
+              typeof vendor === "string"
+                ? vendor
+                : vendor?._id?.toString?.() || "",
+            );
+
+            const token = getToken();
+            let allVendors: APIVendor[] = [];
+            let currentPage = 1;
+            let totalPages = 1;
+
+            try {
+              do {
+                const vendorsResponse = await fetch(
+                  `${API_BASE_URL}/vendors?page=${currentPage}`,
+                  {
+                    headers: { Authorization: `Bearer ${token}` },
+                  },
+                );
+
+                const vendorsData = await vendorsResponse.json();
+                if (vendorsData.success) {
+                  allVendors = [...allVendors, ...vendorsData.data];
+                  totalPages = vendorsData.pagination?.pages || 1;
+                  currentPage++;
+                } else {
+                  break;
+                }
+              } while (currentPage <= totalPages);
+            } catch (vendorFetchError) {
+              console.error(
+                "Failed to fetch vendor details:",
+                vendorFetchError,
+              );
+            }
+
+            const vendorMap = new Map(
+              allVendors.map((vendor) => [vendor._id, vendor]),
+            );
+
+            const resolvedVendors = vendorIds
+              .filter(Boolean)
+              .map((vendorId: string) => {
+                const vendor = vendorMap.get(vendorId);
+
+                if (!vendor) {
+                  return {
+                    id: vendorId,
+                    companyName: `Vendor ${vendorId.slice(-6)}`,
+                    contactPerson: "",
+                    phoneNo: "",
+                    emailAddress: "",
+                    address: "",
+                  };
+                }
+
+                return {
+                  id: vendor._id,
+                  companyName: vendor.name,
+                  contactPerson: vendor.contactPerson || "",
+                  phoneNo: vendor.phone || "",
+                  emailAddress: vendor.email || "",
+                  address: vendor.address || "",
+                };
+              });
+
+            setVendors(resolvedVendors);
+          }
+
+          const rfqItems = Array.isArray(data.data.items)
+            ? data.data.items
+            : [];
+
           setItems(
-            data.data.items.map((item: RequestItem) => ({
-              ...item,
-              id: item.itemId,
-            })),
+            rfqItems.map((item: RequestItem, index: number) => {
+              const rawItemId = item.itemId;
+              const normalizedItemId =
+                typeof rawItemId === "string"
+                  ? rawItemId
+                  : rawItemId?._id || rawItemId?.id || "";
+
+              return {
+                ...item,
+                itemId: normalizedItemId,
+                id: normalizedItemId || item.id || `rfq-item-${index}`,
+              };
+            }),
           );
         } else {
           toast.error("Failed to fetch RFQ data");
@@ -154,7 +252,7 @@ const ViewRFQs = () => {
     if (selectedItems.length === items.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(items.map((item) => item.itemId));
+      setSelectedItems(items.map((item) => item.id));
     }
   };
 
@@ -361,7 +459,10 @@ const ViewRFQs = () => {
                       <th className="text-left py-3 px-2">
                         <input
                           type="checkbox"
-                          checked={selectedItems.length === items.length}
+                          checked={
+                            items.length > 0 &&
+                            selectedItems.length === items.length
+                          }
                           onChange={toggleAllItems}
                           className="w-4 h-4 text-blue-900 rounded border-gray-300"
                         />
@@ -382,20 +483,19 @@ const ViewRFQs = () => {
                   </thead>
                   <tbody>
                     {items.map((item) => (
-                      <tr
-                        key={item.itemId}
-                        className="border-b border-gray-100"
-                      >
+                      <tr key={item.id} className="border-b border-gray-100">
                         <td className="py-4 px-2">
                           <input
                             type="checkbox"
-                            checked={selectedItems.includes(item.itemId)}
-                            onChange={() => toggleItem(item.itemId)}
+                            checked={selectedItems.includes(item.id)}
+                            onChange={() => toggleItem(item.id)}
                             className="w-4 h-4 text-blue-900 rounded border-gray-300"
                           />
                         </td>
                         <td className="py-4 px-4 text-sm">
-                          {item.itemDescription}
+                          {item.itemDescription ||
+                            item.detailedSpecification ||
+                            "N/A"}
                         </td>
                         <td className="py-4 px-4 text-sm">{item.uom}</td>
                         <td className="py-4 px-4 text-sm">{item.quantity}</td>
@@ -411,6 +511,16 @@ const ViewRFQs = () => {
                         </td>
                       </tr>
                     ))}
+                    {items.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="py-6 px-4 text-sm text-gray-500 text-center"
+                        >
+                          No RFQ items were returned for this record.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

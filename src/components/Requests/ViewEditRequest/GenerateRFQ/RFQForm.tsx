@@ -39,7 +39,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { parseDate } from "chrono-node";
+import { parseDate } from "@/lib/parseDate";
 import { Vendor } from "../../types";
 import { useState } from "react";
 import AddVendorDialog from "@/components/Vendor/AddVendorDialog";

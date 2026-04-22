@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
-import { parseDate } from "chrono-node";
+import { parseDate } from "@/lib/parseDate";
 import {
   Popover,
   PopoverContent,

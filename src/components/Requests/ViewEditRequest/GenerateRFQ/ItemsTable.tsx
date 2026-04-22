@@ -39,10 +39,10 @@ export default function ItemsTable({
   const [bulkSelectedItems, setBulkSelectedItems] = useState<string[]>([]);
   const [bulkAction, setBulkAction] = useState("");
 
-  const displayedItems = items.filter((item) => 
-    selectedItems.includes(item._id) && item.status === 'departmentApproved'
+  const displayedItems = items.filter(
+    (item) => Boolean(item._id) && selectedItems.includes(item._id),
   );
-  
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setBulkSelectedItems(displayedItems.map((item) => item._id));
@@ -71,8 +71,13 @@ export default function ItemsTable({
     }
   };
 
-  const isAllSelected = displayedItems.length > 0 && bulkSelectedItems.length === displayedItems.length;
-  const isApplyDisabled = bulkAction !== "delete" || bulkSelectedItems.length === 0 || bulkSelectedItems.length === displayedItems.length;
+  const isAllSelected =
+    displayedItems.length > 0 &&
+    bulkSelectedItems.length === displayedItems.length;
+  const isApplyDisabled =
+    bulkAction !== "delete" ||
+    bulkSelectedItems.length === 0 ||
+    bulkSelectedItems.length === displayedItems.length;
   return (
     <div className="flex flex-col w-full gap">
       <div className="flex gap-3">
@@ -85,7 +90,7 @@ export default function ItemsTable({
           </SelectContent>
         </Select>
 
-        <Button 
+        <Button
           className="bg-[#0F1E7A] text-white cursor-pointer capitalize"
           onClick={handleApply}
           disabled={isApplyDisabled}
@@ -125,39 +130,47 @@ export default function ItemsTable({
                 <TableCell>{item.itemName}</TableCell>
                 <TableCell>{item.UOM || "N/A"}</TableCell>
                 <TableCell>{item.units || "N/A"}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <div
-                        className="cursor-pointer"
-                        onClick={() => onEditItem(item)}
-                      >
-                        <SquarePen size={18} color="#0F1E7A" />
-                      </div>
-                      <div
-                        className={`cursor-pointer ${
-                          displayedItems.length === 1
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          if (displayedItems.length > 1) {
-                            onDeleteItem(item._id);
-                          }
-                        }}
-                      >
-                        <Trash
-                          size={18}
-                          color={
-                            displayedItems.length === 1
-                              ? "#9CA3AF"
-                              : "#ED3237"
-                          }
-                        />
-                      </div>
+                <TableCell>
+                  <div className="flex gap-2">
+                    <div
+                      className="cursor-pointer"
+                      onClick={() => onEditItem(item)}
+                    >
+                      <SquarePen size={18} color="#0F1E7A" />
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    <div
+                      className={`cursor-pointer ${
+                        displayedItems.length === 1
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        if (displayedItems.length > 1) {
+                          onDeleteItem(item._id);
+                        }
+                      }}
+                    >
+                      <Trash
+                        size={18}
+                        color={
+                          displayedItems.length === 1 ? "#9CA3AF" : "#ED3237"
+                        }
+                      />
+                    </div>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {displayedItems.length === 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="py-6 text-center text-sm text-gray-500"
+                >
+                  No selected items to display.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
