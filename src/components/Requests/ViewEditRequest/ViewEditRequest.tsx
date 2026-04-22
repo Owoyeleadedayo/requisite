@@ -152,10 +152,10 @@ export default function ViewEditRequest({
     userType === "hod"
       ? "/hod/requisitions"
       : userType === "procurementManager"
-      ? "/pm/requisitions"
-      : userType === "admin"
-      ? "/hhra/requisitions"
-      : "/user/requisition";
+        ? "/pm/requisitions"
+        : userType === "admin"
+          ? "/hhra/requisitions"
+          : "/user/requisition";
 
   useEffect(() => {
     const urgencyMap: Record<string, number> = {
@@ -176,7 +176,7 @@ export default function ViewEditRequest({
           `${API_BASE_URL}/requisitions/${requisitionId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         const data = await res.json();
         if (data.success) {
@@ -190,7 +190,14 @@ export default function ViewEditRequest({
             req.items.map((item: BackendItem, index: number) => ({
               ...item,
               id: item._id || index,
-            }))
+            })),
+          );
+          console.log(
+            "Items from page: ",
+            req.items.map((item: BackendItem, index: number) => ({
+              ...item,
+              id: item._id || index,
+            })),
           );
           const urgencyValue = req.urgency || req.priority;
           setUrgency([urgencyMap[urgencyValue] || 1]);
@@ -217,7 +224,7 @@ export default function ViewEditRequest({
             `${API_BASE_URL}/vendors?page=${currentPage}`,
             {
               headers: { Authorization: `Bearer ${token}` },
-            }
+            },
           );
           const data = await response.json();
           if (data.success) {
@@ -246,7 +253,7 @@ export default function ViewEditRequest({
 
   const handleItemFormChange = (
     field: keyof Item,
-    value: string | number | boolean | File | null
+    value: string | number | boolean | File | null,
   ) => {
     setCurrentItem((prev) => ({ ...prev, [field]: value }));
   };
@@ -264,7 +271,7 @@ export default function ViewEditRequest({
 
     if (editingItemId !== null) {
       setItems(
-        items.map((item) => (item._id === editingItemId ? currentItem : item))
+        items.map((item) => (item._id === editingItemId ? currentItem : item)),
       );
       toast.success("Item updated successfully!");
     } else {
@@ -349,7 +356,7 @@ export default function ViewEditRequest({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ reason: cancelReason }),
-        }
+        },
       );
       const data = await res.json();
       if (data.success) {
@@ -397,7 +404,7 @@ export default function ViewEditRequest({
     if (!itemComment.trim()) {
       // Errors were thrown to allow the modal close only when the request is successful
       throw toast.error(
-        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN,
       );
     }
 
@@ -411,23 +418,23 @@ export default function ViewEditRequest({
     try {
       const data = await requisitionService.approveBulkRequisitionItems(
         requisitionId,
-        body
+        body,
       );
       if (data.success) {
         toast.success(
-          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS
+          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
       throw toast.error(
-        CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_ERROR
+        CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_ERROR,
       );
     } finally {
       setIsItemRequestLoading(false);
@@ -438,7 +445,7 @@ export default function ViewEditRequest({
     if (!itemComment.trim()) {
       // Errors were thrown to allow the modal close only when the request is successful
       throw toast.error(
-        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN,
       );
     }
 
@@ -452,23 +459,23 @@ export default function ViewEditRequest({
     try {
       const data = await requisitionService.rejectBulkRequisitionItems(
         requisitionId,
-        body
+        body,
       );
       if (data.success) {
         toast.success(
-          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS
+          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
       throw toast.error(
-        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_ERROR
+        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_ERROR,
       );
     } finally {
       setIsItemRequestLoading(false);
@@ -478,7 +485,7 @@ export default function ViewEditRequest({
   const approveRequisitionItem = async (itemId: string) => {
     if (!itemComment.trim()) {
       throw toast.error(
-        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN,
       );
     }
 
@@ -492,26 +499,26 @@ export default function ViewEditRequest({
       const data = await requisitionService.approveRequisitionItem(
         requisitionId,
         itemId,
-        body
+        body,
       );
       console.log(data);
       if (data.success) {
         toast.success(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
       console.error(error);
       throw toast.error(
-        CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_ERROR
+        CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_ERROR,
       );
     } finally {
       setIsItemRequestLoading(false);
@@ -521,7 +528,7 @@ export default function ViewEditRequest({
   const rejectRequisitionItem = async (itemId: string) => {
     if (!itemComment.trim()) {
       throw toast.error(
-        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN,
       );
     }
 
@@ -536,25 +543,25 @@ export default function ViewEditRequest({
       const data = await requisitionService.rejectRequisitionItem(
         requisitionId,
         itemId,
-        body
+        body,
       );
       if (data.success) {
         toast.success(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
       console.error(error);
       throw toast.error(
-        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_ERROR
+        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_ERROR,
       );
     } finally {
       setIsItemRequestLoading(false);
@@ -572,24 +579,24 @@ export default function ViewEditRequest({
     try {
       const data = await requisitionService.rejectRequisition(
         requisitionId,
-        body
+        body,
       );
       if (data.success) {
         toast.success(
-          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_SUCCESS
+          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_SUCCESS,
         );
         setFormData(data.data);
         setShowDenialModal(false);
       } else {
         toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_FAIL
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_FAIL,
         );
       }
     } catch (error) {
       console.error(error);
       throw toast.error(
-        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ERROR
+        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ERROR,
       );
     } finally {
       setApprovalLoading(false);
@@ -612,7 +619,7 @@ export default function ViewEditRequest({
             status: "approved",
             comments: approvalComment.trim() || "Approved for procurement",
           }),
-        }
+        },
       );
       const data = await res.json();
       if (data.success) {
@@ -647,7 +654,7 @@ export default function ViewEditRequest({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ reason: denialReason }),
-        }
+        },
       );
       const data = await res.json();
       if (data.success) {
@@ -675,7 +682,7 @@ export default function ViewEditRequest({
     }
     const selectedItemsParam = selectedItems.join(",");
     router.push(
-      `/pm/requisitions/${requisitionId}/generate-rfq?selectedItems=${selectedItemsParam}`
+      `/pm/requisitions/${requisitionId}/generate-rfq?selectedItems=${selectedItemsParam}`,
     );
   };
 
@@ -732,10 +739,10 @@ export default function ViewEditRequest({
                 formData.status === "submitted"
                   ? "bg-orange-500"
                   : formData.status === "departmentApproved"
-                  ? "bg-green-500"
-                  : formData.status === "cancelled"
-                  ? "bg-red-500"
-                  : "bg-gray-500"
+                    ? "bg-green-500"
+                    : formData.status === "cancelled"
+                      ? "bg-red-500"
+                      : "bg-gray-500"
               }`}
             >
               {formData.status[0].toUpperCase() + formData.status.slice(1)}
@@ -857,13 +864,13 @@ export default function ViewEditRequest({
                             items!.some(
                               (item) =>
                                 item.status === "departmentApproved" ||
-                                item.status === "hrReview"
+                                item.status === "hrReview",
                             )
                           ) {
                             setShowApprovalModal(open);
                           } else {
                             toast.error(
-                              "Approve at least one item before proceeding"
+                              "Approve at least one item before proceeding",
                             );
                           }
                         }}
