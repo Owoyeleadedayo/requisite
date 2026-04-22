@@ -2,14 +2,16 @@
 
 import Image from "next/image";
 import React, { useState } from "react";
+import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, X, AtSign, AlarmClock } from "lucide-react";
 import { data, type Item } from "@/data/mock/tableData";
 
-const RequestDetailPage = ({ params }: { params: { requestId: string } }) => {
+const RequestDetailPage = () => {
   const [replyText, setReplyText] = useState("");
-  const requestId = parseInt(params.requestId);
-  const item = data.find((item) => item.id === requestId);
+  const { requestId } = useParams<{ requestId: string }>();
+  const parsedRequestId = Number.parseInt(requestId, 10);
+  const item = data.find((item) => item.id === parsedRequestId);
 
   if (!item) {
     return (

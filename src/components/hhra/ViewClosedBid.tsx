@@ -20,7 +20,7 @@ import { Textarea } from "../ui/textarea";
 import { Input } from "../ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
-import { parseDate } from "chrono-node";
+import { parseDate } from "@/lib/parseDate";
 import { Label } from "../ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTrigger } from "../ui/dialog";
 

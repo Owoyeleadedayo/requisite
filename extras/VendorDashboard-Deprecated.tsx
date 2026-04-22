@@ -9,7 +9,7 @@ import { NumericFormat } from "react-number-format";
 import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken, getUserId, getAuthData } from "@/lib/auth";
+import { getToken, getUserId } from "@/lib/auth";
 // import RequestsCard from "./Vendor/RequestsCard";
 import { vendorRequestsData } from "@/data/mock/tableData";
 import RequestsCard from "./RequestsCard";
@@ -153,9 +153,6 @@ export default function VendorDashboard({
   // const user = getUser();
   const userId = getUserId();
   const token = getToken();
-  const authdata = getAuthData();
-  const departmentId = authdata?.user?.department?._id;
-  console.log("departmentId: ", departmentId);
 
   const dashboardCardItems = [
     {

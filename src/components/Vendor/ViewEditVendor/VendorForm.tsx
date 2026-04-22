@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { parseDate } from "chrono-node";
+import { parseDate } from "@/lib/parseDate";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken } from "@/lib/auth";
 import { Vendor } from "@/components/Requests/types";

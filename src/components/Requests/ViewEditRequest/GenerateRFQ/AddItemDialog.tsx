@@ -43,9 +43,8 @@ export default function AddItemDialog({
 }: AddItemDialogProps) {
   const [viewingItem, setViewingItem] = useState<Item | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  // Filter to show only departmentApproved items not currently in the list
   const availableItems = items.filter(
-    (item) => !selectedItems.includes(item._id) && item.status === 'departmentApproved'
+    (item) => Boolean(item._id) && !selectedItems.includes(item._id),
   );
 
   return (
@@ -71,7 +70,8 @@ export default function AddItemDialog({
                 {availableItems.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-8">
                     <p className="text-gray-500 text-center">
-                      No approved items available to add. All department-approved items have been added to the RFQ.
+                      No additional items available to add. All current
+                      requisition items are already in this RFQ.
                     </p>
                   </div>
                 ) : (
@@ -89,7 +89,7 @@ export default function AddItemDialog({
                               onCheckedChange={(checked) => {
                                 if (checked) {
                                   setDialogSelectedItems(
-                                    availableItems.map((item) => item._id)
+                                    availableItems.map((item) => item._id),
                                   );
                                 } else {
                                   setDialogSelectedItems([]);
@@ -118,8 +118,8 @@ export default function AddItemDialog({
                                   } else {
                                     setDialogSelectedItems(
                                       dialogSelectedItems.filter(
-                                        (id) => id !== item._id
-                                      )
+                                        (id) => id !== item._id,
+                                      ),
                                     );
                                   }
                                 }}

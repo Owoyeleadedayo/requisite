@@ -1,18 +1,15 @@
-"use client";
-
 import VendorDetails from "@/components/hhra/VendorDetails";
 import VendorTable from "@/components/hhra/VendorTable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import React from "react";
 
-export default function Page({
+export default async function Page({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const view = searchParams.view;
+  const { view } = await searchParams;
 
   if (view === "details") {
     return <VendorDetails />;
