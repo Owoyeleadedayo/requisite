@@ -189,6 +189,39 @@ export default function RFQForm({
     setSelectedVendors((prev) => prev.filter((vendor) => vendor.id !== id));
   };
 
+  const issueRfqRecords = async (rfqIds: string[]) => {
+    if (rfqIds.length === 0) {
+      throw new Error("No RFQ IDs were returned for issuing");
+    }
+
+    const token = getToken();
+    const endpoint =
+      rfqIds.length === 1
+        ? `${API_BASE_URL}/rfqs/${rfqIds[0]}/issue`
+        : `${API_BASE_URL}/rfqs/issue-multiple`;
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: rfqIds.length === 1 ? undefined : JSON.stringify({ rfqIds }),
+    });
+
+    const contentType = response.headers.get("content-type");
+    if (contentType?.includes("application/json")) {
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || "Failed to issue RFQ(s)");
+      }
+      return data;
+    }
+
+    const text = await response.text();
+    throw new Error(text || "Failed to issue RFQ(s)");
+  };
+
   const handleCompleteRFQSubmit = async () => {
     // Validation
     if (!rfqTitle.trim()) {
@@ -262,7 +295,21 @@ export default function RFQForm({
       }
 
       if (data.success) {
-        toast.success("RFQ generated successfully!");
+        const createdRfqIds = Array.isArray(data.data)
+          ? data.data
+              .map((rfq: { _id?: string; id?: string }) => rfq._id || rfq.id)
+              .filter(Boolean)
+          : data.data
+            ? [data.data._id || data.data.id].filter(Boolean)
+            : [];
+
+        await issueRfqRecords(createdRfqIds);
+
+        toast.success(
+          createdRfqIds.length > 1
+            ? "RFQs generated and issued successfully!"
+            : "RFQ generated and issued successfully!",
+        );
         router.push("/pm/rfqs");
       } else {
         toast.error(data.message || "Failed to generate RFQ");

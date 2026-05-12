@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Clock, X, FileText, MessageCircle } from "lucide-react";
 import { getToken } from "@/lib/auth";
-import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
 import { API_BASE_URL } from "@/lib/config";
 
@@ -76,8 +75,12 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
-  const searchParams = useSearchParams();
-  const notificationId = searchParams.get('id');
+  const [notificationId, setNotificationId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setNotificationId(params.get("id"));
+  }, []);
 
   useEffect(() => {
     const fetchNotifications = async () => {
