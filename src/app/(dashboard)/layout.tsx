@@ -2,7 +2,12 @@ import Menu from "@/components/Menu";
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
 import { Menu as MenuIcon } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export const metadata: Metadata = {
   title: "Dashboard - Requisite App",
@@ -21,12 +26,12 @@ export default function DashboardLayout({
           <Navbar />
         </div>
 
-        <div className="flex flex-1 pt-[64px]">
-          <div className="hidden md:flex fixed top-[64px] left-0 h-[calc(100vh-64px)] w-[14%] border-r border-[#e5e5e5] bg-[#0F1E7A]">
+        <div className="flex flex-1 pt-16">
+          <div className="hidden md:flex fixed top-16 left-0 h-[calc(100vh-64px)] w-[14%] border-r border-[#e5e5e5] bg-[#0F1E7A]">
             <Menu />
           </div>
 
-          <div className="flex md:hidden fixed top-[22px] left-[16px] z-20">
+          <div className="flex md:hidden fixed top-[22px] left-4 z-20">
             <Sheet>
               <SheetTrigger>
                 <MenuIcon color="white" size={28} />
@@ -34,8 +39,11 @@ export default function DashboardLayout({
 
               <SheetContent
                 side="left"
-                className="!bg-[#0F1E7A] !text-white pt-10 w-[260px] flex flex-col"
+                className="bg-[#0F1E7A]! text-white! pt-10 w-[260px] flex flex-col"
               >
+                <SheetTitle className="sr-only">
+                  Dashboard navigation
+                </SheetTitle>
                 <div className="flex-1 overflow-y-auto">
                   <Menu />
                 </div>

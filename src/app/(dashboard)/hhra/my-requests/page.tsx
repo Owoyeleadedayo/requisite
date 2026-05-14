@@ -1,5 +1,5 @@
-import PMDashboard from "@/components/pm/PMDashboard";
+import HHRADashboard from "@/components/hhra/HHRADashboard";
 
 export default function MyRequestsPage() {
-  return <PMDashboard page="pmRequests" />;
+  return <HHRADashboard page="hhraRequests" />;
 }

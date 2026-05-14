@@ -25,6 +25,8 @@ interface ItemViewDialogProps {
   userType: UserTypes;
   approveRequisitionItem: (item: string) => Promise<void>;
   rejectRequisitionItem: (item: string) => Promise<void>;
+  approveHrRequisitionItem?: (item: string) => Promise<void>;
+  rejectHrRequisitionItem?: (item: string) => Promise<void>;
   itemComment: string;
   setItemComment: Dispatch<SetStateAction<string>>;
   isItemRequestLoading: boolean;
@@ -38,6 +40,8 @@ export default function ItemViewDialog({
   userType,
   approveRequisitionItem,
   rejectRequisitionItem,
+  approveHrRequisitionItem,
+  rejectHrRequisitionItem,
   itemComment,
   setItemComment,
   isItemRequestLoading,
@@ -46,6 +50,21 @@ export default function ItemViewDialog({
 
   const [approveItemDialogOpen, setApproveItemDialogOpen] = useState(false);
   const [rejectItemDialogOpen, setRejectItemDialogOpen] = useState(false);
+
+  const isHhra = userType === "hhra";
+  const isHod = userType === "hod";
+  const isHrReview = currentItem.status === "hrReview";
+  const useHrActions = isHhra && isHrReview;
+  const canUseDepartmentActions = isHod || isHhra;
+  const approveHandler = useHrActions
+    ? approveHrRequisitionItem
+    : approveRequisitionItem;
+  const rejectHandler = useHrActions
+    ? rejectHrRequisitionItem
+    : rejectRequisitionItem;
+  const approvalDisabled = useHrActions
+    ? currentItem.status !== "hrReview"
+    : currentItem.status !== "pending";
 
   const getVendorName = (vendorId: string) => {
     const vendor = vendors.find((v) => v._id === vendorId);
@@ -150,18 +169,20 @@ export default function ItemViewDialog({
         </div>
 
         <div className="flex gap-2 w-full mt-4">
-          {userType === "hod" && (
+          {canUseDepartmentActions && (
             <>
               <Dialog
                 open={approveItemDialogOpen}
                 onOpenChange={(open) => {
                   setItemComment("");
                   setApproveItemDialogOpen(open);
-                }}>
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button
-                    disabled={currentItem.status !== "pending"}
-                    className="bg-green-600 hover:bg-green-700 text-white flex-1">
+                    disabled={approvalDisabled || !approveHandler}
+                    className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                  >
                     Approve
                   </Button>
                 </DialogTrigger>
@@ -185,13 +206,14 @@ export default function ItemViewDialog({
                       </DialogClose>
                       <Button
                         onClick={() =>
-                          approveRequisitionItem(currentItem._id).then(() => {
+                          approveHandler?.(currentItem._id).then(() => {
                             setApproveItemDialogOpen(false);
                             onOpenChange(false);
                           })
                         }
                         disabled={isItemRequestLoading}
-                        className="bg-green-600 hover:bg-green-700 text-white">
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
                         {isItemRequestLoading ? "Approving..." : "Approve"}
                       </Button>
                     </div>
@@ -203,11 +225,13 @@ export default function ItemViewDialog({
                 onOpenChange={(open) => {
                   setItemComment("");
                   setRejectItemDialogOpen(open);
-                }}>
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button
-                    disabled={currentItem.status !== "pending"}
-                    className="bg-red-600 hover:bg-red-700 text-white flex-1">
+                    disabled={approvalDisabled || !rejectHandler}
+                    className="bg-red-600 hover:bg-red-700 text-white flex-1"
+                  >
                     Deny
                   </Button>
                 </DialogTrigger>
@@ -231,13 +255,14 @@ export default function ItemViewDialog({
                       </DialogClose>
                       <Button
                         onClick={() =>
-                          rejectRequisitionItem(currentItem._id).then(() => {
+                          rejectHandler?.(currentItem._id).then(() => {
                             setRejectItemDialogOpen(false);
                             onOpenChange(false);
                           })
                         }
                         disabled={isItemRequestLoading}
-                        className="bg-red-600 hover:bg-red-700 text-white">
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
                         {isItemRequestLoading ? "Denying..." : "Deny"}
                       </Button>
                     </div>

@@ -57,7 +57,9 @@ const menuItems: Record<string, MenuItem[]> = {
   hhra: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
     { icon: FileCog, label: "Requisitions", href: "/hhra/requisitions" },
-    { icon: FileCog, label: "Request", href: "/hhra/my-requests" },
+    { icon: FileCog, label: "My Requests", href: "/hhra/my-requests" },
+    { icon: CircleDollarSign, label: "RFQs", href: "/hhra/rfqs" },
+    { icon: FileSpreadsheet, label: "POs", href: "/hhra/pos" },
     // { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
     // { icon: User, label: "Profile", href: "/hhra/profile" },
   ],

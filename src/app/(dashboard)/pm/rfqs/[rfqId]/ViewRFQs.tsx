@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { getToken } from "@/lib/auth";
+import { getAuthData, getToken } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/config";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -76,6 +76,9 @@ const ViewRFQs = () => {
   const params = useParams();
   const router = useRouter();
   const rfqId = params.rfqId as string;
+  const authData = getAuthData();
+  const isReadOnly = authData?.user?.role === "hhra";
+  const basePath = isReadOnly ? "/hhra" : "/pm";
 
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
@@ -95,7 +98,7 @@ const ViewRFQs = () => {
 
   useEffect(() => {
     if (!rfqId) {
-      router.push("/pm/rfqs");
+      router.push(`${basePath}/rfqs`);
       return;
     }
     const fetchRFQData = async () => {
@@ -239,16 +242,19 @@ const ViewRFQs = () => {
   }, [rfqId, router]);
 
   const toggleVendor = (id: string) => {
+    if (isReadOnly) return;
     setSelectedVendor((prev) => (prev === id ? null : id));
   };
 
   const toggleItem = (id: string) => {
+    if (isReadOnly) return;
     setSelectedItems((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
   const toggleAllItems = () => {
+    if (isReadOnly) return;
     if (selectedItems.length === items.length) {
       setSelectedItems([]);
     } else {
@@ -257,6 +263,7 @@ const ViewRFQs = () => {
   };
 
   const generatePO = () => {
+    if (isReadOnly) return;
     if (!selectedVendor || selectedItems.length === 0 || !rfqData) return;
     // Store data in localStorage for GeneratePO component
     localStorage.setItem(
@@ -284,7 +291,12 @@ const ViewRFQs = () => {
           <>
             {/* Header */}
             <div className="mb-6">
-              <button className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-blue-900 text-blue-900 hover:bg-blue-50 mb-4">
+              <button
+                onClick={() => router.back()}
+                className={`flex items-center justify-center w-10 h-10 rounded-full border-2 border-blue-900 text-blue-900 mb-4 ${
+                  isReadOnly ? "" : "hover:bg-blue-50"
+                }`}
+              >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <h1 className="text-xl md:text-2xl lg:text-3xl font-semibold text-blue-900">
@@ -292,7 +304,9 @@ const ViewRFQs = () => {
               </h1>
 
               <p className="text-sm text-gray-600 mt-2">
-                Choose the approved vendor below to generate the PO
+                {isReadOnly
+                  ? "RFQ details and vendor information"
+                  : "Choose the approved vendor below to generate the PO"}
               </p>
             </div>
 
@@ -303,22 +317,26 @@ const ViewRFQs = () => {
                   {vendors.map((vendor) => (
                     <div
                       key={vendor.id}
-                      className="bg-white rounded-lg border border-gray-200 p-6 relative shadow-sm cursor-pointer"
+                      className={`bg-white rounded-lg border border-gray-200 p-6 relative shadow-sm ${
+                        isReadOnly ? "cursor-default" : "cursor-pointer"
+                      }`}
                       onClick={() => toggleVendor(vendor.id)}
                     >
-                      <div className="absolute top-4 right-4">
-                        <div
-                          className={`w-5 h-5 rounded-full border-2 cursor-pointer ${
-                            selectedVendor === vendor.id
-                              ? "bg-[#0F1E7A] border-[#0F1E7A]"
-                              : "border-gray-300"
-                          }`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleVendor(vendor.id);
-                          }}
-                        ></div>
-                      </div>
+                      {!isReadOnly && (
+                        <div className="absolute top-4 right-4">
+                          <div
+                            className={`w-5 h-5 rounded-full border-2 cursor-pointer ${
+                              selectedVendor === vendor.id
+                                ? "bg-[#0F1E7A] border-[#0F1E7A]"
+                                : "border-gray-300"
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleVendor(vendor.id);
+                            }}
+                          ></div>
+                        </div>
+                      )}
 
                       <div className="space-y-2 pr-8">
                         <div>
@@ -356,7 +374,9 @@ const ViewRFQs = () => {
                       </div>
 
                       <button
-                        className="mt-4 px-6 py-2 border-2 border-blue-900 text-blue-900 hover:text-white rounded-md font-semibold hover:bg-blue-900 transition-colors"
+                        className={`mt-4 px-6 py-2 border-2 border-blue-900 text-blue-900 rounded-md font-semibold transition-colors ${
+                          isReadOnly ? "" : "hover:text-white hover:bg-blue-900"
+                        }`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         Download RFQ
@@ -438,35 +458,39 @@ const ViewRFQs = () => {
 
               {/* Items Table */}
               <div className="lg:col-span-2 w-full bg-white rounded-lg border border-gray-200 p-6 overflow-x-auto shadow-sm">
-                <div className="flex gap-2 justify-end mb-4">
-                  <select
-                    value={bulkAction}
-                    onChange={(e) => setBulkAction(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm"
-                  >
-                    <option value="">Bulk actions</option>
-                    <option value="delete">Delete Selected</option>
-                    <option value="edit">Edit Selected</option>
-                  </select>
-                  <button className="px-6 py-2 bg-gray-400 text-white rounded-md font-medium hover:bg-gray-500">
-                    Apply
-                  </button>
-                </div>
+                {!isReadOnly && (
+                  <div className="flex gap-2 justify-end mb-4">
+                    <select
+                      value={bulkAction}
+                      onChange={(e) => setBulkAction(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm"
+                    >
+                      <option value="">Bulk actions</option>
+                      <option value="delete">Delete Selected</option>
+                      <option value="edit">Edit Selected</option>
+                    </select>
+                    <button className="px-6 py-2 bg-gray-400 text-white rounded-md font-medium hover:bg-gray-500">
+                      Apply
+                    </button>
+                  </div>
+                )}
 
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-2">
-                        <input
-                          type="checkbox"
-                          checked={
-                            items.length > 0 &&
-                            selectedItems.length === items.length
-                          }
-                          onChange={toggleAllItems}
-                          className="w-4 h-4 text-blue-900 rounded border-gray-300"
-                        />
-                      </th>
+                      {!isReadOnly && (
+                        <th className="text-left py-3 px-2">
+                          <input
+                            type="checkbox"
+                            checked={
+                              items.length > 0 &&
+                              selectedItems.length === items.length
+                            }
+                            onChange={toggleAllItems}
+                            className="w-4 h-4 text-blue-900 rounded border-gray-300"
+                          />
+                        </th>
+                      )}
                       <th className="text-left py-3 px-4 font-semibold text-sm">
                         Item Description
                       </th>
@@ -476,22 +500,26 @@ const ViewRFQs = () => {
                       <th className="text-left py-3 px-4 font-semibold text-sm">
                         QTY
                       </th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm">
-                        Action
-                      </th>
+                      {!isReadOnly && (
+                        <th className="text-left py-3 px-4 font-semibold text-sm">
+                          Action
+                        </th>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item) => (
                       <tr key={item.id} className="border-b border-gray-100">
-                        <td className="py-4 px-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedItems.includes(item.id)}
-                            onChange={() => toggleItem(item.id)}
-                            className="w-4 h-4 text-blue-900 rounded border-gray-300"
-                          />
-                        </td>
+                        {!isReadOnly && (
+                          <td className="py-4 px-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.includes(item.id)}
+                              onChange={() => toggleItem(item.id)}
+                              className="w-4 h-4 text-blue-900 rounded border-gray-300"
+                            />
+                          </td>
+                        )}
                         <td className="py-4 px-4 text-sm">
                           {item.itemDescription ||
                             item.detailedSpecification ||
@@ -499,16 +527,18 @@ const ViewRFQs = () => {
                         </td>
                         <td className="py-4 px-4 text-sm">{item.uom}</td>
                         <td className="py-4 px-4 text-sm">{item.quantity}</td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-2">
-                            <button className="p-1.5 hover:bg-gray-100 rounded">
-                              <Edit2 className="w-4 h-4 text-gray-600" />
-                            </button>
-                            <button className="p-1.5 hover:bg-gray-100 rounded">
-                              <Trash2 className="w-4 h-4 text-gray-600" />
-                            </button>
-                          </div>
-                        </td>
+                        {!isReadOnly && (
+                          <td className="py-4 px-4">
+                            <div className="flex gap-2">
+                              <button className="p-1.5 hover:bg-gray-100 rounded">
+                                <Edit2 className="w-4 h-4 text-gray-600" />
+                              </button>
+                              <button className="p-1.5 hover:bg-gray-100 rounded">
+                                <Trash2 className="w-4 h-4 text-gray-600" />
+                              </button>
+                            </div>
+                          </td>
+                        )}
                       </tr>
                     ))}
                     {items.length === 0 && (
@@ -526,17 +556,19 @@ const ViewRFQs = () => {
               </div>
             </div>
 
-            <button
-              onClick={generatePO}
-              disabled={!selectedVendor || selectedItems.length === 0}
-              className={`my-6 w-full md:w-auto px-8 py-3 rounded-md font-semibold transition-colors ${
-                selectedVendor && selectedItems.length > 0
-                  ? "bg-blue-900 text-white hover:bg-blue-800"
-                  : "bg-gray-400 text-white cursor-not-allowed"
-              }`}
-            >
-              Generate PO
-            </button>
+            {!isReadOnly && (
+              <button
+                onClick={generatePO}
+                disabled={!selectedVendor || selectedItems.length === 0}
+                className={`my-6 w-full md:w-auto px-8 py-3 rounded-md font-semibold transition-colors ${
+                  selectedVendor && selectedItems.length > 0
+                    ? "bg-blue-900 text-white hover:bg-blue-800"
+                    : "bg-gray-400 text-white cursor-not-allowed"
+                }`}
+              >
+                Generate PO
+              </button>
+            )}
           </>
         )}
       </div>

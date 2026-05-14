@@ -549,6 +549,48 @@ export default function ViewEditRequest({
     }
   };
 
+  const approveHrRequisitionItem = async (itemId: string) => {
+    if (!itemComment.trim()) {
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN,
+      );
+    }
+
+    const body = {
+      comments:
+        itemComment.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
+    };
+
+    setIsItemRequestLoading(true);
+    try {
+      const data = await requisitionService.approveHrRequisitionItem(
+        requisitionId,
+        itemId,
+        body,
+      );
+      if (data.success) {
+        toast.success(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
+        );
+        setItems(data.data.requisition.items);
+        setViewingItem(data.data.item);
+      } else {
+        throw toast.error(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_ERROR,
+      );
+    } finally {
+      setIsItemRequestLoading(false);
+    }
+  };
+
   const rejectRequisitionItem = async (itemId: string) => {
     if (!itemComment.trim()) {
       throw toast.error(
@@ -576,6 +618,49 @@ export default function ViewEditRequest({
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
+      } else {
+        throw toast.error(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_ERROR,
+      );
+    } finally {
+      setIsItemRequestLoading(false);
+    }
+  };
+
+  const rejectHrRequisitionItem = async (itemId: string) => {
+    if (!itemComment.trim()) {
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN,
+      );
+    }
+
+    const body = {
+      comments:
+        itemComment.trim() ||
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN,
+    };
+
+    setIsItemRequestLoading(true);
+    try {
+      const data = await requisitionService.rejectHrRequisitionItem(
+        requisitionId,
+        itemId,
+        body,
+      );
+      if (data.success) {
+        toast.success(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
+        );
+        setItems(data.data.requisition.items);
+        setViewingItem(data.data.item);
       } else {
         throw toast.error(
           data.message ||
@@ -879,7 +964,7 @@ export default function ViewEditRequest({
                       Edit
                     </Button>
                   )}
-                  {userType === "hod" && (
+                  {(userType === "hod" || userType === "hhra") && (
                     <>
                       <Dialog
                         open={showApprovalModal}
@@ -914,7 +999,7 @@ export default function ViewEditRequest({
                           <div className="space-y-4">
                             <div>
                               <Label>Approval Comment</Label>
-                              {userType === "hod" && (
+                              {(userType === "hod" || userType === "hhra") && (
                                 <span className="flex text-xs pt-2 leading-none">
                                   Confirm that all relevant items have been
                                   approved before proceeding, as the process
@@ -1139,6 +1224,8 @@ export default function ViewEditRequest({
                 userType={userType}
                 approveRequisitionItem={approveRequisitionItem}
                 rejectRequisitionItem={rejectRequisitionItem}
+                approveHrRequisitionItem={approveHrRequisitionItem}
+                rejectHrRequisitionItem={rejectHrRequisitionItem}
                 itemComment={itemComment}
                 setItemComment={setItemComment}
                 isItemRequestLoading={isItemRequestLoading}

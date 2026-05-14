@@ -151,6 +151,38 @@ export default function PMDashboard({
   const userId = getUserId();
   const token = getToken();
   const authdata = getAuthData();
+  const isHhra = authdata?.user?.role === "hhra";
+
+  const handleApprovePo = async (poId: string) => {
+    if (!token) return;
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/${poId}/hhr-approve`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(data.message || "Purchase order approved.");
+        setPos((prev) =>
+          prev.map((po) =>
+            po._id === poId ? { ...po, status: data.data?.status } : po,
+          ),
+        );
+      } else {
+        toast.error(data.message || "Failed to approve purchase order");
+      }
+    } catch (error) {
+      console.error("Error approving PO:", error);
+      toast.error("Failed to approve purchase order");
+    }
+  };
 
   const fetchLocations = useCallback(async () => {
     setLoading(true);
@@ -385,7 +417,9 @@ export default function PMDashboard({
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
             {/* <Link href={`#`}>View</Link> */}
-            <Link href={`/pm/rfqs/${row._id}`}>View</Link>
+            <Link href={`${isHhra ? "/hhra" : "/pm"}/rfqs/${row._id}`}>
+              View
+            </Link>
           </Button>
         </div>
       ),
@@ -451,13 +485,30 @@ export default function PMDashboard({
       label: "Action",
       render: (_, row) => (
         <div className="flex gap-2 items-center">
-          <Button
-            asChild
-            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-          >
-            <Link href={`#`}>View</Link>
-            {/* <Link href={`/pm/pos/${row._id}`}>View</Link> */}
-          </Button>
+          {isHhra ? (
+            <>
+              <Button
+                asChild
+                className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+              >
+                <Link href={`/hhra/pos/${row._id}`}>View</Link>
+              </Button>
+              <Button
+                onClick={() => handleApprovePo(row._id)}
+                disabled={row.status !== "hofApproved"}
+                className="bg-green-600 hover:bg-green-700 text-white px-4"
+              >
+                Approve
+              </Button>
+            </>
+          ) : (
+            <Button
+              asChild
+              className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+            >
+              <Link href={`/pm/pos/${row._id}`}>View</Link>
+            </Button>
+          )}
         </div>
       ),
     },
@@ -480,8 +531,8 @@ export default function PMDashboard({
             mode="view"
             isLocationLoading={isLocationLoading}
           >
-            <Button variant="ghost" className="!px-2 !lg:px-1">
-              <Eye size={24} className="!text-[#0F1E7A]" />
+            <Button variant="ghost" className="px-2! lg:px-1!">
+              <Eye size={24} className="text-[#0F1E7A]!" />
             </Button>
           </LocationsFormDialog>
           <LocationsFormDialog
@@ -493,12 +544,12 @@ export default function PMDashboard({
           >
             <Button
               variant="ghost"
-              className="!px-2 !lg:px-1"
+              className="px-2! lg:px-1!"
               onClick={() => {
                 setCurrentLocation(row);
               }}
             >
-              <Edit size={24} className="!text-[#0F1E7A]" />
+              <Edit size={24} className="text-[#0F1E7A]!" />
             </Button>
           </LocationsFormDialog>
           <LocationsFormDialog
@@ -508,8 +559,8 @@ export default function PMDashboard({
             mode="delete"
             isLocationLoading={isLocationLoading}
           >
-            <Button variant="ghost" className="!px-2 !lg:px-1">
-              <Trash2 size={24} className="!text-red-500" />
+            <Button variant="ghost" className="px-2! lg:px-1!">
+              <Trash2 size={24} className="text-red-500!" />
             </Button>
           </LocationsFormDialog>
         </div>
@@ -694,12 +745,10 @@ export default function PMDashboard({
   };
 
   return (
-    <div className="flex flex-col gap-4 p-6 lg:p-12 !pb-16">
+    <div className="flex flex-col gap-4 p-6 lg:p-12 pb-16!">
       {page === "procurementDashboard" && (
         <div className="flex flex-col gap-4">
-          <p className="text-2xl text-[#0F1E7A] font-semibold font-normal">
-            Summary
-          </p>
+          <p className="text-2xl text-[#0F1E7A] font-semibold">Summary</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {dashboardCardItems.map((item) => (

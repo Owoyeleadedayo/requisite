@@ -10,13 +10,13 @@ export default function HODViewEditRequest() {
   const { requisitionId } = params;
 
   const [isEditMode, setIsEditMode] = useState(
-    searchParams.get("mode") === "edit"
+    searchParams.get("mode") === "edit",
   );
 
-  return (  
+  return (
     <ViewEditRequest
       requisitionId={requisitionId as string}
-      userType="procurementManager"
+      userType="hhra"
       isEditMode={isEditMode}
       onEditModeChange={setIsEditMode}
     />
