@@ -148,6 +148,33 @@ export default function ViewEditRequest({
     2: "high",
   };
 
+  const buildRequisitionFormData = (formattedDate?: string) => {
+    const body = new FormData();
+    body.append("title", formData.title);
+    body.append("urgency", priorityMap[urgency[0]]);
+    body.append("justification", formData.justification);
+    body.append("deliveryLocation", formData.deliveryLocation);
+    if (formattedDate) {
+      body.append("deliveryDate", formattedDate);
+    }
+
+    items.forEach((item, index) => {
+      const { _id, uploadImage, ...rest } = item;
+      const { recommendedVendor, ...itemPayload } = rest;
+      const payload = recommendedVendor
+        ? { ...itemPayload, recommendedVendor }
+        : itemPayload;
+
+      body.append(`item_${index}`, JSON.stringify(payload));
+
+      if (uploadImage) {
+        body.append(`uploadImage_${index}`, uploadImage);
+      }
+    });
+
+    return body;
+  };
+
   const backPath =
     userType === "hod"
       ? "/hod/requisitions"
@@ -291,23 +318,20 @@ export default function ViewEditRequest({
   const handleSave = async () => {
     setLoading(true);
     try {
+      const formattedDate = dateStart
+        ? new Date(dateStart.getTime() - dateStart.getTimezoneOffset() * 60000)
+            .toISOString()
+            .split("T")[0]
+        : undefined;
+
+      const requestBody = buildRequisitionFormData(formattedDate);
+
       const res = await fetch(`${API_BASE_URL}/requisitions/${requisitionId}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          ...formData,
-          urgency: priorityMap[urgency[0]],
-          items: items.map(({ _id, uploadImage, ...rest }) => {
-            const { recommendedVendor, ...itemPayload } = rest;
-            if (recommendedVendor) {
-              return { ...itemPayload, recommendedVendor };
-            }
-            return itemPayload;
-          }),
-        }),
+        body: requestBody,
       });
       const data = await res.json();
       if (data.success) {
