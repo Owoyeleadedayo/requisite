@@ -54,6 +54,33 @@ export default function CreateNewRequest({
 
   const token = getToken();
 
+  const buildRequisitionFormData = (formattedDate?: string) => {
+    const body = new FormData();
+    body.append("title", formData.title);
+    body.append("urgency", urgencyMap[urgency[0]]);
+    body.append("justification", formData.justification);
+    body.append("deliveryLocation", formData.deliveryLocation);
+    if (formattedDate) {
+      body.append("deliveryDate", formattedDate);
+    }
+
+    items.forEach((item, index) => {
+      const { _id, uploadImage, ...rest } = item;
+      const { recommendedVendor, ...itemPayload } = rest;
+      const payload = recommendedVendor
+        ? { ...itemPayload, recommendedVendor }
+        : itemPayload;
+
+      body.append(`item_${index}`, JSON.stringify(payload));
+
+      if (uploadImage) {
+        body.append(`uploadImage_${index}`, uploadImage);
+      }
+    });
+
+    return body;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) {
@@ -67,22 +94,7 @@ export default function CreateNewRequest({
           .split("T")[0]
       : undefined;
 
-    const payload = {
-      title: formData.title,
-      urgency: urgencyMap[urgency[0]],
-      justification: formData.justification,
-      deliveryLocation: formData.deliveryLocation,
-      deliveryDate: formattedDate,
-      items: items.map(({ _id, uploadImage, ...rest }) => {
-        const { recommendedVendor, ...itemPayload } = rest;
-        if (recommendedVendor) {
-          return { ...itemPayload, recommendedVendor };
-        }
-        return itemPayload;
-      }),
-    };
-
-    console.log("Request Payload:", payload);
+    const requestBody = buildRequisitionFormData(formattedDate);
 
     setLoading(true);
 
@@ -92,9 +104,8 @@ export default function CreateNewRequest({
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: requestBody,
       });
 
       const createData = await createResponse.json();
@@ -109,7 +120,7 @@ export default function CreateNewRequest({
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         const submitData = await submitResponse.json();
@@ -121,10 +132,10 @@ export default function CreateNewRequest({
             page === "hod"
               ? "/hod/my-requests/"
               : page === "pm"
-              ? "/pm/my-requests/"
-              : page === "hhra"
-              ? "/hhra/my-requests/"
-              : "/user/requisition/";
+                ? "/pm/my-requests/"
+                : page === "hhra"
+                  ? "/hhra/my-requests/"
+                  : "/user/requisition/";
           router.push(redirectPath);
         } else {
           toast.error("Failed to submit requisition");
@@ -161,7 +172,7 @@ export default function CreateNewRequest({
           `${API_BASE_URL}/vendors?page=${currentPage}`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
         const data = await response.json();
         if (data.success) {
@@ -185,7 +196,7 @@ export default function CreateNewRequest({
 
   const handleItemFormChange = (
     field: keyof Item,
-    value: string | number | boolean | File | null
+    value: string | number | boolean | File | null,
   ) => {
     setCurrentItem((prev) => ({ ...prev, [field]: value }));
   };
@@ -204,7 +215,7 @@ export default function CreateNewRequest({
     if (editingItemId !== null) {
       // Update existing item
       setItems(
-        items.map((item) => (item._id === editingItemId ? currentItem : item))
+        items.map((item) => (item._id === editingItemId ? currentItem : item)),
       );
       toast.success("Item updated successfully!");
     } else {
@@ -255,10 +266,10 @@ export default function CreateNewRequest({
               page === "hod"
                 ? "/hod/my-requests"
                 : page === "pm"
-                ? "/pm/my-requests"
-                : page === "hhra"
-                ? "/hhra/my-requests"
-                : "/user/requisition"
+                  ? "/pm/my-requests"
+                  : page === "hhra"
+                    ? "/hhra/my-requests"
+                    : "/user/requisition"
             }
             className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-1"
           >
