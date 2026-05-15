@@ -73,6 +73,75 @@ interface RFQShape {
 }
 
 interface POShape {
+  // _id: "6a059cda43f18a84cbc0faae";
+  // requisition: {
+  //   _id: "6916faacd3f3960d6f091722";
+  //   title: "HOD Request Test 2";
+  //   requisitionNumber: "REQ-2511-0014";
+  // };
+  rfq: {
+    _id: "6a059c8143f18a84cbc0fa3e";
+    rfqNumber: "RFQ-000019";
+  };
+  // vendor: {
+  //   _id: "68e929fb10912bcc494783cc";
+  //   name: "Daystar";
+  //   contactPerson: "Sunday Oruwhine";
+  //   email: "sundayoruwhone+requisite@gmail.com";
+  //   phone: "+2347068496602";
+  //   address: "651 N Broad Street";
+  // };
+  items: [
+    {
+      itemId: "6916faacd3f3960d6f091723";
+      itemDescription: "HOD Request Test 2 - HOD Request Test 2";
+      quantity: 20;
+      uom: "HOD Request Test 2";
+      brand: "HOD Request Test 2";
+      unitPrice: 0;
+      totalPrice: 0;
+      _id: "6a059cda43f18a84cbc0faaf";
+    },
+  ];
+  totalAmount: 0;
+  // deliveryLocation: {
+  //   _id: "693ab05c8f6af7011ef32145";
+  //   name: "Main Campus";
+  //   address: "123 University Ave";
+  //   contactPerson: "John Doe";
+  //   phoneNumber: "1234567890";
+  //   email: "contact@university.edu";
+  // };
+  deliveryDate: "2025-11-21T00:00:00.000Z";
+  deliveryContact: {
+    _id: "68de60e5c3ef9f0b1498143d";
+    firstName: "Lucy";
+    lastName: "Ikechukwu";
+    email: "lucyikechukwu@daystarng.org";
+  };
+  shipping: "Main Campus";
+  generalTerms: "ToS";
+  evaluationCriteria: "EC";
+  termsOfService: "ToS";
+  paymentTerms: "";
+  quoteUrl: "";
+  vendorQuote: "";
+  approvals: [];
+  // status: "draft";
+  // createdBy: {
+  //   _id: "68de60e5c3ef9f0b1498143d";
+  //   firstName: "Lucy";
+  //   lastName: "Ikechukwu";
+  //   email: "lucyikechukwu@daystarng.org";
+  // };
+  attachments: [];
+  // createdAt: "2026-05-14T09:58:50.030Z";
+  updatedAt: "2026-05-14T09:58:50.030Z";
+  poNumber: "PO-2605-0002";
+  __v: 0;
+
+  // -=-=-=-=-=-=-=-=-
+
   _id: string;
   rfqNumber: string;
   title: string;
@@ -428,7 +497,7 @@ export default function PMDashboard({
 
   const poColumns: Column<POShape>[] = [
     { key: "title", label: "PO Title" },
-    { key: "rfqNumber", label: "PO Number" },
+    { key: "poNumber", label: "PO Number" },
     {
       key: "deliveryLocation",
       label: "Location",
@@ -451,14 +520,14 @@ export default function PMDashboard({
       render: (vendor) => vendor?.name || "N/A",
     },
     {
-      key: "requester",
+      key: "createdBy",
       label: "Staff",
-      render: (_, row) => {
-        if (!row.requester) return "N/A";
+      render: (createdBy) => {
+        if (!createdBy) return "N/A";
         const currentUser = authdata?.user;
-        return currentUser?.id === row.requester._id
+        return currentUser?.id === createdBy._id
           ? "You"
-          : `${row.requester.firstName} ${row.requester.lastName}`;
+          : `${createdBy.firstName} ${createdBy.lastName}`;
       },
     },
     {
@@ -485,30 +554,13 @@ export default function PMDashboard({
       label: "Action",
       render: (_, row) => (
         <div className="flex gap-2 items-center">
-          {isHhra ? (
-            <>
-              <Button
-                asChild
-                className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-              >
-                <Link href={`/hhra/pos/${row._id}`}>View</Link>
-              </Button>
-              <Button
-                onClick={() => handleApprovePo(row._id)}
-                disabled={row.status !== "hofApproved"}
-                className="bg-green-600 hover:bg-green-700 text-white px-4"
-              >
-                Approve
-              </Button>
-            </>
-          ) : (
-            <Button
-              asChild
-              className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-            >
-              <Link href={`/pm/pos/${row._id}`}>View</Link>
-            </Button>
-          )}
+          <Button
+            asChild
+            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+          >
+            <Link href={`/pm/pos/${row._id}`}>View</Link>
+            {/* <Link href={`/pm/pos/${row._id}`}>View</Link> */}
+          </Button>
         </div>
       ),
     },

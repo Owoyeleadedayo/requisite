@@ -241,6 +241,38 @@ const ViewRFQs = () => {
     fetchRFQData();
   }, [rfqId, router]);
 
+  const handleDownloadRFQ = async (vendorId: string) => {
+    try {
+      const token = getToken();
+      const response = await fetch(
+        `${API_BASE_URL}/rfqs/${rfqId}/download?vendorIds=${vendorId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to download RFQ");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `RFQ-${rfqData?.rfqNumber || rfqId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("RFQ downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading RFQ:", error);
+      toast.error("Failed to download RFQ");
+    }
+  };
+
   const toggleVendor = (id: string) => {
     if (isReadOnly) return;
     setSelectedVendor((prev) => (prev === id ? null : id));
@@ -374,10 +406,13 @@ const ViewRFQs = () => {
                       </div>
 
                       <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadRFQ(vendor.id);
+                        }}
                         className={`mt-4 px-6 py-2 border-2 border-blue-900 text-blue-900 rounded-md font-semibold transition-colors ${
                           isReadOnly ? "" : "hover:text-white hover:bg-blue-900"
                         }`}
-                        onClick={(e) => e.stopPropagation()}
                       >
                         Download RFQ
                       </button>
