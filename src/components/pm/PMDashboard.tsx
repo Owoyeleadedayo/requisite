@@ -220,38 +220,6 @@ export default function PMDashboard({
   const userId = getUserId();
   const token = getToken();
   const authdata = getAuthData();
-  const isHhra = authdata?.user?.role === "hhra";
-
-  const handleApprovePo = async (poId: string) => {
-    if (!token) return;
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/purchase-orders/${poId}/hhr-approve`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-      const data = await response.json();
-
-      if (data.success) {
-        toast.success(data.message || "Purchase order approved.");
-        setPos((prev) =>
-          prev.map((po) =>
-            po._id === poId ? { ...po, status: data.data?.status } : po,
-          ),
-        );
-      } else {
-        toast.error(data.message || "Failed to approve purchase order");
-      }
-    } catch (error) {
-      console.error("Error approving PO:", error);
-      toast.error("Failed to approve purchase order");
-    }
-  };
 
   const fetchLocations = useCallback(async () => {
     setLoading(true);
@@ -486,9 +454,7 @@ export default function PMDashboard({
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
             {/* <Link href={`#`}>View</Link> */}
-            <Link href={`${isHhra ? "/hhra" : "/pm"}/rfqs/${row._id}`}>
-              View
-            </Link>
+            <Link href={`/pm/rfqs/${row._id}`}>View</Link>
           </Button>
         </div>
       ),

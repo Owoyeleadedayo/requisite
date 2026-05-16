@@ -13,12 +13,51 @@ import { getToken, getUserId, getAuthData } from "@/lib/auth";
 import { RequisitionShape } from "@/types/requisition";
 import getLocationName, { Location } from "@/lib/getLocationName";
 
+interface RFQShape {
+  _id: string;
+  rfqNumber: string;
+  title: string;
+  requisition: {
+    _id: string;
+    title: string;
+    requisitionNumber: string;
+  };
+  requester?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  vendor?: {
+    _id: string;
+    name: string;
+  };
+  deliveryLocation?: {
+    _id: string;
+    name: string;
+  };
+  createdAt: string;
+  status: string;
+}
+
+interface POShape {
+  _id: string;
+  poNumber?: string;
+  title?: string;
+  deliveryLocation?: { _id: string; name: string };
+  createdAt?: string;
+  vendor?: { name?: string };
+  createdBy?: { _id?: string; firstName?: string; lastName?: string };
+  status?: string;
+}
+
 interface ProcurementManagerDashboardProps {
   page?:
     | "hhraDashboard"
     | "hhraRequisitions"
     | "hhraRequests"
-    | "procurementBids";
+    | "procurementBids"
+    | "rfqs"
+    | "pos";
 }
 
 export default function HHRADashboard({
@@ -26,14 +65,14 @@ export default function HHRADashboard({
 }: ProcurementManagerDashboardProps = {}) {
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
+  const [rfqs, setRfqs] = useState<RFQShape[]>([]);
+  const [pos, setPos] = useState<POShape[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   // const [locations, setLocations] = useState<{ _id: string; name: string }[]>(
   //   []
   // );
-  const [locations, setLocations] = useState<Location[]>(
-    []
-  );
+  const [locations, setLocations] = useState<Location[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [dashboardStats, setDashboardStats] = useState({
     total: 0,
@@ -63,6 +102,87 @@ export default function HHRADashboard({
       console.error("Failed to fetch locations", error);
     }
   }, [token]);
+
+  const fetchRFQs = useCallback(
+    async (pageNum: number = 1) => {
+      setLoading(true);
+      try {
+        const endpoint = `${API_BASE_URL}/rfqs?page=${pageNum}&limit=${itemsPerPage}`;
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        if (data.success) {
+          setRfqs(data.data);
+          setCurrentPage(data.currentPage || data.pagination?.page || 1);
+          setTotalPages(data.totalPages || data.pagination?.pages || 1);
+          setTotalCount(data.total || data.pagination?.total || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching RFQs:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token],
+  );
+
+  const fetchPOs = useCallback(
+    async (pageNum: number = 1) => {
+      setLoading(true);
+      try {
+        const endpoint = `${API_BASE_URL}/purchase-orders?page=${pageNum}&limit=${itemsPerPage}`;
+        const response = await fetch(endpoint, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        if (data.success) {
+          setPos(data.data);
+          setCurrentPage(data.currentPage || data.pagination?.page || 1);
+          setTotalPages(data.totalPages || data.pagination?.pages || 1);
+          setTotalCount(data.total || data.pagination?.total || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching POs:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token],
+  );
+
+  const handleApprovePo = async (poId: string) => {
+    if (!token) return;
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/${poId}/hhr-approve`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const data = await response.json();
+      if (data.success) {
+        // update local PO status
+        setPos((prev) =>
+          prev.map((po) =>
+            po._id === poId ? { ...po, status: data.data?.status } : po,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error("Error approving PO:", error);
+    }
+  };
 
   const columns: Column<RequisitionShape>[] = [
     { key: "title", label: "Request Title" },
@@ -135,12 +255,120 @@ export default function HHRADashboard({
           >
             <Link href={`/hhra/requests/${row._id}`}>View</Link>
           </Button>
-          {/* <Button
-          asChild
-          className="bg-green-600 hover:bg-green-700 text-white px-4"
-        >
-          <Link href={`/procurement/bids/${row._id}`}>Manage Bids</Link>
-        </Button> */}
+        </div>
+      ),
+    },
+  ];
+  const rfqColumns: Column<RFQShape>[] = [
+    { key: "title", label: "RFQ Title" },
+    { key: "rfqNumber", label: "RFQ Number" },
+    {
+      key: "deliveryLocation",
+      label: "Location",
+      render: (location) => location?.name || "N/A",
+    },
+    {
+      key: "createdAt",
+      label: "Date Created",
+      render: (value) => {
+        const date = new Date(value);
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = date.toLocaleString("default", { month: "long" });
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      },
+    },
+    {
+      key: "vendor",
+      label: "Vendor",
+      render: (vendor) => vendor?.name || "N/A",
+    },
+    {
+      key: "requester" as keyof RFQShape,
+      label: "Staff",
+      render: (_, row) => {
+        if (!row) return "N/A";
+        return "N/A";
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => <span className={"text-gray-500"}>{value}</span>,
+    },
+    {
+      key: "_id",
+      label: "Action",
+      render: (_, row) => (
+        <div className="flex gap-2 items-center">
+          <Button
+            asChild
+            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+          >
+            <Link href={`/hhra/rfqs/${row._id}`}>View</Link>
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const poColumns: Column<POShape>[] = [
+    { key: "title", label: "PO Title" },
+    { key: "poNumber", label: "PO Number" },
+    {
+      key: "deliveryLocation",
+      label: "Location",
+      render: (location) => location?.name || "N/A",
+    },
+    {
+      key: "createdAt",
+      label: "Date Created",
+      render: (value) => {
+        const date = new Date(value || "");
+        const day = date.getDate().toString().padStart(2, "0");
+        const month = date.toLocaleString("default", { month: "long" });
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      },
+    },
+    {
+      key: "vendor",
+      label: "Vendor",
+      render: (vendor) => vendor?.name || "N/A",
+    },
+    {
+      key: "createdBy",
+      label: "Staff",
+      render: (createdBy) => {
+        if (!createdBy) return "N/A";
+        const currentUser = authdata?.user;
+        return currentUser?.id === createdBy._id
+          ? "You"
+          : `${createdBy.firstName} ${createdBy.lastName}`;
+      },
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (value) => <span className={"text-gray-500"}>{value}</span>,
+    },
+    {
+      key: "_id",
+      label: "Action",
+      render: (_, row) => (
+        <div className="flex gap-2 items-center">
+          <Button
+            asChild
+            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+          >
+            <Link href={`/hhra/pos/${row._id}`}>View</Link>
+          </Button>
+          <Button
+            className="bg-green-600 hover:bg-green-700 text-white px-4"
+            onClick={() => handleApprovePo(row._id)}
+          >
+            Approve
+          </Button>
         </div>
       ),
     },
@@ -229,27 +457,37 @@ export default function HHRADashboard({
         setLoading(false);
       }
     },
-    [token, page, userId]
+    [token, page, userId],
   );
 
   useEffect(() => {
     if (token) {
       fetchLocations();
-      fetchRequisitions(1);
+      if (page === "rfqs") {
+        fetchRFQs(1);
+      } else if (page === "pos") {
+        fetchPOs(1);
+      } else {
+        fetchRequisitions(1);
+      }
     }
-  }, [token, fetchRequisitions, fetchLocations]);
+  }, [token, fetchRequisitions, fetchRFQs, fetchPOs, fetchLocations, page]);
 
-  const handlePageChange = (page: number) => {
-    fetchRequisitions(page);
+  const handlePageChange = (pageNum: number) => {
+    if (page === "rfqs") {
+      fetchRFQs(pageNum);
+    } else if (page === "pos") {
+      fetchPOs(pageNum);
+    } else {
+      fetchRequisitions(pageNum);
+    }
   };
 
   return (
-    <div className="flex flex-col gap-4 p-6 lg:p-12 !pb-16">
+    <div className="flex flex-col gap-4 p-6 lg:p-12 pb-16!">
       {page === "hhraDashboard" && (
         <div className="flex flex-col gap-4">
-          <p className="text-2xl text-[#0F1E7A] font-semibold font-normal">
-            Summary
-          </p>
+          <p className="text-2xl text-[#0F1E7A] font-normal">Summary</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {dashboardCardItems.map((item) => (
@@ -281,8 +519,8 @@ export default function HHRADashboard({
           {page === "procurementBids"
             ? "Bid Management"
             : page === "hhraRequests"
-            ? "My Requests"
-            : "Requests"}
+              ? "My Requests"
+              : "Requests"}
         </p>
 
         {page !== "hhraRequisitions" && (
@@ -305,8 +543,10 @@ export default function HHRADashboard({
         </div>
       ) : (
         <DataTable
-          columns={columns}
-          data={requisitions}
+          columns={
+            page === "rfqs" ? rfqColumns : page === "pos" ? poColumns : columns
+          }
+          data={page === "rfqs" ? rfqs : page === "pos" ? pos : requisitions}
           totalPages={totalPages}
           currentPage={currentPage}
           onPageChange={handlePageChange}
