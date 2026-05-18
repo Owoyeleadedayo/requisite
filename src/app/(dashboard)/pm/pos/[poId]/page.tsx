@@ -44,11 +44,17 @@ interface PODetails {
   evaluationCriteria: string;
   termsOfService: string;
   status: string;
+  related?: {
+    requests?: Array<{ _id: string; title: string; department: string }>;
+    rfqs?: Array<{ _id: string; title: string; department: string }>;
+    pos?: Array<{ _id: string; title: string; department: string }>;
+  };
 }
 
 export default function ViewPO() {
   const router = useRouter();
   const token = getToken();
+  const basePath = "/pm";
   const { poId } = useParams();
   const [loading, setLoading] = useState(true);
   const [po, setPo] = useState<PODetails | null>(null);
@@ -160,6 +166,23 @@ export default function ViewPO() {
       month: "2-digit",
       day: "2-digit",
     });
+
+  const handleRelatedView = (
+    item: { _id: string },
+    type: "request" | "rfq" | "po",
+  ) => {
+    if (type === "request") {
+      router.push(`${basePath}/requisitions/${item._id}`);
+      return;
+    }
+
+    if (type === "rfq") {
+      router.push(`${basePath}/rfqs/${item._id}`);
+      return;
+    }
+
+    router.push(`${basePath}/pos/${item._id}`);
+  };
 
   return (
     <div className="min-h-screen bg-white p-6 font-sans">
@@ -312,32 +335,12 @@ export default function ViewPO() {
           </div>
 
           {/* Right Column */}
-          <div className="flex w-full flex-col gap-5 lg:w-[400px]">
+          <div className="flex w-full flex-col gap-5 lg:w-100">
             <Related
-              requests={[
-                {
-                  _id: "1",
-                  title: "Request for Microphones",
-                  department: "IT Dept",
-                },
-              ]}
-              rfqs={[
-                {
-                  _id: "2",
-                  title: "RFQ for Equipment",
-                  department: "HR Dept",
-                },
-              ]}
-              pos={[
-                {
-                  _id: "2",
-                  title: "RFQ for Equipment",
-                  department: "HR Dept",
-                },
-              ]}
-              onViewItem={(item, type) => {
-                console.log("View", type, item);
-              }}
+              requests={po?.related?.requests || []}
+              rfqs={po?.related?.rfqs || []}
+              pos={po?.related?.pos || []}
+              onViewItem={handleRelatedView}
             />
 
             {/* Vendor Info Card */}

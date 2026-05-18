@@ -70,6 +70,11 @@ interface RFQData {
   };
   createdAt: string;
   updatedAt: string;
+  related?: {
+    requests?: Array<{ _id: string; title: string; department: string }>;
+    rfqs?: Array<{ _id: string; title: string; department: string }>;
+    pos?: Array<{ _id: string; title: string; department: string }>;
+  };
 }
 
 const ViewRFQs = () => {
@@ -311,6 +316,23 @@ const ViewRFQs = () => {
     router.push(`/pm/rfqs/${rfqId}/generate-po`);
   };
 
+  const handleRelatedView = (
+    item: { _id: string },
+    type: "request" | "rfq" | "po",
+  ) => {
+    if (type === "request") {
+      router.push(`${basePath}/requisitions/${item._id}`);
+      return;
+    }
+
+    if (type === "rfq") {
+      router.push(`${basePath}/rfqs/${item._id}`);
+      return;
+    }
+
+    router.push(`${basePath}/pos/${item._id}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 md:px-16 py-4 md:py-8">
       <div className="max-w-7xl">
@@ -424,30 +446,10 @@ const ViewRFQs = () => {
               {/* Right Section - Related Tab */}
               <div className="lg:col-span-1">
                 <Related
-                  requests={[
-                    {
-                      _id: "1",
-                      title: "Request for Microphones",
-                      department: "IT Dept",
-                    },
-                  ]}
-                  rfqs={[
-                    {
-                      _id: "2",
-                      title: "RFQ for Equipment",
-                      department: "HR Dept",
-                    },
-                  ]}
-                  pos={[
-                    {
-                      _id: "2",
-                      title: "RFQ for Equipment",
-                      department: "HR Dept",
-                    },
-                  ]}
-                  onViewItem={(item, type) => {
-                    console.log("View", type, item);
-                  }}
+                  requests={rfqData?.related?.requests || []}
+                  rfqs={rfqData?.related?.rfqs || []}
+                  pos={rfqData?.related?.pos || []}
+                  onViewItem={handleRelatedView}
                 />
               </div>
             </div>

@@ -67,6 +67,11 @@ interface RequestData {
   status?: string;
   items?: Item[];
   deliveryDate?: string;
+  related?: {
+    requests?: Array<{ _id: string; title: string; department: string }>;
+    rfqs?: Array<{ _id: string; title: string; department: string }>;
+    pos?: Array<{ _id: string; title: string; department: string }>;
+  };
 }
 
 // Define a type for the item object received from the API
@@ -111,6 +116,11 @@ export default function ViewEditRequest({
 
   const [urgency, setUrgency] = useState([1]);
   const [items, setItems] = useState<Item[]>([]);
+  const [related, setRelated] = useState<{
+    requests: Array<{ _id: string; title: string; department: string }>;
+    rfqs: Array<{ _id: string; title: string; department: string }>;
+    pos: Array<{ _id: string; title: string; department: string }>;
+  }>({ requests: [], rfqs: [], pos: [] });
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [isItemViewDialogOpen, setIsItemViewDialogOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<Item | null>(null);
@@ -184,6 +194,37 @@ export default function ViewEditRequest({
           ? "/hhra/requisitions"
           : "/user/requisition";
 
+  const relatedBasePath =
+    userType === "hod"
+      ? "/hod"
+      : userType === "procurementManager"
+        ? "/pm"
+        : userType === "admin"
+          ? "/hhra"
+          : "/user";
+
+  const handleRelatedView = (
+    item: { _id: string },
+    type: "request" | "rfq" | "po",
+  ) => {
+    if (type === "request") {
+      if (userType === "user") {
+        router.push(`/user/requisition/${item._id}`);
+        return;
+      }
+
+      router.push(`${relatedBasePath}/requisitions/${item._id}`);
+      return;
+    }
+
+    if (type === "rfq") {
+      router.push(`${relatedBasePath}/rfqs/${item._id}`);
+      return;
+    }
+
+    router.push(`${relatedBasePath}/pos/${item._id}`);
+  };
+
   useEffect(() => {
     const urgencyMap: Record<string, number> = {
       low: 0,
@@ -212,6 +253,11 @@ export default function ViewEditRequest({
             ...req,
             title: req.title,
             justification: req.justification,
+          });
+          setRelated({
+            requests: req.related?.requests || [],
+            rfqs: req.related?.rfqs || [],
+            pos: req.related?.pos || [],
           });
           setItems(
             req.items.map((item: BackendItem, index: number) => ({
@@ -1178,30 +1224,10 @@ export default function ViewEditRequest({
                 />
 
                 <Related
-                  requests={[
-                    {
-                      _id: "1",
-                      title: "Request for Microphones",
-                      department: "IT Dept",
-                    },
-                  ]}
-                  rfqs={[
-                    {
-                      _id: "2",
-                      title: "RFQ for Equipment",
-                      department: "HR Dept",
-                    },
-                  ]}
-                  pos={[
-                    {
-                      _id: "2",
-                      title: "RFQ for Equipment",
-                      department: "HR Dept",
-                    },
-                  ]}
-                  onViewItem={(item, type) => {
-                    console.log("View", type, item);
-                  }}
+                  requests={related.requests}
+                  rfqs={related.rfqs}
+                  pos={related.pos}
+                  onViewItem={handleRelatedView}
                 />
               </div>
             )}
