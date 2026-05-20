@@ -20,6 +20,7 @@ interface POItem {
 
 interface PODetails {
   _id: string;
+  title?: string;
   poNumber: string;
   requisition: { _id: string; title: string };
   rfq: { _id: string; rfqNumber: string };
@@ -167,6 +168,8 @@ export default function ViewPO() {
       day: "2-digit",
     });
 
+  const displayTitle = po?.title?.trim() || "Purchase Order";
+
   const handleRelatedView = (
     item: { _id: string },
     type: "request" | "rfq" | "po",
@@ -193,7 +196,21 @@ export default function ViewPO() {
         <ArrowLeft size={16} />
       </button>
 
-      <h1 className="mb-6 text-3xl font-bold text-[#1a2e6e]">View PO</h1>
+      <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-[#1a2e6e]">View PO</h1>
+          {!loading && po && (
+            <p className="mt-2 text-2xl font-semibold text-gray-900">
+              {displayTitle}
+            </p>
+          )}
+        </div>
+        {!loading && po && (
+          <div className="inline-flex w-fit items-center rounded-full bg-[#f0f3fa] px-4 py-2 text-sm font-semibold text-[#1a2e6e]">
+            {po.poNumber}
+          </div>
+        )}
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

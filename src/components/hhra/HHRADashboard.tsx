@@ -313,7 +313,14 @@ export default function HHRADashboard({
   ];
 
   const poColumns: Column<POShape>[] = [
-    { key: "title", label: "PO Title" },
+    {
+      key: "title",
+      label: "PO Title",
+      render: (value) =>
+        typeof value === "string" && value.trim()
+          ? value
+          : "Untitled Purchase Order",
+    },
     { key: "poNumber", label: "PO Number" },
     {
       key: "deliveryLocation",

@@ -218,8 +218,11 @@ export default function PurchaseOrderDetails() {
                 Purchase Order
               </p>
               <h1 className="text-2xl md:text-3xl font-semibold text-blue-900">
-                {purchaseOrder.poNumber || purchaseOrder._id}
+                {purchaseOrder.title?.trim() || "Untitled Purchase Order"}
               </h1>
+              <p className="mt-1 text-sm font-medium text-gray-600">
+                {purchaseOrder.poNumber || "No PO Number"}
+              </p>
               <p className="mt-2 text-sm text-gray-600">
                 {isHhra
                   ? "Review the purchase order and approve it for PM processing."

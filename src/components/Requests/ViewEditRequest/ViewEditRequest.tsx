@@ -203,6 +203,11 @@ export default function ViewEditRequest({
           ? "/hhra"
           : "/user";
 
+  const canAccessProcurementPages =
+    userType === "procurementManager" ||
+    userType === "admin" ||
+    userType === "hhra";
+
   const handleRelatedView = (
     item: { _id: string },
     type: "request" | "rfq" | "po",
@@ -217,12 +222,19 @@ export default function ViewEditRequest({
       return;
     }
 
-    if (type === "rfq") {
-      router.push(`${relatedBasePath}/rfqs/${item._id}`);
+    if (!canAccessProcurementPages) {
+      toast.error("You do not have access to view this item.");
       return;
     }
 
-    router.push(`${relatedBasePath}/pos/${item._id}`);
+    if (type === "rfq") {
+      const basePath = userType === "procurementManager" ? "/pm" : "/hhra";
+      router.push(`${basePath}/rfqs/${item._id}`);
+      return;
+    }
+
+    const basePath = userType === "procurementManager" ? "/pm" : "/hhra";
+    router.push(`${basePath}/pos/${item._id}`);
   };
 
   useEffect(() => {

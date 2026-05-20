@@ -82,8 +82,10 @@ const ViewRFQs = () => {
   const router = useRouter();
   const rfqId = params.rfqId as string;
   const authData = getAuthData();
-  const isReadOnly = authData?.user?.role === "hhra";
-  const basePath = isReadOnly ? "/hhra" : "/pm";
+  const role = authData?.user?.role;
+  const isHhra = role === "admin" || role === "hhra";
+  const isReadOnly = isHhra;
+  const basePath = isHhra ? "/hhra" : "/pm";
 
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedVendor, setSelectedVendor] = useState<string | null>(null);
