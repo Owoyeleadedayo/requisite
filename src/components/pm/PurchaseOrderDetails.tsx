@@ -54,6 +54,7 @@ type PurchaseOrderApproval = {
 type PurchaseOrder = {
   _id: string;
   poNumber?: string;
+  title?: string;
   status: string;
   requisition?: {
     _id: string;

@@ -821,7 +821,7 @@ export default function PMDashboard({
               asChild
               className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
             >
-              <Link href="/pm/my-requests/create-new">
+              <Link href={"/pm/my-requests/create-new" as any}>
                 <Plus size={22} />{" "}
                 <span className="hidden lg:flex">New Request</span>
               </Link>
