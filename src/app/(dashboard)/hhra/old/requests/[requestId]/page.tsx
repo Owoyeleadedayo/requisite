@@ -4,8 +4,8 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, X, AtSign, AlarmClock } from "lucide-react";
 import { data, type Item } from "@/data/mock/tableData";
+import { ArrowLeft, X, AtSign, AlarmClock } from "lucide-react";
 
 const RequestDetailPage = () => {
   const [replyText, setReplyText] = useState("");
@@ -70,10 +70,10 @@ const RequestDetailPage = () => {
                       item.status === "Complete"
                         ? "bg-green-400"
                         : item.status === "Active"
-                        ? "bg-yellow-400"
-                        : item.status === "Rejected"
-                        ? "bg-red-400"
-                        : "bg-gray-400"
+                          ? "bg-yellow-400"
+                          : item.status === "Rejected"
+                            ? "bg-red-400"
+                            : "bg-gray-400"
                     }`}
                   ></div>
                   <span className="text-gray-600">{item.status} Request</span>
@@ -87,10 +87,10 @@ const RequestDetailPage = () => {
                       item.status === "Complete"
                         ? "text-green-500"
                         : item.status === "Active"
-                        ? "text-yellow-500"
-                        : item.status === "Rejected"
-                        ? "text-red-500"
-                        : "text-gray-500"
+                          ? "text-yellow-500"
+                          : item.status === "Rejected"
+                            ? "text-red-500"
+                            : "text-gray-500"
                     }`}
                   >
                     Status: {item.status}

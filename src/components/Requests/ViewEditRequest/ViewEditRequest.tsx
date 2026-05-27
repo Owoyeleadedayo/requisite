@@ -194,6 +194,8 @@ export default function ViewEditRequest({
           ? "/hhra/requisitions"
           : "/user/requisition";
 
+  console.log("Back path: ", backPath);
+
   const relatedBasePath =
     userType === "hod"
       ? "/hod"

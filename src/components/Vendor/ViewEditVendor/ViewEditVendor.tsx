@@ -1,13 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { getToken, getUserRole } from "@/lib/auth";
+import VendorForm from "./VendorForm";
+import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken } from "@/lib/auth";
+import { useEffect, useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Vendor } from "@/components/Requests/types";
 import {
   Dialog,
   DialogContent,
@@ -15,23 +19,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import VendorForm from "./VendorForm";
-import { Vendor } from "@/components/Requests/types";
 
 interface ViewEditVendorProps {
   vendorId: string;
 }
 
 export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
-  const router = useRouter();
   const token = getToken();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
-
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [vendorData, setVendorData] = useState<Vendor>({
     _id: "",
     name: "",
@@ -47,9 +48,6 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
     status: "pending",
     dateOfIncorporation: "",
   });
-
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteReason, setDeleteReason] = useState("");
 
   useEffect(() => {
     const fetchVendor = async () => {
@@ -96,7 +94,7 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
           website: vendorData.website,
           dateOfIncorporation: vendorData.dateOfIncorporation,
           categories: vendorData.categories?.map((cat) =>
-            typeof cat === "string" ? cat : cat._id
+            typeof cat === "string" ? cat : cat._id,
           ),
           isVerified: vendorData.isVerified,
           isActive: vendorData.isActive,
@@ -117,6 +115,16 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
       setLoading(false);
     }
   };
+
+  const userType = getUserRole();
+  console.log("User type: ", userType);
+
+  const backPath =
+    userType === "pm"
+      ? "/pm/vendors"
+      : userType === "admin"
+        ? "/hhra/vendors"
+        : "";
 
   const handleApprove = async () => {
     setActionLoading(true);
@@ -170,7 +178,7 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
         {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       const data = await res.json();
       if (data.success) {
@@ -252,7 +260,7 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
     <div className="pt-8 pb-16 px-4 lg:px-12">
       <div className="w-full flex items-center mb-4">
         <Link
-          href="/pm/vendors"
+          href={backPath}
           className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-1"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -270,8 +278,8 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
                 vendorData.status === "approved"
                   ? "bg-green-500"
                   : vendorData.status === "pending"
-                  ? "bg-orange-500"
-                  : "bg-red-500"
+                    ? "bg-orange-500"
+                    : "bg-red-500"
               }`}
             >
               {vendorData.status[0].toUpperCase() + vendorData.status.slice(1)}
@@ -283,11 +291,11 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
       <div className="grid grid-cols-1 lg:grid-cols-[60%_35%] w-full lg:max-w-7xl gap-10">
         <div className="w-full flex flex-col pb-16">
           <VendorForm
-            vendorData={vendorData}
-            setVendorData={setVendorData}
-            isEditMode={isEditMode}
             loading={loading}
             onSave={handleSave}
+            isEditMode={isEditMode}
+            vendorData={vendorData}
+            setVendorData={setVendorData}
           />
 
           <div className="flex flex-col sm:flex-row gap-3 pt-6">
@@ -403,8 +411,8 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
                     vendorData.status === "approved"
                       ? "text-green-600"
                       : vendorData.status === "pending"
-                      ? "text-orange-600"
-                      : "text-red-600"
+                        ? "text-orange-600"
+                        : "text-red-600"
                   }`}
                 >
                   {vendorData.status || "Pending"}

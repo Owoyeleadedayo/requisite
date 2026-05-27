@@ -12,7 +12,7 @@ import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import React, { useEffect, useState, useCallback } from "react";
 
-export default function VendorDashboard() {
+export default function VendorDashboard({ routePrefix = "/pm" }: { routePrefix?: string }) {
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -96,7 +96,7 @@ export default function VendorDashboard() {
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/pm/vendors/${row._id}`}>View</Link>
+            <Link href={`${routePrefix}/vendors/${row._id}`}>View</Link>
           </Button>
         </div>
       ),

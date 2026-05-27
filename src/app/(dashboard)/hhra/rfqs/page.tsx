@@ -1,7 +1,7 @@
 "use client";
 
-import PMDashboard from "@/components/pm/PMDashboard";
+import HHRADashboard from "@/components/hhra/HHRADashboard";
 
 export default function HHRARFQsPage() {
-  return <PMDashboard page="rfqs" />;
+  return <HHRADashboard page="rfqs" />;
 }

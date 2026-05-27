@@ -1,22 +1,22 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { getToken } from "@/lib/auth";
+import { parseDate } from "@/lib/parseDate";
+import { API_BASE_URL } from "@/lib/config";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import React, { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
 import { CalendarIcon, Search } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import { Vendor } from "@/components/Requests/types";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { parseDate } from "@/lib/parseDate";
-import { API_BASE_URL } from "@/lib/config";
-import { getToken } from "@/lib/auth";
-import { Vendor } from "@/components/Requests/types";
 
 interface VendorFormProps {
   vendorData: Vendor;
@@ -53,7 +53,7 @@ export default function VendorForm({
           year: "numeric",
           month: "long",
           day: "numeric",
-        })
+        }),
       );
       setMonthStart(date);
     }
@@ -80,12 +80,12 @@ export default function VendorForm({
   }, [token]);
 
   const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(categorySearch.toLowerCase())
+    category.name.toLowerCase().includes(categorySearch.toLowerCase()),
   );
 
   const selectedCategories = vendorData.categories || [];
   const selectedCategoryIds = selectedCategories.map((cat) =>
-    typeof cat === "string" ? cat : cat._id
+    typeof cat === "string" ? cat : cat._id,
   );
 
   const handleCategoryToggle = (category: Category) => {
@@ -96,7 +96,7 @@ export default function VendorForm({
         ...prev,
         categories:
           prev.categories?.filter(
-            (cat) => (typeof cat === "string" ? cat : cat._id) !== category._id
+            (cat) => (typeof cat === "string" ? cat : cat._id) !== category._id,
           ) || [],
       }));
     } else {
@@ -265,7 +265,7 @@ export default function VendorForm({
                           year: "numeric",
                           month: "long",
                           day: "numeric",
-                        })
+                        }),
                       );
                     }
                     setOpenStart(false);

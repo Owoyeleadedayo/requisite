@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
+import { useEffect, useState } from "react";
 import { getAuthData, getToken } from "@/lib/auth";
-import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Download, FileText, ShieldCheck } from "lucide-react";
 
@@ -87,9 +87,9 @@ type PurchaseOrder = {
 export default function PurchaseOrderDetails() {
   const params = useParams();
   const router = useRouter();
-  const poId = params.poId as string;
   const authData = getAuthData();
-  const isHhra = authData?.user?.role === "hhra";
+  const poId = params.poId as string;
+  const isHhra = authData?.user?.role === "admin";
 
   const [loading, setLoading] = useState(true);
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(
@@ -231,16 +231,6 @@ export default function PurchaseOrderDetails() {
               </p>
             </div>
           </div>
-
-          {isHhra && purchaseOrder.status === "hofApproved" && (
-            <button
-              onClick={handleApprove}
-              disabled={approving}
-              className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
-            >
-              {approving ? "Approving..." : "Approve PO"}
-            </button>
-          )}
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -450,6 +440,14 @@ export default function PurchaseOrderDetails() {
             </div>
           </div>
         </div>
+
+        <button
+          onClick={handleApprove}
+          disabled={approving || !isHhra}
+          className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
+        >
+          {approving ? "Approving..." : "Approve PO"}
+        </button>
       </div>
     </div>
   );
