@@ -15,10 +15,12 @@ import { RequisitionShape } from "@/types/requisition";
 
 interface HDODashboardProps {
   page?: "hodDashboard" | "hodRequisitions" | "hodRequests";
+  routePrefix?: string;
 }
 
 export default function HDODashboard({
   page = "hodDashboard",
+  routePrefix = "/hod",
 }: HDODashboardProps = {}) {
   const columns: Column<RequisitionShape>[] = [
     { key: "title", label: "Request Title" },
@@ -82,7 +84,7 @@ export default function HDODashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/hod/requisitions/${row._id}`}>View</Link>
+            <Link href={`${routePrefix}/requisitions/${row._id}`}>View</Link>
           </Button>
 
           {(page === "hodRequests" || row.requester._id === userId) && (
@@ -90,7 +92,9 @@ export default function HDODashboard({
               asChild
               className="bg-blue-900 hover:bg-blue-800 text-white px-4"
             >
-              <Link href={`/hod/requisitions/${row._id}?mode=edit`}>Edit</Link>
+              <Link href={`${routePrefix}/requisitions/${row._id}?mode=edit`}>
+                Edit
+              </Link>
             </Button>
           )}
         </div>
@@ -227,7 +231,7 @@ export default function HDODashboard({
         setLoading(false);
       }
     },
-    [userId, token, page, departmentId]
+    [userId, token, page, departmentId],
   );
 
   useEffect(() => {
@@ -279,10 +283,10 @@ export default function HDODashboard({
           {page === "hodRequests"
             ? "My Requests"
             : page === "hodRequisitions"
-            ? "Requests"
-            : page === "hodDashboard"
-            ? "Requests summary"
-            : ""}
+              ? "Requests"
+              : page === "hodDashboard"
+                ? "Requests summary"
+                : ""}
         </p>
 
         {page !== "hodRequisitions" && (
@@ -290,7 +294,7 @@ export default function HDODashboard({
             asChild
             className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
           >
-            <Link href="/hod/my-requests/create-new">
+            <Link href={"/hod/my-requests/create-new" as any}>
               <Plus size={22} />{" "}
               <span className="hidden lg:flex">New Request</span>
             </Link>

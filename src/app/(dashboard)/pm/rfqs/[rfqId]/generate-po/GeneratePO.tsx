@@ -19,6 +19,7 @@ import { format } from "date-fns";
 
 interface POItem {
   id: string;
+  itemId: string;
   itemDescription: string;
   uom: string;
   brand: string;
@@ -203,6 +204,7 @@ const GeneratePO = () => {
         .filter((item: RequestItem) => selItems.includes(item.itemId))
         .map((item: RequestItem) => ({
           id: item.itemId,
+          itemId: item.itemId,
           itemDescription: item.itemDescription,
           uom: item.uom,
           brand: "",
@@ -259,7 +261,12 @@ const GeneratePO = () => {
     }));
   };
 
-  const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
+  const visibleItems =
+    selectedItems.length > 0
+      ? items.filter((item) => selectedItems.includes(item.id))
+      : items;
+
+  const totalAmount = visibleItems.reduce((sum, item) => sum + item.total, 0);
 
   const handleCompletePO = async () => {
     // New Implementation
@@ -267,17 +274,31 @@ const GeneratePO = () => {
 
     try {
       const token = getToken();
+      const submissionItems = visibleItems.map((item) => ({
+        itemId: item.itemId,
+        itemDescription: item.itemDescription,
+        quantity: item.quantity,
+        uom: item.uom,
+        brand: item.brand,
+        unitPrice: item.unitPrice,
+        totalPrice: item.total,
+        detailsSpecification: item.detailsSpecification,
+      }));
+
       const payload = {
-        selectedItemIds:
-          selectedItems.length > 0
-            ? selectedItems
-            : items.map((item) => item.id),
+        title: formData.poTitle,
+        selectedItemIds: visibleItems.map((item) => item.id),
         selectedVendorId: vendorId,
         deliveryDate: date ? format(date, "yyyy-MM-dd") : "",
         deliveryLocation: formData.deliveryLocation,
         deliveryContact: formData.deliveryContact,
         shipping: formData.shipping,
         generalTerms: formData.termsOfService,
+        evaluationCriteria: formData.evaluationCriteria,
+        termsOfService: formData.termsOfService,
+        paymentTerms: formData.paymentTerms,
+        items: submissionItems,
+        totalAmount,
       };
 
       const response = await fetch(
@@ -395,7 +416,7 @@ const GeneratePO = () => {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px]">
+                <table className="w-full min-w-200">
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-2">

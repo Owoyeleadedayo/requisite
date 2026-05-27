@@ -462,7 +462,14 @@ export default function PMDashboard({
   ];
 
   const poColumns: Column<POShape>[] = [
-    { key: "title", label: "PO Title" },
+    {
+      key: "title",
+      label: "PO Title",
+      render: (value) =>
+        typeof value === "string" && value.trim()
+          ? value
+          : "Untitled Purchase Order",
+    },
     { key: "poNumber", label: "PO Number" },
     {
       key: "deliveryLocation",
@@ -549,8 +556,8 @@ export default function PMDashboard({
             mode="view"
             isLocationLoading={isLocationLoading}
           >
-            <Button variant="ghost" className="!px-2 !lg:px-1">
-              <Eye size={24} className="!text-[#0F1E7A]" />
+            <Button variant="ghost" className="px-2! lg:px-1!">
+              <Eye size={24} className="text-[#0F1E7A]!" />
             </Button>
           </LocationsFormDialog>
           <LocationsFormDialog
@@ -562,12 +569,12 @@ export default function PMDashboard({
           >
             <Button
               variant="ghost"
-              className="!px-2 !lg:px-1"
+              className="px-2! lg:px-1!"
               onClick={() => {
                 setCurrentLocation(row);
               }}
             >
-              <Edit size={24} className="!text-[#0F1E7A]" />
+              <Edit size={24} className="text-[#0F1E7A]!" />
             </Button>
           </LocationsFormDialog>
           <LocationsFormDialog
@@ -577,8 +584,8 @@ export default function PMDashboard({
             mode="delete"
             isLocationLoading={isLocationLoading}
           >
-            <Button variant="ghost" className="!px-2 !lg:px-1">
-              <Trash2 size={24} className="!text-red-500" />
+            <Button variant="ghost" className="px-2! lg:px-1!">
+              <Trash2 size={24} className="text-red-500!" />
             </Button>
           </LocationsFormDialog>
         </div>
@@ -763,12 +770,10 @@ export default function PMDashboard({
   };
 
   return (
-    <div className="flex flex-col gap-4 p-6 lg:p-12 !pb-16">
+    <div className="flex flex-col gap-4 p-6 lg:p-12 pb-16!">
       {page === "procurementDashboard" && (
         <div className="flex flex-col gap-4">
-          <p className="text-2xl text-[#0F1E7A] font-semibold font-normal">
-            Summary
-          </p>
+          <p className="text-2xl text-[#0F1E7A] font-semibold">Summary</p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {dashboardCardItems.map((item) => (
@@ -816,7 +821,7 @@ export default function PMDashboard({
               asChild
               className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
             >
-              <Link href="/pm/my-requests/create-new">
+              <Link href={"/pm/my-requests/create-new" as any}>
                 <Plus size={22} />{" "}
                 <span className="hidden lg:flex">New Request</span>
               </Link>

@@ -67,6 +67,11 @@ interface RequestData {
   status?: string;
   items?: Item[];
   deliveryDate?: string;
+  related?: {
+    requests?: Array<{ _id: string; title: string; department: string }>;
+    rfqs?: Array<{ _id: string; title: string; department: string }>;
+    pos?: Array<{ _id: string; title: string; department: string }>;
+  };
 }
 
 // Define a type for the item object received from the API
@@ -111,6 +116,11 @@ export default function ViewEditRequest({
 
   const [urgency, setUrgency] = useState([1]);
   const [items, setItems] = useState<Item[]>([]);
+  const [related, setRelated] = useState<{
+    requests: Array<{ _id: string; title: string; department: string }>;
+    rfqs: Array<{ _id: string; title: string; department: string }>;
+    pos: Array<{ _id: string; title: string; department: string }>;
+  }>({ requests: [], rfqs: [], pos: [] });
   const [isItemDialogOpen, setIsItemDialogOpen] = useState(false);
   const [isItemViewDialogOpen, setIsItemViewDialogOpen] = useState(false);
   const [viewingItem, setViewingItem] = useState<Item | null>(null);
@@ -184,6 +194,51 @@ export default function ViewEditRequest({
           ? "/hhra/requisitions"
           : "/user/requisition";
 
+  console.log("Back path: ", backPath);
+
+  const relatedBasePath =
+    userType === "hod"
+      ? "/hod"
+      : userType === "procurementManager"
+        ? "/pm"
+        : userType === "admin"
+          ? "/hhra"
+          : "/user";
+
+  const canAccessProcurementPages =
+    userType === "procurementManager" ||
+    userType === "admin" ||
+    userType === "hhra";
+
+  const handleRelatedView = (
+    item: { _id: string },
+    type: "request" | "rfq" | "po",
+  ) => {
+    if (type === "request") {
+      if (userType === "user") {
+        router.push(`/user/requisition/${item._id}`);
+        return;
+      }
+
+      router.push(`${relatedBasePath}/requisitions/${item._id}`);
+      return;
+    }
+
+    if (!canAccessProcurementPages) {
+      toast.error("You do not have access to view this item.");
+      return;
+    }
+
+    if (type === "rfq") {
+      const basePath = userType === "procurementManager" ? "/pm" : "/hhra";
+      router.push(`${basePath}/rfqs/${item._id}`);
+      return;
+    }
+
+    const basePath = userType === "procurementManager" ? "/pm" : "/hhra";
+    router.push(`${basePath}/pos/${item._id}`);
+  };
+
   useEffect(() => {
     const urgencyMap: Record<string, number> = {
       low: 0,
@@ -212,6 +267,11 @@ export default function ViewEditRequest({
             ...req,
             title: req.title,
             justification: req.justification,
+          });
+          setRelated({
+            requests: req.related?.requests || [],
+            rfqs: req.related?.rfqs || [],
+            pos: req.related?.pos || [],
           });
           setItems(
             req.items.map((item: BackendItem, index: number) => ({
@@ -549,6 +609,48 @@ export default function ViewEditRequest({
     }
   };
 
+  const approveHrRequisitionItem = async (itemId: string) => {
+    if (!itemComment.trim()) {
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN,
+      );
+    }
+
+    const body = {
+      comments:
+        itemComment.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
+    };
+
+    setIsItemRequestLoading(true);
+    try {
+      const data = await requisitionService.approveHrRequisitionItem(
+        requisitionId,
+        itemId,
+        body,
+      );
+      if (data.success) {
+        toast.success(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
+        );
+        setItems(data.data.requisition.items);
+        setViewingItem(data.data.item);
+      } else {
+        throw toast.error(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_ERROR,
+      );
+    } finally {
+      setIsItemRequestLoading(false);
+    }
+  };
+
   const rejectRequisitionItem = async (itemId: string) => {
     if (!itemComment.trim()) {
       throw toast.error(
@@ -576,6 +678,49 @@ export default function ViewEditRequest({
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
+      } else {
+        throw toast.error(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_ERROR,
+      );
+    } finally {
+      setIsItemRequestLoading(false);
+    }
+  };
+
+  const rejectHrRequisitionItem = async (itemId: string) => {
+    if (!itemComment.trim()) {
+      throw toast.error(
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN,
+      );
+    }
+
+    const body = {
+      comments:
+        itemComment.trim() ||
+        CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_REJECTION_COMMENT_WARN,
+    };
+
+    setIsItemRequestLoading(true);
+    try {
+      const data = await requisitionService.rejectHrRequisitionItem(
+        requisitionId,
+        itemId,
+        body,
+      );
+      if (data.success) {
+        toast.success(
+          data.message ||
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
+        );
+        setItems(data.data.requisition.items);
+        setViewingItem(data.data.item);
       } else {
         throw toast.error(
           data.message ||
@@ -879,7 +1024,7 @@ export default function ViewEditRequest({
                       Edit
                     </Button>
                   )}
-                  {userType === "hod" && (
+                  {(userType === "hod" || userType === "hhra") && (
                     <>
                       <Dialog
                         open={showApprovalModal}
@@ -914,7 +1059,7 @@ export default function ViewEditRequest({
                           <div className="space-y-4">
                             <div>
                               <Label>Approval Comment</Label>
-                              {userType === "hod" && (
+                              {(userType === "hod" || userType === "hhra") && (
                                 <span className="flex text-xs pt-2 leading-none">
                                   Confirm that all relevant items have been
                                   approved before proceeding, as the process
@@ -1093,30 +1238,10 @@ export default function ViewEditRequest({
                 />
 
                 <Related
-                  requests={[
-                    {
-                      _id: "1",
-                      title: "Request for Microphones",
-                      department: "IT Dept",
-                    },
-                  ]}
-                  rfqs={[
-                    {
-                      _id: "2",
-                      title: "RFQ for Equipment",
-                      department: "HR Dept",
-                    },
-                  ]}
-                  pos={[
-                    {
-                      _id: "2",
-                      title: "RFQ for Equipment",
-                      department: "HR Dept",
-                    },
-                  ]}
-                  onViewItem={(item, type) => {
-                    console.log("View", type, item);
-                  }}
+                  requests={related.requests}
+                  rfqs={related.rfqs}
+                  pos={related.pos}
+                  onViewItem={handleRelatedView}
                 />
               </div>
             )}
@@ -1139,6 +1264,8 @@ export default function ViewEditRequest({
                 userType={userType}
                 approveRequisitionItem={approveRequisitionItem}
                 rejectRequisitionItem={rejectRequisitionItem}
+                approveHrRequisitionItem={approveHrRequisitionItem}
+                rejectHrRequisitionItem={rejectHrRequisitionItem}
                 itemComment={itemComment}
                 setItemComment={setItemComment}
                 isItemRequestLoading={isItemRequestLoading}

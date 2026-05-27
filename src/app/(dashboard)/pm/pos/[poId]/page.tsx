@@ -20,6 +20,7 @@ interface POItem {
 
 interface PODetails {
   _id: string;
+  title?: string;
   poNumber: string;
   requisition: { _id: string; title: string };
   rfq: { _id: string; rfqNumber: string };
@@ -44,11 +45,17 @@ interface PODetails {
   evaluationCriteria: string;
   termsOfService: string;
   status: string;
+  related?: {
+    requests?: Array<{ _id: string; title: string; department: string }>;
+    rfqs?: Array<{ _id: string; title: string; department: string }>;
+    pos?: Array<{ _id: string; title: string; department: string }>;
+  };
 }
 
 export default function ViewPO() {
   const router = useRouter();
   const token = getToken();
+  const basePath = "/pm";
   const { poId } = useParams();
   const [loading, setLoading] = useState(true);
   const [po, setPo] = useState<PODetails | null>(null);
@@ -161,6 +168,25 @@ export default function ViewPO() {
       day: "2-digit",
     });
 
+  const displayTitle = po?.title?.trim() || "Purchase Order";
+
+  const handleRelatedView = (
+    item: { _id: string },
+    type: "request" | "rfq" | "po",
+  ) => {
+    if (type === "request") {
+      router.push(`${basePath}/requisitions/${item._id}`);
+      return;
+    }
+
+    if (type === "rfq") {
+      router.push(`${basePath}/rfqs/${item._id}`);
+      return;
+    }
+
+    router.push(`${basePath}/pos/${item._id}`);
+  };
+
   return (
     <div className="min-h-screen bg-white p-6 font-sans">
       <button
@@ -170,7 +196,21 @@ export default function ViewPO() {
         <ArrowLeft size={16} />
       </button>
 
-      <h1 className="mb-6 text-3xl font-bold text-[#1a2e6e]">View PO</h1>
+      <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-[#1a2e6e]">View PO</h1>
+          {!loading && po && (
+            <p className="mt-2 text-2xl font-semibold text-gray-900">
+              {displayTitle}
+            </p>
+          )}
+        </div>
+        {!loading && po && (
+          <div className="inline-flex w-fit items-center rounded-full bg-[#f0f3fa] px-4 py-2 text-sm font-semibold text-[#1a2e6e]">
+            {po.poNumber}
+          </div>
+        )}
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -312,32 +352,12 @@ export default function ViewPO() {
           </div>
 
           {/* Right Column */}
-          <div className="flex w-full flex-col gap-5 lg:w-[400px]">
+          <div className="flex w-full flex-col gap-5 lg:w-100">
             <Related
-              requests={[
-                {
-                  _id: "1",
-                  title: "Request for Microphones",
-                  department: "IT Dept",
-                },
-              ]}
-              rfqs={[
-                {
-                  _id: "2",
-                  title: "RFQ for Equipment",
-                  department: "HR Dept",
-                },
-              ]}
-              pos={[
-                {
-                  _id: "2",
-                  title: "RFQ for Equipment",
-                  department: "HR Dept",
-                },
-              ]}
-              onViewItem={(item, type) => {
-                console.log("View", type, item);
-              }}
+              requests={po?.related?.requests || []}
+              rfqs={po?.related?.rfqs || []}
+              pos={po?.related?.pos || []}
+              onViewItem={handleRelatedView}
             />
 
             {/* Vendor Info Card */}

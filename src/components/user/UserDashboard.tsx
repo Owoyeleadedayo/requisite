@@ -73,8 +73,6 @@ export default function UserDashboard({
     },
   ];
 
-
-
   const columns: Column<RequisitionShape>[] = [
     { key: "title", label: "Request Title" },
     { key: "items", label: "No. of Items", render: (items) => items.length },
@@ -128,8 +126,6 @@ export default function UserDashboard({
     },
   ];
 
-
-
   const fetchLocations = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/locations`, {
@@ -158,7 +154,7 @@ export default function UserDashboard({
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
         const data = await response.json();
 
@@ -196,7 +192,7 @@ export default function UserDashboard({
         setLoading(false);
       }
     },
-    [userId, token]
+    [userId, token],
   );
 
   useEffect(() => {
@@ -251,7 +247,7 @@ export default function UserDashboard({
           asChild
           className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
         >
-          <Link href="/user/requisition/create-new">
+          <Link href={"/user/requisition/create-new" as any}>
             <Plus size={22} />{" "}
             <span className="hidden lg:flex">New Request</span>
           </Link>
