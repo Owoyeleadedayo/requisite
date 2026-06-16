@@ -16,8 +16,8 @@ function HomeContent() {
 
   useEffect(() => {
     const authenticateUser = async () => {
-      const userId = searchParams.get("userId");
-      const bypass = searchParams.get("bypass");
+      const userId = searchParams?.get("userId");
+      const bypass = searchParams?.get("bypass");
 
       if (!userId || !bypass) {
         setShowVendorLogin(true);

@@ -88,7 +88,7 @@ export default function PurchaseOrderDetails() {
   const params = useParams();
   const router = useRouter();
   const authData = getAuthData();
-  const poId = params.poId as string;
+  const poId = params?.poId as string;
   const isHhra = authData?.user?.role === "admin";
 
   const [loading, setLoading] = useState(true);

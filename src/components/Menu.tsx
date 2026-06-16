@@ -57,12 +57,9 @@ const menuItems: Record<string, MenuItem[]> = {
   hhra: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
     { icon: FileCog, label: "Requisitions", href: "/hhra/requisitions" },
-    { icon: Package, label: "My Requests", href: "/hhra/my-requests" },
-    { icon: SquarePen, label: "All Requests", href: "/hhra/requests" },
-    { icon: CircleDollarSign, label: "RFQs", href: "/hhra/rfqs" },
-    { icon: FileSpreadsheet, label: "POs", href: "/hhra/pos" },
-    { icon: Store, label: "Vendors", href: "/hhra/vendors" },
-    { icon: MapPin, label: "Locations", href: "/hhra/locations" },
+    { icon: FileCog, label: "Request", href: "/hhra/my-requests" },
+    // { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
+    // { icon: User, label: "Profile", href: "/hhra/profile" },
   ],
 };
 
@@ -72,11 +69,12 @@ type MenuProps = {
 
 const Menu = ({ showText = true }: MenuProps) => {
   const pathname = usePathname();
+  const currentPathname = pathname ?? "";
   const router = useRouter();
   const user = getUser();
 
   // Get role from URL first, fallback to user's role if on shared routes
-  let role = pathname.split("/")[1] as keyof typeof menuItems;
+  let role = (currentPathname.split("/")[1] || user?.role || "user") as keyof typeof menuItems;
   if (!menuItems[role] && user?.role) {
     role = user.role as keyof typeof menuItems;
   }
@@ -108,8 +106,8 @@ const Menu = ({ showText = true }: MenuProps) => {
         const Icon = item.icon;
         const isActive =
           item.href === `/${role}`
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(item.href + "/");
+            ? currentPathname === item.href
+            : currentPathname === item.href || currentPathname.startsWith(item.href + "/");
 
         return (
           <Link

@@ -12,7 +12,7 @@ import React, { Suspense } from "react";
 
 const RequestsPageContent = () => {
   const searchParams = useSearchParams();
-  const view = searchParams.get("view");
+  const view = searchParams?.get("view");
 
   if (view === "new") {
     return <ViewRequest />;

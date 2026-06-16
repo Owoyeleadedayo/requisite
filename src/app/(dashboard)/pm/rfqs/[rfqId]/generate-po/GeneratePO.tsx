@@ -19,7 +19,6 @@ import { format } from "date-fns";
 
 interface POItem {
   id: string;
-  itemId: string;
   itemDescription: string;
   uom: string;
   brand: string;
@@ -124,9 +123,9 @@ interface Location {
 }
 
 const GeneratePO = () => {
-  const params = useParams();
+  const params = useParams<{ rfqId: string }>();
   const router = useRouter();
-  const rfqId = params.rfqId as string;
+  const rfqId = params?.rfqId ?? "";
 
   const [loading, setLoading] = useState(true);
   const [bulkAction, setBulkAction] = useState("");
@@ -204,7 +203,6 @@ const GeneratePO = () => {
         .filter((item: RequestItem) => selItems.includes(item.itemId))
         .map((item: RequestItem) => ({
           id: item.itemId,
-          itemId: item.itemId,
           itemDescription: item.itemDescription,
           uom: item.uom,
           brand: "",
@@ -261,12 +259,7 @@ const GeneratePO = () => {
     }));
   };
 
-  const visibleItems =
-    selectedItems.length > 0
-      ? items.filter((item) => selectedItems.includes(item.id))
-      : items;
-
-  const totalAmount = visibleItems.reduce((sum, item) => sum + item.total, 0);
+  const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
 
   const handleCompletePO = async () => {
     // New Implementation
@@ -274,31 +267,17 @@ const GeneratePO = () => {
 
     try {
       const token = getToken();
-      const submissionItems = visibleItems.map((item) => ({
-        itemId: item.itemId,
-        itemDescription: item.itemDescription,
-        quantity: item.quantity,
-        uom: item.uom,
-        brand: item.brand,
-        unitPrice: item.unitPrice,
-        totalPrice: item.total,
-        detailsSpecification: item.detailsSpecification,
-      }));
-
       const payload = {
-        title: formData.poTitle,
-        selectedItemIds: visibleItems.map((item) => item.id),
+        selectedItemIds:
+          selectedItems.length > 0
+            ? selectedItems
+            : items.map((item) => item.id),
         selectedVendorId: vendorId,
         deliveryDate: date ? format(date, "yyyy-MM-dd") : "",
         deliveryLocation: formData.deliveryLocation,
         deliveryContact: formData.deliveryContact,
         shipping: formData.shipping,
         generalTerms: formData.termsOfService,
-        evaluationCriteria: formData.evaluationCriteria,
-        termsOfService: formData.termsOfService,
-        paymentTerms: formData.paymentTerms,
-        items: submissionItems,
-        totalAmount,
       };
 
       const response = await fetch(
@@ -314,7 +293,27 @@ const GeneratePO = () => {
       );
       const data = await response.json();
       if (data.success) {
-        toast.success("Purchase Order created successfully");
+        toast.success("Purchase Order created successfully, submitting...");
+        const poId = data.data._id;
+
+        // Now, submit the PO
+        const submitResponse = await fetch(
+          `${API_BASE_URL}/purchase-orders/${poId}/submit`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const submitData = await submitResponse.json();
+        if (submitData.success) {
+          toast.success("Purchase Order submitted for approval.");
+        } else {
+          toast.error(`PO created but failed to submit: ${submitData.message}`);
+        }
+
         localStorage.removeItem("poData"); // Clean up
         router.push("/pm/pos");
       } else {
@@ -416,7 +415,7 @@ const GeneratePO = () => {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-200">
+                <table className="w-full min-w-[800px]">
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-2">

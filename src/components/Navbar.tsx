@@ -40,7 +40,7 @@ const Navbar = () => {
     str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
 
   // Get current role from URL or user data
-  const currentRole = pathname.split("/")[1] || user?.role || "user";
+  const currentRole = pathname?.split("/")[1] || user?.role || "user";
   const notificationsPath = `/${currentRole}/notifications`;
 
   const handleLogout = async () => {

@@ -56,7 +56,8 @@ export default function ViewPO() {
   const router = useRouter();
   const token = getToken();
   const basePath = "/pm";
-  const { poId } = useParams();
+  const params = useParams();
+  const poId = params?.poId as string;
   const [loading, setLoading] = useState(true);
   const [po, setPo] = useState<PODetails | null>(null);
   const [downloading, setDownloading] = useState(false);

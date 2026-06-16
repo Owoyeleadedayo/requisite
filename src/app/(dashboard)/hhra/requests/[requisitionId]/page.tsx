@@ -5,18 +5,18 @@ import { useParams, useSearchParams } from "next/navigation";
 import ViewEditRequest from "@/components/Requests/ViewEditRequest/ViewEditRequest";
 
 export default function HODViewEditRequest() {
-  const params = useParams();
+  const params = useParams<{ requisitionId: string }>();
   const searchParams = useSearchParams();
-  const { requisitionId } = params;
+  const requisitionId = params?.requisitionId ?? "";
 
   const [isEditMode, setIsEditMode] = useState(
-    searchParams.get("mode") === "edit",
+    searchParams?.get("mode") === "edit"
   );
 
-  return (
+  return (  
     <ViewEditRequest
       requisitionId={requisitionId as string}
-      userType="admin"
+      userType="procurementManager"
       isEditMode={isEditMode}
       onEditModeChange={setIsEditMode}
     />
