@@ -45,6 +45,11 @@ export const getUserRole = (): string | null => {
   return user?.role || null;
 };
 
+export const getUserDesignation = (): string | null => {
+  const user = getUser();
+  return user?.designation || null;
+};
+
 // Todo
 export const isAuthenticated = (): boolean => {
   return !!getToken();

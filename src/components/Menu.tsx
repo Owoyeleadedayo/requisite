@@ -41,7 +41,12 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: LayoutGrid, label: "Dashboard", href: "/hod" },
     { icon: FileCog, label: "Requisitions", href: "/hod/requisitions" },
     { icon: Package, label: "My Requests", href: "/hod/my-requests" },
-    // { icon: User, label: "Profile", href: "/hod/profile" },
+  ],
+  hof: [
+    { icon: LayoutGrid, label: "Dashboard", href: "/hof" },
+    { icon: FileCog, label: "Requisitions", href: "/hof/requisitions" },
+    { icon: Package, label: "My Requests", href: "/hof/my-requests" },
+    { icon: FileSpreadsheet, label: "POs", href: "/hof/pos" },
   ],
   pm: [
     { icon: LayoutGrid, label: "Dashboard", href: "/pm" },
