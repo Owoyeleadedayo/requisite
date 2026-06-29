@@ -41,19 +41,22 @@ function HomeContent() {
           localStorage.setItem("authData", JSON.stringify(data.data));
           toast.success(data.message);
 
-          const role = data.data.user.role;
+          const { role, designation } = data.data.user;
           switch (role) {
             case "staff":
               router.push("/user");
               break;
             case "departmentHead":
-              router.push("/hod");
+              if (designation === "Head, Finance") {
+                router.push("/hof");
+              } else if (designation === "Head, Human Resources & Admin") {
+                router.push("/hhra");
+              } else {
+                router.push("/hod");
+              }
               break;
             case "procurementManager":
               router.push("/pm");
-              break;
-            case "admin": // case for HHRA role
-              router.push("/hhra");
               break;
             default:
               setShowVendorLogin(true);

@@ -89,7 +89,12 @@ export default function PurchaseOrderDetails() {
   const router = useRouter();
   const authData = getAuthData();
   const poId = params.poId as string;
-  const isHhra = authData?.user?.role === "admin";
+  const isHhra =
+    authData?.user?.role === "departmentHead" &&
+    authData?.user?.designation === "Human Resources & Admin";
+  const isHof =
+    authData?.user?.role === "departmentHead" &&
+    authData?.user?.designation === "Head, Finance";
 
   const [loading, setLoading] = useState(true);
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(
@@ -100,7 +105,7 @@ export default function PurchaseOrderDetails() {
   useEffect(() => {
     const fetchPurchaseOrder = async () => {
       if (!poId) {
-        router.push("/hhra/pos");
+        router.back();
         return;
       }
 
@@ -121,12 +126,12 @@ export default function PurchaseOrderDetails() {
           setPurchaseOrder(data.data);
         } else {
           toast.error(data.message || "Failed to fetch purchase order");
-          router.push("/hhra/pos");
+          router.back();
         }
       } catch (error) {
         console.error("Error fetching purchase order:", error);
         toast.error("Failed to fetch purchase order");
-        router.push("/hhra/pos");
+        router.back();
       } finally {
         setLoading(false);
       }
@@ -135,27 +140,28 @@ export default function PurchaseOrderDetails() {
     fetchPurchaseOrder();
   }, [poId, router]);
 
-  const handleApprove = async () => {
-    if (!purchaseOrder || !isHhra) return;
+  const handleApprove = async (approvalType: "hhr" | "hof") => {
+    if (!purchaseOrder) return;
     setApproving(true);
     try {
       const token = getToken();
-      const response = await fetch(
-        `${API_BASE_URL}/purchase-orders/${purchaseOrder._id}/hhr-approve`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+      const endpoint =
+        approvalType === "hof"
+          ? `${API_BASE_URL}/purchase-orders/${purchaseOrder._id}/hof-approve`
+          : `${API_BASE_URL}/purchase-orders/${purchaseOrder._id}/hhr-approve`;
+      const response = await fetch(endpoint, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      );
+      });
       const data = await response.json();
 
       if (data.success) {
         toast.success(data.message || "Purchase order approved");
         setPurchaseOrder((prev) =>
-          prev ? { ...prev, status: data.data?.status || "hhrApproved" } : prev,
+          prev ? { ...prev, status: data.data?.status || `${approvalType}Approved` } : prev,
         );
       } else {
         toast.error(data.message || "Failed to approve purchase order");
@@ -207,9 +213,7 @@ export default function PurchaseOrderDetails() {
           <div className="space-y-3">
             <button
               onClick={() => router.back()}
-              className={`flex h-10 w-10 items-center justify-center rounded-full border-2 border-blue-900 text-blue-900 ${
-                isHhra ? "" : "hover:bg-blue-50"
-              }`}
+              className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-blue-900 text-blue-900 hover:bg-blue-50"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
@@ -225,9 +229,11 @@ export default function PurchaseOrderDetails() {
                 {purchaseOrder.poNumber || "No PO Number"}
               </p>
               <p className="mt-2 text-sm text-gray-600">
-                {isHhra
-                  ? "Review the purchase order and approve it for PM processing."
-                  : "Review purchase order details."}
+                {isHof
+                  ? "Review the purchase order and provide finance approval."
+                  : isHhra
+                    ? "Review the purchase order and approve it for PM processing."
+                    : "Review purchase order details."}
               </p>
             </div>
           </div>
@@ -441,13 +447,24 @@ export default function PurchaseOrderDetails() {
           </div>
         </div>
 
-        <button
-          onClick={handleApprove}
-          disabled={approving || !isHhra}
-          className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
-        >
-          {approving ? "Approving..." : "Approve PO"}
-        </button>
+        {isHof && (
+          <button
+            onClick={() => handleApprove("hof")}
+            disabled={approving}
+            className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
+          >
+            {approving ? "Approving..." : "Approve PO"}
+          </button>
+        )}
+        {isHhra && (
+          <button
+            onClick={() => handleApprove("hhr")}
+            disabled={approving}
+            className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
+          >
+            {approving ? "Approving..." : "Approve PO"}
+          </button>
+        )}
       </div>
     </div>
   );

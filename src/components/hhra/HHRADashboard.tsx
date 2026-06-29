@@ -9,7 +9,7 @@ import { NumericFormat } from "react-number-format";
 import DashboardCard from "@/components/DashboardCard";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken, getUserId, getAuthData, getUserRole } from "@/lib/auth";
+import { getToken, getUserId, getAuthData } from "@/lib/auth";
 import { RequisitionShape } from "@/types/requisition";
 import getLocationName, { Location } from "@/lib/getLocationName";
 import { toast } from "sonner";
@@ -59,10 +59,14 @@ interface ProcurementManagerDashboardProps {
     | "procurementBids"
     | "rfqs"
     | "pos";
+  routePrefix?: string;
+  approvalType?: "hhr" | "hof";
 }
 
 export default function HHRADashboard({
   page = "hhraDashboard",
+  routePrefix = "/hhra",
+  approvalType = "hhr",
 }: ProcurementManagerDashboardProps = {}) {
   const [loading, setLoading] = useState(false);
   const [requisitions, setRequisitions] = useState<RequisitionShape[]>([]);
@@ -87,7 +91,6 @@ export default function HHRADashboard({
   const userId = getUserId();
   const token = getToken();
   const authdata = getAuthData();
-  const userRole = getUserRole();
 
   const fetchLocations = useCallback(async () => {
     try {
@@ -163,7 +166,7 @@ export default function HHRADashboard({
     if (!token) return;
     try {
       const response = await fetch(
-        `${API_BASE_URL}/purchase-orders/${poId}/hhr-approve`,
+        `${API_BASE_URL}/purchase-orders/${poId}/${approvalType}-approve`,
         {
           method: "PUT",
           headers: {
@@ -373,12 +376,11 @@ export default function HHRADashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/hhra/pos/${row._id}`}>View</Link>
+            <Link href={`${routePrefix}/pos/${row._id}`}>View</Link>
           </Button>
           <Button
             className="bg-green-600 hover:bg-green-700 text-white px-4 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={() => handleApprovePO(row._id)}
-            disabled={userRole !== "admin"}
           >
             Approve
           </Button>
