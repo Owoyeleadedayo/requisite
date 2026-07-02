@@ -36,7 +36,7 @@ interface StatusMap {
 const statusMap: Record<string, StatusMap> = {
   draft: { label: "Draft", color: "bg-gray-100 text-gray-800" },
   submitted: {
-    label: "Pending HOD Approval",
+    label: "Submitted",
     color: "bg-orange-100 text-orange-800",
   },
   pending: {
@@ -128,7 +128,7 @@ export default function StatusBadge({ status, className }: StatusBadgeProps) {
 }
 
 // •⁠  ⁠"draft" = Draft
-// •⁠  ⁠⁠"submitted" = Pending HOD Approval
+// •⁠  ⁠⁠"submitted" = Submitted
 // •⁠  ⁠⁠"departmentApproved" = Approved by HOD
 // •⁠  ⁠⁠"departmentRejected" = Rejected by HOD
 // •⁠  ⁠“vendorBidding" = Active Bidding Ongoing
