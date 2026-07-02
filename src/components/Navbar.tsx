@@ -28,13 +28,25 @@ import {
 import NotificationDropdown from "./NotificationDropdown";
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
 import Menu from "./Menu";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Navbar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const user = getUser();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  // If the tab is restored from bfcache (back/forward) after logout,
+  // no network request fires so middleware never runs — catch it here.
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && !localStorage.getItem("authData")) {
+        window.location.replace("/");
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   const capitalize = (str: string) =>
     str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
@@ -57,6 +69,11 @@ const Navbar = () => {
     } finally {
       localStorage.removeItem("authData");
       clearAuthCookies();
+      // Overwrite every history entry in this tab with '/' so clicking
+      // back never restores a dashboard page from this session.
+      for (let i = 0; i < window.history.length; i++) {
+        window.history.pushState(null, "", "/");
+      }
       window.location.replace("/");
     }
   };
