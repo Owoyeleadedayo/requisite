@@ -104,7 +104,7 @@ const Menu = ({ showText = true }: MenuProps) => {
     } finally {
       localStorage.removeItem("authData");
       clearAuthCookies();
-      router.push("/");
+      window.location.replace("/");
     }
   };
 
