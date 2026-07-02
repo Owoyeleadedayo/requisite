@@ -104,6 +104,9 @@ const Menu = ({ showText = true }: MenuProps) => {
     } finally {
       localStorage.removeItem("authData");
       clearAuthCookies();
+      for (let i = 0; i < window.history.length; i++) {
+        window.history.pushState(null, "", "/");
+      }
       window.location.replace("/");
     }
   };
