@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import AddVendorDialog from "./AddVendorDialog";
 import { Vendor } from "@/components/Requests/types";
 import DashboardCard from "@/components/DashboardCard";
+import StatusBadge from "@/components/StatusBadge";
 import DataTable, { Column } from "@/components/DataTable";
 import React, { useEffect, useState, useCallback } from "react";
 
@@ -65,18 +66,7 @@ export default function VendorDashboard({ routePrefix = "/pm" }: { routePrefix?:
     {
       key: "status",
       label: "Status",
-      render: (value) => {
-        const statusColors: Record<string, string> = {
-          approved: "text-green-500",
-          pending: "text-orange-500",
-          rejected: "text-red-500",
-        };
-        return (
-          <span className={statusColors[value || "pending"] ?? "text-gray-500"}>
-            {value || "pending"}
-          </span>
-        );
-      },
+      render: (value) => <StatusBadge status={value || "pending"} />,
     },
     {
       key: "isVerified",

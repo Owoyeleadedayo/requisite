@@ -5,8 +5,16 @@ import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { getAuthData, getToken } from "@/lib/auth";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import { ArrowLeft, Download, FileText, ShieldCheck } from "lucide-react";
+import Related from "@/components/Requests/ViewEditRequest/Related";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type PopulatedUser = {
   _id: string;
@@ -82,25 +90,39 @@ type PurchaseOrder = {
   approvals?: PurchaseOrderApproval[];
   pdfUrl?: string;
   createdAt?: string;
+  related?: {
+    requests?: { _id: string; title: string; department: string }[];
+    rfqs?: { _id: string; title: string; department: string }[];
+    pos?: { _id: string; title: string; department: string }[];
+  };
 };
 
 export default function PurchaseOrderDetails() {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
   const authData = getAuthData();
+  const token = getToken();
   const poId = params.poId as string;
+  const basePath = `/${pathname.split("/")[1]}`;
   const isHhra =
     authData?.user?.role === "departmentHead" &&
-    authData?.user?.designation === "Human Resources & Admin";
+    authData?.user?.designation === "Head, Human Resources & Admin";
   const isHof =
     authData?.user?.role === "departmentHead" &&
     authData?.user?.designation === "Head, Finance";
+  const isPm = authData?.user?.role === "procurementManager";
 
   const [loading, setLoading] = useState(true);
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(
     null,
   );
   const [approving, setApproving] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadingQuote, setDownloadingQuote] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState<"hhr" | "hof" | null>(
+    null,
+  );
 
   useEffect(() => {
     const fetchPurchaseOrder = async () => {
@@ -110,7 +132,6 @@ export default function PurchaseOrderDetails() {
       }
 
       try {
-        const token = getToken();
         const response = await fetch(
           `${API_BASE_URL}/purchase-orders/${poId}`,
           {
@@ -140,11 +161,67 @@ export default function PurchaseOrderDetails() {
     fetchPurchaseOrder();
   }, [poId, router]);
 
+  const handleDownloadPO = async () => {
+    setDownloading(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/${poId}/pdf`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!response.ok) throw new Error("Failed to download PO");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `PO-${purchaseOrder?.poNumber || poId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Purchase order downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading PO:", error);
+      toast.error("Failed to download purchase order");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDownloadVendorQuote = async () => {
+    if (!purchaseOrder?.rfq?._id || !purchaseOrder?.vendor?._id) return;
+    setDownloadingQuote(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/rfqs/${purchaseOrder.rfq._id}/download?vendorIds=${purchaseOrder.vendor._id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      if (!response.ok) throw new Error("Failed to download vendor quote");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `vendor-quote-${purchaseOrder.rfq?.rfqNumber || purchaseOrder.rfq._id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Vendor quote downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading vendor quote:", error);
+      toast.error("Failed to download vendor quote");
+    } finally {
+      setDownloadingQuote(false);
+    }
+  };
+
   const handleApprove = async (approvalType: "hhr" | "hof") => {
     if (!purchaseOrder) return;
     setApproving(true);
     try {
-      const token = getToken();
       const endpoint =
         approvalType === "hof"
           ? `${API_BASE_URL}/purchase-orders/${purchaseOrder._id}/hof-approve`
@@ -161,7 +238,14 @@ export default function PurchaseOrderDetails() {
       if (data.success) {
         toast.success(data.message || "Purchase order approved");
         setPurchaseOrder((prev) =>
-          prev ? { ...prev, status: data.data?.status || `${approvalType}Approved` } : prev,
+          prev
+            ? {
+                ...prev,
+                status:
+                  data.data?.status ??
+                  (approvalType === "hof" ? "hofApproved" : "approved"),
+              }
+            : prev,
         );
       } else {
         toast.error(data.message || "Failed to approve purchase order");
@@ -172,6 +256,21 @@ export default function PurchaseOrderDetails() {
     } finally {
       setApproving(false);
     }
+  };
+
+  const handleRelatedView = (
+    item: { _id: string },
+    type: "request" | "rfq" | "po",
+  ) => {
+    if (type === "request") {
+      router.push(`${basePath}/requisitions/${item._id}`);
+      return;
+    }
+    if (type === "rfq") {
+      router.push(`${basePath}/rfqs/${item._id}`);
+      return;
+    }
+    router.push(`${basePath}/pos/${item._id}`);
   };
 
   const formatMoney = (value?: number) => {
@@ -205,6 +304,9 @@ export default function PurchaseOrderDetails() {
   }
 
   const approvals = purchaseOrder.approvals || [];
+  const canHofApprove =
+    purchaseOrder.status === "issued" || purchaseOrder.status === "submitted";
+  const canHhraApprove = purchaseOrder.status === "hofApproved";
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 md:px-16 py-6 md:py-8">
@@ -283,6 +385,30 @@ export default function PurchaseOrderDetails() {
                 <span className="font-semibold">Vendor:</span>{" "}
                 {purchaseOrder.vendor?.name || "N/A"}
               </p>
+              {purchaseOrder.vendor?.contactPerson && (
+                <p>
+                  <span className="font-semibold">Contact Person:</span>{" "}
+                  {purchaseOrder.vendor.contactPerson}
+                </p>
+              )}
+              {purchaseOrder.vendor?.phone && (
+                <p>
+                  <span className="font-semibold">Phone:</span>{" "}
+                  {purchaseOrder.vendor.phone}
+                </p>
+              )}
+              {purchaseOrder.vendor?.email && (
+                <p>
+                  <span className="font-semibold">Vendor Email:</span>{" "}
+                  {purchaseOrder.vendor.email}
+                </p>
+              )}
+              {purchaseOrder.vendor?.address && (
+                <p>
+                  <span className="font-semibold">Address:</span>{" "}
+                  {purchaseOrder.vendor.address}
+                </p>
+              )}
               <p>
                 <span className="font-semibold">Delivery Location:</span>{" "}
                 {purchaseOrder.deliveryLocation?.name || "N/A"}
@@ -447,23 +573,94 @@ export default function PurchaseOrderDetails() {
           </div>
         </div>
 
-        {isHof && (
+        {purchaseOrder.related &&
+          (purchaseOrder.related.requests?.length ?? 0) +
+            (purchaseOrder.related.rfqs?.length ?? 0) +
+            (purchaseOrder.related.pos?.length ?? 0) >
+            0 && (
+            <Related
+              requests={purchaseOrder.related.requests || []}
+              rfqs={purchaseOrder.related.rfqs || []}
+              pos={purchaseOrder.related.pos || []}
+              onViewItem={handleRelatedView}
+            />
+          )}
+
+        {isHof && canHofApprove && (
           <button
-            onClick={() => handleApprove("hof")}
             disabled={approving}
+            onClick={() => setPendingApproval("hof")}
             className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
           >
-            {approving ? "Approving..." : "Approve PO"}
+            Approve PO
           </button>
         )}
-        {isHhra && (
+        {isHhra && canHhraApprove && (
           <button
-            onClick={() => handleApprove("hhr")}
             disabled={approving}
+            onClick={() => setPendingApproval("hhr")}
             className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
           >
-            {approving ? "Approving..." : "Approve PO"}
+            Approve PO
           </button>
+        )}
+
+        <Dialog
+          open={pendingApproval !== null}
+          onOpenChange={(open) => {
+            if (!open) setPendingApproval(null);
+          }}
+        >
+          <DialogContent className="max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle>Confirm Approval</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-gray-600">
+              Are you sure you want to approve this purchase order? This action
+              cannot be undone.
+            </p>
+            <DialogFooter className="gap-2">
+              <button
+                onClick={() => setPendingApproval(null)}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={approving}
+                onClick={async () => {
+                  if (!pendingApproval) return;
+                  await handleApprove(pendingApproval);
+                  setPendingApproval(null);
+                }}
+                className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
+              >
+                {approving ? "Approving..." : "Yes, Approve"}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {isPm && (
+          <div className="flex gap-3">
+            <button
+              onClick={handleDownloadVendorQuote}
+              disabled={
+                downloadingQuote ||
+                !purchaseOrder?.rfq?._id ||
+                !purchaseOrder?.vendor?._id
+              }
+              className="rounded-md border border-blue-900 px-5 py-3 text-sm font-semibold text-blue-900 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {downloadingQuote ? "Downloading..." : "Download Vendor Quote"}
+            </button>
+            <button
+              onClick={handleDownloadPO}
+              disabled={downloading}
+              className="rounded-md bg-blue-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {downloading ? "Downloading..." : "Download PO"}
+            </button>
+          </div>
         )}
       </div>
     </div>

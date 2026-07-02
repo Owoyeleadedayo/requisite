@@ -1,18 +1,25 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { NumericFormat } from "react-number-format";
-import DashboardCard from "@/components/DashboardCard";
-import DataTable, { Column } from "@/components/DataTable";
-import { API_BASE_URL } from "@/lib/config";
-import { getToken, getUserId, getAuthData } from "@/lib/auth";
-import { RequisitionShape } from "@/types/requisition";
-import getLocationName, { Location } from "@/lib/getLocationName";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
+import { API_BASE_URL } from "@/lib/config";
+import { Button } from "@/components/ui/button";
+import StatusBadge from "@/components/StatusBadge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import DashboardCard from "@/components/DashboardCard";
+import { RequisitionShape } from "@/types/requisition";
+import { useEffect, useState, useCallback } from "react";
+import DataTable, { Column } from "@/components/DataTable";
+import { getToken, getUserId, getAuthData } from "@/lib/auth";
+import getLocationName, { Location } from "@/lib/getLocationName";
 
 interface RFQShape {
   _id: string;
@@ -79,6 +86,10 @@ export default function HHRADashboard({
   // );
   const [locations, setLocations] = useState<Location[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [pendingApprovalPoId, setPendingApprovalPoId] = useState<string | null>(
+    null,
+  );
+  const [approvingPoId, setApprovingPoId] = useState<string | null>(null);
   const [dashboardStats, setDashboardStats] = useState({
     total: 0,
     pending: 0,
@@ -164,6 +175,7 @@ export default function HHRADashboard({
 
   const handleApprovePO = async (poId: string) => {
     if (!token) return;
+    setApprovingPoId(poId);
     try {
       const response = await fetch(
         `${API_BASE_URL}/purchase-orders/${poId}/${approvalType}-approve`,
@@ -179,7 +191,14 @@ export default function HHRADashboard({
       if (data.success) {
         setPos((prev) =>
           prev.map((po) =>
-            po._id === poId ? { ...po, status: data.data?.status } : po,
+            po._id === poId
+              ? {
+                  ...po,
+                  status:
+                    data.data?.status ??
+                    (approvalType === "hof" ? "hofApproved" : "approved"),
+                }
+              : po,
           ),
         );
         toast.success(data.message || "Purchase Order approved successfully");
@@ -189,6 +208,9 @@ export default function HHRADashboard({
     } catch (error) {
       console.error("Error approving PO:", error);
       toast.error("An error occurred while approving the Purchase Order");
+    } finally {
+      setApprovingPoId(null);
+      setPendingApprovalPoId(null);
     }
   };
 
@@ -236,21 +258,7 @@ export default function HHRADashboard({
     {
       key: "status",
       label: "Status",
-      render: (value) => {
-        const statusColors: Record<string, string> = {
-          draft: "text-gray-500",
-          departmentApproved: "text-green-500",
-          procurementApproved: "text-blue-500",
-          cancelled: "text-red-500",
-          pending: "text-orange-500",
-          bidding: "text-purple-500",
-        };
-        return (
-          <span className={statusColors[value] ?? "text-gray-500"}>
-            {value}
-          </span>
-        );
-      },
+      render: (value) => <StatusBadge status={value} />,
     },
     {
       key: "_id",
@@ -302,7 +310,7 @@ export default function HHRADashboard({
     {
       key: "status",
       label: "Status",
-      render: (value) => <span className={"text-gray-500"}>{value}</span>,
+      render: (value) => <StatusBadge status={value} />,
     },
     {
       key: "_id",
@@ -365,27 +373,37 @@ export default function HHRADashboard({
     {
       key: "status",
       label: "Status",
-      render: (value) => <span className={"text-gray-500"}>{value}</span>,
+      render: (value) => <StatusBadge status={value} />,
     },
     {
       key: "_id",
       label: "Action",
-      render: (_, row) => (
-        <div className="flex gap-2 items-center">
-          <Button
-            asChild
-            className="bg-blue-900 hover:bg-blue-800 text-white px-4"
-          >
-            <Link href={`${routePrefix}/pos/${row._id}`}>View</Link>
-          </Button>
-          <Button
-            className="bg-green-600 hover:bg-green-700 text-white px-4 disabled:opacity-50 disabled:cursor-not-allowed"
-            onClick={() => handleApprovePO(row._id)}
-          >
-            Approve
-          </Button>
-        </div>
-      ),
+      render: (_, row) => {
+        const showApprove =
+          (approvalType === "hof" &&
+            (row.status === "issued" || row.status === "submitted")) ||
+          (approvalType === "hhr" && row.status === "hofApproved");
+
+        return (
+          <div className="flex gap-2 items-center">
+            <Button
+              asChild
+              className="bg-blue-900 hover:bg-blue-800 text-white px-4"
+            >
+              <Link href={`${routePrefix}/pos/${row._id}`}>View</Link>
+            </Button>
+            {showApprove && (
+              <Button
+                className="bg-green-600 hover:bg-green-700 text-white px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={approvingPoId === row._id}
+                onClick={() => setPendingApprovalPoId(row._id)}
+              >
+                {approvingPoId === row._id ? "Approving..." : "Approve"}
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -568,6 +586,41 @@ export default function HHRADashboard({
           loading={loading}
         />
       )}
+
+      <Dialog
+        open={pendingApprovalPoId !== null}
+        onOpenChange={(open) => {
+          if (!open && !approvingPoId) setPendingApprovalPoId(null);
+        }}
+      >
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader>
+            <DialogTitle>Confirm Approval</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">
+            Are you sure you want to approve this purchase order? This action
+            cannot be undone.
+          </p>
+          <DialogFooter className="gap-2">
+            <button
+              onClick={() => setPendingApprovalPoId(null)}
+              disabled={!!approvingPoId}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={!!approvingPoId}
+              onClick={() => {
+                if (pendingApprovalPoId) handleApprovePO(pendingApprovalPoId);
+              }}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
+            >
+              {approvingPoId ? "Approving..." : "Yes, Approve"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

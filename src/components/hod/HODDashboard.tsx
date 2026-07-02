@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NumericFormat } from "react-number-format";
 import DashboardCard from "@/components/DashboardCard";
+import StatusBadge from "@/components/StatusBadge";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
@@ -61,19 +62,7 @@ export default function HDODashboard({
     {
       key: "status",
       label: "Status",
-      render: (value) => {
-        const statusColors: Record<string, string> = {
-          draft: "text-gray-500",
-          departmentApproved: "text-green-500",
-          cancelled: "text-red-500",
-          pending: "text-orange-500",
-        };
-        return (
-          <span className={statusColors[value] ?? "text-gray-500"}>
-            {value}
-          </span>
-        );
-      },
+      render: (value) => <StatusBadge status={value} />,
     },
     {
       key: "_id",

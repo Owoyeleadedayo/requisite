@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
+import { setAuthCookies } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
 export default function VendorLogin() {
@@ -63,9 +64,10 @@ export default function VendorLogin() {
           user: data.user,
         })
       );
+      setAuthCookies(data.token, data.user?.role ?? "vendor", data.user?.designation ?? "");
 
       toast.success("Login successful!");
-      router.push("/vendor"); // Redirect to vendor dashboard
+      router.push("/vendor");
     } catch (err) {
       console.error("Login error:", err);
       toast.error("Something went wrong. Try again.");
