@@ -46,19 +46,19 @@ function HomeContent() {
           setAuthCookies(data.data.token, role, designation ?? "");
           switch (role) {
             case "staff":
-              router.push("/user");
+              router.replace("/user");
               break;
             case "departmentHead":
               if (designation === "Head, Finance") {
-                router.push("/hof");
+                router.replace("/hof");
               } else if (designation === "Head, Human Resources & Admin") {
-                router.push("/hhra");
+                router.replace("/hhra");
               } else {
-                router.push("/hod");
+                router.replace("/hod");
               }
               break;
             case "procurementManager":
-              router.push("/pm");
+              router.replace("/pm");
               break;
             default:
               setShowVendorLogin(true);
