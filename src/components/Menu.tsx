@@ -1,7 +1,7 @@
 "use client";
 
 import { API_BASE_URL } from "@/lib/config";
-import { getUser } from "@/lib/auth";
+import { getUser, clearAuthCookies } from "@/lib/auth";
 import {
   SquarePen,
   LayoutGrid,
@@ -103,6 +103,7 @@ const Menu = ({ showText = true }: MenuProps) => {
       toast.error("Logout failed. Please try again.");
     } finally {
       localStorage.removeItem("authData");
+      clearAuthCookies();
       router.push("/");
     }
   };

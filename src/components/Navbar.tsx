@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-import { getUser } from "@/lib/auth";
+import { getUser, clearAuthCookies } from "@/lib/auth";
 import { useRouter, usePathname } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
 import AdvancedSearchModal from "./AdvancedSearchModal";
@@ -56,6 +56,7 @@ const Navbar = () => {
       console.error("Logout error:", error);
     } finally {
       localStorage.removeItem("authData");
+      clearAuthCookies();
       router.push("/");
     }
   };

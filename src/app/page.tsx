@@ -6,6 +6,7 @@ import { API_BASE_URL } from "@/lib/config";
 import VendorLogin from "@/components/VendorLogin";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { setAuthCookies } from "@/lib/auth";
 
 function HomeContent() {
   const router = useRouter();
@@ -42,6 +43,7 @@ function HomeContent() {
           toast.success(data.message);
 
           const { role, designation } = data.data.user;
+          setAuthCookies(data.data.token, role, designation ?? "");
           switch (role) {
             case "staff":
               router.push("/user");

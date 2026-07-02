@@ -101,7 +101,9 @@ const statusMap: Record<string, StatusMap> = {
 };
 
 const getStatus = (status: RequisitionStatus): StatusMap => {
-  return statusMap[status] ?? { label: status, color: "bg-gray-100 text-gray-800" };
+  return (
+    statusMap[status] ?? { label: status, color: "bg-gray-100 text-gray-800" }
+  );
 };
 
 interface StatusBadgeProps {
@@ -125,3 +127,13 @@ export default function StatusBadge({ status, className }: StatusBadgeProps) {
   );
 }
 
+// •⁠  ⁠"draft" = Draft
+// •⁠  ⁠⁠"submitted" = Pending HOD Approval
+// •⁠  ⁠⁠"departmentApproved" = Approved by HOD
+// •⁠  ⁠⁠"departmentRejected" = Rejected by HOD
+// •⁠  ⁠“vendorBidding" = Active Bidding Ongoing
+// •⁠  ⁠⁠"hhraReview" = Bid Review Ongoing
+// •⁠  ⁠⁠"hhraApproved" = Bids Approved for Negotiation
+// •⁠  ⁠⁠"hhraRejected" = Bids Rejected
+// •⁠  ⁠⁠"negotiation" = Active Bid Negotiation
+// •⁠  ⁠⁠"vendorAcknowledged" = Winning Bid Approved
