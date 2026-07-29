@@ -82,8 +82,9 @@ const ViewRFQs = () => {
   const router = useRouter();
   const rfqId = params.rfqId as string;
   const authData = getAuthData();
-  const role = authData?.user?.role;
-  const isHhra = role === "admin" || role === "hhra";
+  const isHhra =
+    authData?.user?.role === "departmentHead" &&
+    authData?.user?.designation === "Head, Human Resources & Admin";
   const isReadOnly = isHhra;
   const basePath = isHhra ? "/hhra" : "/pm";
 
