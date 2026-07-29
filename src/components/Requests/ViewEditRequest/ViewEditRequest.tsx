@@ -188,26 +188,28 @@ export default function ViewEditRequest({
   const backPath =
     userType === "hod"
       ? "/hod/requisitions"
-      : userType === "procurementManager"
-        ? "/pm/requisitions"
-        : userType === "admin"
-          ? "/hhra/requisitions"
-          : "/user/requisition";
-
-  console.log("Back path: ", backPath);
+      : userType === "hof"
+        ? "/hof/requisitions"
+        : userType === "procurementManager"
+          ? "/pm/requisitions"
+          : userType === "hhra"
+            ? "/hhra/requisitions"
+            : "/user/requisition";
 
   const relatedBasePath =
     userType === "hod"
       ? "/hod"
-      : userType === "procurementManager"
-        ? "/pm"
-        : userType === "admin"
-          ? "/hhra"
-          : "/user";
+      : userType === "hof"
+        ? "/hof"
+        : userType === "procurementManager"
+          ? "/pm"
+          : userType === "hhra"
+            ? "/hhra"
+            : "/user";
 
   const canAccessProcurementPages =
     userType === "procurementManager" ||
-    userType === "admin" ||
+    userType === "hof" ||
     userType === "hhra";
 
   const handleRelatedView = (
@@ -230,13 +232,23 @@ export default function ViewEditRequest({
     }
 
     if (type === "rfq") {
-      const basePath = userType === "procurementManager" ? "/pm" : "/hhra";
-      router.push(`${basePath}/rfqs/${item._id}`);
+      if (userType === "procurementManager") {
+        router.push(`/pm/rfqs/${item._id}`);
+      } else if (userType === "hof") {
+        toast.error("You do not have access to view RFQs.");
+      } else {
+        router.push(`/hhra/rfqs/${item._id}`);
+      }
       return;
     }
 
-    const basePath = userType === "procurementManager" ? "/pm" : "/hhra";
-    router.push(`${basePath}/pos/${item._id}`);
+    if (userType === "procurementManager") {
+      router.push(`/pm/pos/${item._id}`);
+    } else if (userType === "hof") {
+      router.push(`/hof/pos/${item._id}`);
+    } else {
+      router.push(`/hhra/pos/${item._id}`);
+    }
   };
 
   useEffect(() => {

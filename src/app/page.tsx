@@ -3,10 +3,10 @@
 import { toast } from "sonner";
 import Image from "next/image";
 import { API_BASE_URL } from "@/lib/config";
+import { setAuthCookies } from "@/lib/auth";
 import VendorLogin from "@/components/VendorLogin";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setAuthCookies } from "@/lib/auth";
 
 function HomeContent() {
   const router = useRouter();

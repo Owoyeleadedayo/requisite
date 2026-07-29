@@ -1,8 +1,8 @@
 export type UserTypes =
   | "user"
   | "hod"
+  | "hof"
   | "hhra"
-  | "admin"
   | "procurementManager"
   | "vendor";
 
