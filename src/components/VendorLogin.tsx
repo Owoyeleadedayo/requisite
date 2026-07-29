@@ -62,9 +62,13 @@ export default function VendorLogin() {
         JSON.stringify({
           token: data.token,
           user: data.user,
-        })
+        }),
       );
-      setAuthCookies(data.token, data.user?.role ?? "vendor", data.user?.designation ?? "");
+      setAuthCookies(
+        data.token,
+        data.user?.role ?? "vendor",
+        data.user?.designation ?? "",
+      );
 
       toast.success("Login successful!");
       router.push("/vendor");
@@ -196,15 +200,15 @@ export default function VendorLogin() {
                 <p className="text-sm text-[var(--primary-color)] hover:underline cursor-pointer">
                   Forgot password?
                 </p>
-                <p className="text-sm text-gray-500">
-                  New to Rwquisite Software?{" "}
+                {/* <p className="text-sm text-gray-500">
+                  New to Requisite Software?{" "}
                   <Link
                     href="/signup"
                     className="text-[#0A1A6B] hover:underline font-medium"
                   >
                     Sign up
                   </Link>
-                </p>
+                </p> */}
               </div>
             </form>
           )}
