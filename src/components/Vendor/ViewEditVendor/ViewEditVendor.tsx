@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { toast } from "sonner";
-import { getToken, getUserRole } from "@/lib/auth";
+import { getToken, getUserRole, getUserDesignation } from "@/lib/auth";
 import VendorForm from "./VendorForm";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
@@ -116,13 +116,16 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
     }
   };
 
-  const userType = getUserRole();
-  console.log("User type: ", userType);
+  const userRole = getUserRole();
+  const userDesignation = getUserDesignation();
+  const isHhraVendor =
+    userRole === "departmentHead" &&
+    userDesignation === "Head, Human Resources & Admin";
 
   const backPath =
-    userType === "pm"
+    userRole === "procurementManager"
       ? "/pm/vendors"
-      : userType === "admin"
+      : isHhraVendor
         ? "/hhra/vendors"
         : "";
 
