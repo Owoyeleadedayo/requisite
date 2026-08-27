@@ -57,7 +57,8 @@ export default function CreateNewRequest({
   const buildRequisitionFormData = (formattedDate?: string) => {
     const body = new FormData();
     body.append("title", formData.title);
-    body.append("urgency", urgencyMap[urgency[0]]);
+    // A1: urgency removed from payload — field no longer collected at requisition stage
+    // body.append("urgency", urgencyMap[urgency[0]]);
     body.append("justification", formData.justification);
     body.append("deliveryLocation", formData.deliveryLocation);
     if (formattedDate) {

@@ -28,6 +28,7 @@ interface POItem {
   total: number;
   selected: boolean;
   detailsSpecification: string;
+  itemType?: "product" | "service";
 }
 
 interface VendorInfo {
@@ -119,6 +120,7 @@ interface POItemData {
 interface Location {
   _id: string;
   name: string;
+  address?: string;
   contactPerson: string;
   phoneNumber: string;
 }
@@ -133,12 +135,18 @@ const GeneratePO = () => {
   const [bulkAction, setBulkAction] = useState("");
   const [vendorId, setVendorId] = useState<string>("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
   const [requisitionId, setRequisitionId] = useState<string>("");
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [editingItem, setEditingItem] = useState<POItem | null>(null);
   const [vendorInfo, setVendorInfo] = useState<VendorInfo | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [date, setDate] = useState<Date | undefined>();
+  // H5: Multi-file vendor quote upload
+  const [vendorQuoteFiles, setVendorQuoteFiles] = useState<File[]>([]);
+  // H2: Discount and VAT
+  const [discountPct, setDiscountPct] = useState(0);
+  const [vatPct, setVatPct] = useState(0);
 
   const [formData, setFormData] = useState({
     poTitle: "",
@@ -267,10 +275,19 @@ const GeneratePO = () => {
       ? items.filter((item) => selectedItems.includes(item.id))
       : items;
 
-  const totalAmount = visibleItems.reduce((sum, item) => sum + item.total, 0);
+  const subtotal = visibleItems.reduce((sum, item) => sum + item.total, 0);
+  const discountAmount = subtotal * (discountPct / 100);
+  const afterDiscount = subtotal - discountAmount;
+  const vatAmount = afterDiscount * (vatPct / 100);
+  const totalAmount = afterDiscount + vatAmount;
 
   const handleCompletePO = async () => {
     if (!rfqId) return;
+    // H6: Validate that total amount is greater than 0 before submission
+    if (totalAmount <= 0) {
+      toast.error("Total amount must be greater than 0. Please fill in unit prices for all items.");
+      return;
+    }
     setSubmitting(true);
     try {
       const token = getToken();
@@ -294,8 +311,12 @@ const GeneratePO = () => {
         deliveryContact: formData.deliveryContact,
         shipping: formData.shipping,
         generalTerms: formData.termsOfService,
-        evaluationCriteria: formData.evaluationCriteria,
+        // H3: evaluationCriteria removed from payload
+        // evaluationCriteria: formData.evaluationCriteria,
         termsOfService: formData.termsOfService,
+        // H2: Include discount/VAT in payload
+        discount: discountPct,
+        vat: vatPct,
         paymentTerms: formData.paymentTerms,
         items: submissionItems,
         totalAmount,
@@ -419,19 +440,28 @@ const GeneratePO = () => {
 
             {/* Items Table */}
             <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 mb-6 shadow-sm">
-              <div className="flex gap-2 justify-end mb-4">
-                <select
-                  value={bulkAction}
-                  onChange={(e) => setBulkAction(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm"
+              <div className="flex gap-2 justify-between mb-4">
+                {/* H1: Add Line Item button */}
+                <button
+                  onClick={() => setIsAddItemModalOpen(true)}
+                  className="px-4 py-2 bg-[#0F1E7A] text-white rounded-md text-sm font-medium hover:bg-blue-800"
                 >
-                  <option value="">Bulk actions</option>
-                  <option value="delete">Delete Selected</option>
-                  <option value="edit">Edit Selected</option>
-                </select>
-                <button className="px-6 py-2 bg-gray-400 text-white rounded-md font-medium hover:bg-gray-500">
-                  Apply
+                  + Add Line Item
                 </button>
+                <div className="flex gap-2">
+                  <select
+                    value={bulkAction}
+                    onChange={(e) => setBulkAction(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-md text-sm"
+                  >
+                    <option value="">Bulk actions</option>
+                    <option value="delete">Delete Selected</option>
+                    <option value="edit">Edit Selected</option>
+                  </select>
+                  <button className="px-6 py-2 bg-gray-400 text-white rounded-md font-medium hover:bg-gray-500">
+                    Apply
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-x-auto">
@@ -446,70 +476,68 @@ const GeneratePO = () => {
                           className="w-4 h-4 text-blue-900 rounded border-gray-300"
                         />
                       </th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm">
-                        Item Description
-                      </th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm">
-                        UOM
-                      </th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm">
-                        Brand
-                      </th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm">
-                        QTY
-                      </th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm">
-                        Unit Price
-                      </th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm">
-                        Total
-                      </th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm">
-                        Action
-                      </th>
+                      <th className="text-left py-3 px-4 font-semibold text-sm">Item Description</th>
+                      {/* H7/H8: Item Type column for product/service distinction */}
+                      <th className="text-left py-3 px-4 font-semibold text-sm">Type</th>
+                      <th className="text-left py-3 px-4 font-semibold text-sm">Brand</th>
+                      <th className="text-left py-3 px-4 font-semibold text-sm">QTY</th>
+                      <th className="text-left py-3 px-4 font-semibold text-sm">UOM</th>
+                      <th className="text-left py-3 px-4 font-semibold text-sm">Unit Price</th>
+                      <th className="text-left py-3 px-4 font-semibold text-sm">Total</th>
+                      <th className="text-left py-3 px-4 font-semibold text-sm">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item) => (
-                      <tr key={item.id} className="border-b border-gray-100">
-                        <td className="py-4 px-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedItems.includes(item.id)}
-                            onChange={() => toggleItem(item.id)}
-                            className="w-4 h-4 text-blue-900 rounded border-gray-300"
-                          />
-                        </td>
-                        <td className="py-4 px-4 text-sm">
-                          {item.itemDescription}
-                        </td>
-                        <td className="py-4 px-4 text-sm">{item.uom}</td>
-                        <td className="py-4 px-4 text-sm">{item.brand}</td>
-                        <td className="py-4 px-4 text-sm">{item.quantity}</td>
-                        <td className="py-4 px-4 text-sm">
-                          ₦{item.unitPrice.toLocaleString()}
-                        </td>
-                        <td className="py-4 px-4 text-sm">
-                          ₦{item.total.toLocaleString()}
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex gap-2">
-                            <button
-                              className="p-1.5 hover:bg-gray-100 rounded"
-                              onClick={() => {
-                                setEditingItem(item);
-                                setIsEditModalOpen(true);
-                              }}
-                            >
-                              <Edit2 className="w-4 h-4 text-blue-900" />
-                            </button>
-                            <button className="p-1.5 hover:bg-gray-100 rounded">
-                              <Trash2 className="w-4 h-4 text-red-600" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                    {items.map((item) => {
+                      const isService = item.itemType === "service";
+                      return (
+                        <tr key={item.id} className="border-b border-gray-100">
+                          <td className="py-4 px-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.includes(item.id)}
+                              onChange={() => toggleItem(item.id)}
+                              className="w-4 h-4 text-blue-900 rounded border-gray-300"
+                            />
+                          </td>
+                          <td className="py-4 px-4 text-sm">{item.itemDescription}</td>
+                          <td className="py-4 px-4 text-sm capitalize">{item.itemType || "product"}</td>
+                          <td className="py-4 px-4 text-sm">{item.brand}</td>
+                          {/* H8: Conditionally hide Qty/UOM/Unit Price for service items */}
+                          <td className="py-4 px-4 text-sm">
+                            {isService ? <span className="text-gray-400">—</span> : item.quantity}
+                          </td>
+                          <td className="py-4 px-4 text-sm">
+                            {isService ? <span className="text-gray-400">—</span> : item.uom}
+                          </td>
+                          <td className="py-4 px-4 text-sm">
+                            {isService ? <span className="text-gray-400">—</span> : `₦${item.unitPrice.toLocaleString()}`}
+                          </td>
+                          <td className="py-4 px-4 text-sm">₦{item.total.toLocaleString()}</td>
+                          <td className="py-4 px-4">
+                            <div className="flex gap-2">
+                              <button
+                                className="p-1.5 hover:bg-gray-100 rounded"
+                                onClick={() => {
+                                  setEditingItem(item);
+                                  setIsEditModalOpen(true);
+                                }}
+                              >
+                                <Edit2 className="w-4 h-4 text-blue-900" />
+                              </button>
+                              <button
+                                className="p-1.5 hover:bg-gray-100 rounded"
+                                onClick={() =>
+                                  setItems((prev) => prev.filter((i) => i.id !== item.id))
+                                }
+                              >
+                                <Trash2 className="w-4 h-4 text-red-600" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -547,9 +575,10 @@ const GeneratePO = () => {
                         className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
                       >
                         <option value="">Select Location</option>
+                        {/* H9: Show location name + address */}
                         {locations.map((loc) => (
                           <option key={loc._id} value={loc._id}>
-                            {loc.name}
+                            {loc.name}{loc.address ? ` — ${loc.address}` : ""}
                           </option>
                         ))}
                       </select>
@@ -568,7 +597,7 @@ const GeneratePO = () => {
                         <option value="">Select Location</option>
                         {locations.map((loc) => (
                           <option key={loc._id} value={loc.name}>
-                            {loc.name}
+                            {loc.name}{loc.address ? ` — ${loc.address}` : ""}
                           </option>
                         ))}
                       </select>
@@ -598,7 +627,7 @@ const GeneratePO = () => {
                     </select>
                   </div>
 
-                  {/* Evaluation Criteria */}
+                  {/* H3: Evaluation Criteria commented out — not applicable at PO stage
                   <div>
                     <label className="block text-sm font-semibold mb-2">
                       Evaluation Criteria
@@ -611,6 +640,7 @@ const GeneratePO = () => {
                       className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
                     />
                   </div>
+                  */}
 
                   {/* Expected Delivery Date */}
                   <div>
@@ -681,38 +711,106 @@ const GeneratePO = () => {
                     />
                   </div>
 
-                  {/* Upload Vendor's Quote */}
+                  {/* H5: Multi-file vendor quote upload */}
                   <div>
                     <label className="block text-sm font-semibold mb-2">
-                      Upload Vendor&apos;s Quote{" "}
+                      Upload Vendor&apos;s Quote(s){" "}
                       <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        readOnly
-                        placeholder="Upload file"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer"
-                      />
-                      <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <div className="relative border border-gray-300 rounded-md px-4 py-2 bg-white">
+                      <div className="flex items-center gap-2">
+                        <Upload className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-500 flex-1 truncate">
+                          {vendorQuoteFiles.length > 0
+                            ? `${vendorQuoteFiles.length} file(s) selected`
+                            : "Upload files"}
+                        </span>
+                      </div>
                       <input
                         type="file"
+                        multiple
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        onChange={(e) => {
+                          if (e.target.files) {
+                            setVendorQuoteFiles(Array.from(e.target.files));
+                          }
+                        }}
+                      />
+                    </div>
+                    {vendorQuoteFiles.length > 0 && (
+                      <ul className="mt-2 space-y-1">
+                        {vendorQuoteFiles.map((f, i) => (
+                          <li key={i} className="text-xs text-gray-600 flex items-center justify-between">
+                            <span className="truncate">{f.name}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setVendorQuoteFiles((prev) =>
+                                  prev.filter((_, idx) => idx !== i),
+                                )
+                              }
+                              className="ml-2 text-red-500 hover:text-red-700 flex-shrink-0"
+                            >
+                              ✕
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  {/* H2: Discount and VAT fields */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">
+                        Discount (%)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={discountPct}
+                        onChange={(e) => setDiscountPct(parseFloat(e.target.value) || 0)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">
+                        VAT (%)
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={vatPct}
+                        onChange={(e) => setVatPct(parseFloat(e.target.value) || 0)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
                       />
                     </div>
                   </div>
 
-                  {/* Total Amount */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Total Amount
-                    </label>
-                    <input
-                      type="text"
-                      value={`₦ ${totalAmount.toLocaleString()}`}
-                      readOnly
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm bg-gray-50 focus:outline-none"
-                    />
+                  {/* H2 + H6: Total Amount with discount/VAT breakdown */}
+                  <div className="space-y-2 bg-gray-50 rounded-md p-3 border border-gray-200">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span>₦ {subtotal.toLocaleString()}</span>
+                    </div>
+                    {discountPct > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Discount ({discountPct}%)</span>
+                        <span className="text-red-600">-₦ {discountAmount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {vatPct > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">VAT ({vatPct}%)</span>
+                        <span>+₦ {vatAmount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm font-semibold border-t border-gray-300 pt-2">
+                      <span>Total Amount</span>
+                      <span>₦ {totalAmount.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -774,6 +872,7 @@ const GeneratePO = () => {
           </>
         )}
       </div>
+      {/* EditPOItem modal for editing existing line items */}
       <EditPOItem
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -781,7 +880,12 @@ const GeneratePO = () => {
           setItems((prev) =>
             prev.map((i) =>
               i.id === editingItem?.id
-                ? { ...i, ...itemData, total: itemData.totalPrice }
+                ? {
+                    ...i,
+                    ...itemData,
+                    total: itemData.totalPrice,
+                    itemType: (itemData as any).itemType || i.itemType,
+                  }
                 : i,
             ),
           );
@@ -799,6 +903,29 @@ const GeneratePO = () => {
               }
             : undefined
         }
+      />
+
+      {/* H1: Add Line Item modal — reuse EditPOItem with empty data */}
+      <EditPOItem
+        isOpen={isAddItemModalOpen}
+        onClose={() => setIsAddItemModalOpen(false)}
+        onUpdate={(itemData) => {
+          const newItem: POItem = {
+            id: Date.now().toString(),
+            itemId: Date.now().toString(),
+            itemDescription: itemData.itemDescription,
+            brand: itemData.brand,
+            quantity: itemData.quantity,
+            uom: itemData.uom,
+            unitPrice: itemData.unitPrice,
+            total: itemData.totalPrice,
+            selected: false,
+            detailsSpecification: itemData.detailsSpecification,
+            itemType: (itemData as any).itemType || "product",
+          };
+          setItems((prev) => [...prev, newItem]);
+        }}
+        itemData={undefined}
       />
     </div>
   );

@@ -595,9 +595,11 @@ export default function RFQForm({
 
                 <div className="selected-vendor-action-buttons flex flex-row justify-start items-center">
                   <div className="flex gap-2">
+                    {/* G1: Edit icon removed — vendor details are not editable at RFQ stage
                     <div className="cursor-pointer">
                       <SquarePen size={20} color="#0F1E7A" />
                     </div>
+                    */}
                     <div
                       className="cursor-pointer"
                       onClick={() => removeSelectedVendor(vendor.id)}
