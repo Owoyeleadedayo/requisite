@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken } from "@/lib/auth";
+import { getToken, getAuthData } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,6 +43,7 @@ interface RequestFormProps<
 interface Location {
   _id: string;
   name: string;
+  address?: string;
 }
 
 function formatDate(date: Date | undefined) {
@@ -75,6 +76,8 @@ export default function RequestForm<
   const [monthStart, setMonthStart] = useState<Date | undefined>(dateStart);
   const [locations, setLocations] = useState<Location[]>([]);
   const [locationsLoading, setLocationsLoading] = useState(true);
+  const authData = getAuthData();
+  const departmentName = authData?.user?.department?.name as string | undefined;
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -104,6 +107,18 @@ export default function RequestForm<
       onSubmit={handleSubmit}
       className="w-full bg-white space-y-5 border-2 border-[#e5e5e5e5] shadow-xl p-5 rounded-xl"
     >
+      {/* A3: Requisitioning department — auto-populated from auth, read-only */}
+      {departmentName && (
+        <div className="space-y-2 mb-6">
+          <Label>Requisitioning Department</Label>
+          <Input
+            value={departmentName}
+            readOnly
+            className="!p-4 rounded-md border shadow-sm bg-gray-50 text-gray-600"
+          />
+        </div>
+      )}
+
       <div className="space-y-2 mb-6">
         <Label>
           Request Title <span className="compulsory-field">*</span>
@@ -118,6 +133,7 @@ export default function RequestForm<
         />
       </div>
 
+      {/* A1: Urgency field commented out — not collected at requisition creation stage
       <div className="space-y-2 mb-6">
         <Label>
           Urgency <span className="compulsory-field">*</span>
@@ -161,6 +177,7 @@ export default function RequestForm<
           </div>
         </div>
       </div>
+      */}
 
       <div className="space-y-2 mb-6">
         <Label>
@@ -204,6 +221,7 @@ export default function RequestForm<
                 className="hover:bg-gray-100 data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:text-white"
               >
                 {location.name.charAt(0).toUpperCase() + location.name.slice(1)}
+                {location.address ? ` — ${location.address}` : ""}
               </SelectItem>
             ))}
           </SelectContent>

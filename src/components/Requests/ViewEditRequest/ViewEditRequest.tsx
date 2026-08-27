@@ -72,6 +72,19 @@ interface RequestData {
     rfqs?: Array<{ _id: string; title: string; department: string }>;
     pos?: Array<{ _id: string; title: string; department: string }>;
   };
+  // B2: Approval timestamps — shape matches types.ts RequestData.approvals + extended fields
+  approvals?: {
+    stage?: string;
+    approver?: string | { firstName?: string; lastName?: string };
+    approverRole?: string;
+    approvedAt?: string;
+    status?: string;
+    timestamp?: string;
+    comments?: string;
+    _id?: string;
+  }[];
+  departmentApprovedAt?: string;
+  departmentApprovedBy?: { firstName?: string; lastName?: string };
 }
 
 // Define a type for the item object received from the API
@@ -161,7 +174,8 @@ export default function ViewEditRequest({
   const buildRequisitionFormData = (formattedDate?: string) => {
     const body = new FormData();
     body.append("title", formData.title);
-    body.append("urgency", priorityMap[urgency[0]]);
+    // A1: urgency removed from payload — field no longer collected at requisition stage
+    // body.append("urgency", priorityMap[urgency[0]]);
     body.append("justification", formData.justification);
     body.append("deliveryLocation", formData.deliveryLocation);
     if (formattedDate) {
@@ -805,7 +819,12 @@ export default function ViewEditRequest({
       const data = await res.json();
       if (data.success) {
         toast.success("Request approved successfully");
-        setFormData(data.data);
+        // J1: Merge response data so status always reflects the approval even if API returns partial data
+        setFormData((prev) => ({
+          ...prev,
+          ...(data.data || {}),
+          status: data.data?.status || "departmentApproved",
+        }));
         setShowApprovalModal(false);
       } else {
         toast.error(data.message || "Failed to approve request");
@@ -859,6 +878,21 @@ export default function ViewEditRequest({
       toast.error("Please select at least one item to generate RFQ");
       setShowItemsError(true);
       setTimeout(() => setShowItemsError(false), 10000);
+      return;
+    }
+    // C7: Block RFQ generation if any selected work-tool items haven't completed HHR review
+    const workToolsPendingReview = selectedItems.some((id) => {
+      const item = items.find((i) => i._id === id || (i as any).id === id);
+      return (
+        item?.isWorkTool === true &&
+        item?.status !== "hrReview" &&
+        item?.status !== "departmentApproved"
+      );
+    });
+    if (workToolsPendingReview) {
+      toast.error(
+        "All work-tool items must complete HHR review before generating an RFQ.",
+      );
       return;
     }
     const selectedItemsParam = selectedItems.join(",");
@@ -988,6 +1022,43 @@ export default function ViewEditRequest({
               isEditMode={isEditMode}
             />
 
+            {/* B2: Approval history timestamps */}
+            {!isEditMode && formData.approvals && formData.approvals.length > 0 && (
+              <div className="w-full bg-white border rounded-xl p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-[#0F1E7A] uppercase tracking-wide">
+                  Approval History
+                </h3>
+                {formData.approvals.map((approval, i) => (
+                  <div key={i} className="flex flex-col gap-1 border-l-2 border-green-400 pl-3 text-sm">
+                    <p className="font-semibold text-gray-800">
+                      {approval.approverRole === "hod"
+                        ? "Head of Department"
+                        : approval.approverRole === "hof"
+                          ? "Head of Finance"
+                          : approval.approverRole === "hhr"
+                            ? "Head of Human Resources"
+                            : approval.approverRole || "Approver"}
+                    </p>
+                    {approval.approver && (
+                      <p className="text-gray-600">
+                        {typeof approval.approver === "string"
+                          ? approval.approver
+                          : `${approval.approver.firstName || ""} ${approval.approver.lastName || ""}`.trim()}
+                      </p>
+                    )}
+                    {approval.approvedAt && (
+                      <p className="text-gray-500 text-xs">
+                        {new Date(approval.approvedAt).toLocaleString()}
+                      </p>
+                    )}
+                    {approval.comments && (
+                      <p className="text-gray-600 italic text-xs">{approval.comments}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {formData.status === "departmentApproved" &&
               userType === "procurementManager" && (
                 <div className="flex flex-col sm:flex-row gap-3 pt-6">
@@ -1036,7 +1107,7 @@ export default function ViewEditRequest({
                       Edit
                     </Button>
                   )}
-                  {(userType === "hod" || userType === "hhra") && (
+                  {(userType === "hod" || userType === "hhra" || userType === "hof") && (
                     <>
                       <Dialog
                         open={showApprovalModal}
@@ -1071,7 +1142,7 @@ export default function ViewEditRequest({
                           <div className="space-y-4">
                             <div>
                               <Label>Approval Comment</Label>
-                              {(userType === "hod" || userType === "hhra") && (
+                              {(userType === "hod" || userType === "hhra" || userType === "hof") && (
                                 <span className="flex text-xs pt-2 leading-none">
                                   Confirm that all relevant items have been
                                   approved before proceeding, as the process
@@ -1210,32 +1281,43 @@ export default function ViewEditRequest({
           {/* {isEditMode ? ( */}
           <>
             {userType !== "procurementManager" ? (
-              <ItemsList
-                isEditMode={isEditMode}
-                items={items}
-                selectedItems={selectedItems}
-                approveBulkRequisitionItems={approveBulkRequisitionItems}
-                rejectBulkRequisitionItems={rejectBulkRequisitionItems}
-                isItemRequestLoading={isItemRequestLoading}
-                itemComment={itemComment}
-                setItemComment={setItemComment}
-                handleItemCheck={handleItemCheck}
-                onAddNewItem={() => {
-                  resetCurrentItem();
-                  setIsItemDialogOpen(true);
-                }}
-                onEditItem={(item) => {
-                  setCurrentItem(item);
-                  setEditingItemId(item._id);
-                  setIsItemDialogOpen(true);
-                }}
-                onViewItem={(item) => {
-                  setViewingItem(item);
-                  setIsItemViewDialogOpen(true);
-                }}
-                onDeleteItem={handleDeleteItem}
-                userType={userType}
-              />
+              <div className="flex flex-col gap-10">
+                <ItemsList
+                  isEditMode={isEditMode}
+                  items={items}
+                  selectedItems={selectedItems}
+                  approveBulkRequisitionItems={approveBulkRequisitionItems}
+                  rejectBulkRequisitionItems={rejectBulkRequisitionItems}
+                  isItemRequestLoading={isItemRequestLoading}
+                  itemComment={itemComment}
+                  setItemComment={setItemComment}
+                  handleItemCheck={handleItemCheck}
+                  onAddNewItem={() => {
+                    resetCurrentItem();
+                    setIsItemDialogOpen(true);
+                  }}
+                  onEditItem={(item) => {
+                    setCurrentItem(item);
+                    setEditingItemId(item._id);
+                    setIsItemDialogOpen(true);
+                  }}
+                  onViewItem={(item) => {
+                    setViewingItem(item);
+                    setIsItemViewDialogOpen(true);
+                  }}
+                  onDeleteItem={handleDeleteItem}
+                  userType={userType}
+                />
+                {/* D1: Show Related panel (RFQs/POs) for HOF and HHRA */}
+                {(userType === "hof" || userType === "hhra") && (
+                  <Related
+                    requests={related.requests}
+                    rfqs={related.rfqs}
+                    pos={related.pos}
+                    onViewItem={handleRelatedView}
+                  />
+                )}
+              </div>
             ) : (
               <div className="flex flex-col gap-10">
                 <PMItemsList

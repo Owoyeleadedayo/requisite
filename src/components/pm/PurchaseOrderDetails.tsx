@@ -118,11 +118,18 @@ export default function PurchaseOrderDetails() {
     null,
   );
   const [approving, setApproving] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadingQuote, setDownloadingQuote] = useState(false);
   const [pendingApproval, setPendingApproval] = useState<"hhr" | "hof" | null>(
     null,
   );
+  const [pendingRejection, setPendingRejection] = useState<"hhr" | "hof" | null>(null);
+  const [rejectionFeedback, setRejectionFeedback] = useState("");
+  // H4: PM edit mode for submitted POs
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedItems, setEditedItems] = useState<PurchaseOrderItem[]>([]);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     const fetchPurchaseOrder = async () => {
@@ -255,6 +262,75 @@ export default function PurchaseOrderDetails() {
       toast.error("Failed to approve purchase order");
     } finally {
       setApproving(false);
+    }
+  };
+
+  const handleReject = async (rejectionType: "hhr" | "hof") => {
+    if (!purchaseOrder) return;
+    setRejecting(true);
+    try {
+      const endpoint =
+        rejectionType === "hof"
+          ? `${API_BASE_URL}/purchase-orders/${purchaseOrder._id}/hof-reject`
+          : `${API_BASE_URL}/purchase-orders/${purchaseOrder._id}/hhr-reject`;
+      const response = await fetch(endpoint, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ feedback: rejectionFeedback }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success(data.message || "Purchase order rejected");
+        setPurchaseOrder((prev) =>
+          prev ? { ...prev, status: data.data?.status ?? "rejected" } : prev,
+        );
+        setPendingRejection(null);
+        setRejectionFeedback("");
+      } else {
+        toast.error(data.message || "Failed to reject purchase order");
+      }
+    } catch (error) {
+      console.error("Error rejecting purchase order:", error);
+      toast.error("Failed to reject purchase order");
+    } finally {
+      setRejecting(false);
+    }
+  };
+
+  // H4: Save PM edits to a submitted PO
+  const handleSaveEdit = async () => {
+    if (!purchaseOrder) return;
+    setSavingEdit(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/purchase-orders/${purchaseOrder._id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ items: editedItems }),
+        },
+      );
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Purchase order updated successfully");
+        setPurchaseOrder((prev) =>
+          prev ? { ...prev, items: editedItems } : prev,
+        );
+        setIsEditMode(false);
+      } else {
+        toast.error(data.message || "Failed to update purchase order");
+      }
+    } catch (error) {
+      console.error("Error updating PO:", error);
+      toast.error("Failed to update purchase order");
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -586,25 +662,46 @@ export default function PurchaseOrderDetails() {
             />
           )}
 
+        {/* C6: HOF Approve + Reject buttons */}
         {isHof && canHofApprove && (
-          <button
-            disabled={approving}
-            onClick={() => setPendingApproval("hof")}
-            className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
-          >
-            Approve PO
-          </button>
+          <div className="flex gap-3">
+            <button
+              disabled={approving}
+              onClick={() => setPendingApproval("hof")}
+              className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
+            >
+              Approve PO
+            </button>
+            <button
+              disabled={rejecting}
+              onClick={() => setPendingRejection("hof")}
+              className="rounded-md bg-red-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+            >
+              Reject PO
+            </button>
+          </div>
         )}
+        {/* C6: HHRA Approve + Reject buttons */}
         {isHhra && canHhraApprove && (
-          <button
-            disabled={approving}
-            onClick={() => setPendingApproval("hhr")}
-            className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
-          >
-            Approve PO
-          </button>
+          <div className="flex gap-3">
+            <button
+              disabled={approving}
+              onClick={() => setPendingApproval("hhr")}
+              className="rounded-md bg-green-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-green-300"
+            >
+              Approve PO
+            </button>
+            <button
+              disabled={rejecting}
+              onClick={() => setPendingRejection("hhr")}
+              className="rounded-md bg-red-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+            >
+              Reject PO
+            </button>
+          </div>
         )}
 
+        {/* Approval confirmation dialog */}
         <Dialog
           open={pendingApproval !== null}
           onOpenChange={(open) => {
@@ -640,8 +737,69 @@ export default function PurchaseOrderDetails() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* C6: Rejection confirmation dialog */}
+        <Dialog
+          open={pendingRejection !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setPendingRejection(null);
+              setRejectionFeedback("");
+            }
+          }}
+        >
+          <DialogContent className="max-w-md bg-white">
+            <DialogHeader>
+              <DialogTitle>Reject Purchase Order</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-gray-600">
+              Please provide a reason for rejecting this purchase order.
+            </p>
+            <textarea
+              value={rejectionFeedback}
+              onChange={(e) => setRejectionFeedback(e.target.value)}
+              placeholder="Reason for rejection..."
+              rows={3}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            />
+            <DialogFooter className="gap-2">
+              <button
+                onClick={() => {
+                  setPendingRejection(null);
+                  setRejectionFeedback("");
+                }}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={rejecting}
+                onClick={async () => {
+                  if (!pendingRejection) return;
+                  await handleReject(pendingRejection);
+                }}
+                className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+              >
+                {rejecting ? "Rejecting..." : "Confirm Reject"}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {isPm && (
           <div className="flex gap-3">
+            {/* H4: Edit PO button for PM when status is submitted */}
+            {purchaseOrder.status === "submitted" && (
+              <button
+                onClick={() => {
+                  setEditedItems(purchaseOrder.items ? [...purchaseOrder.items] : []);
+                  setIsEditMode(true);
+                }}
+                className="rounded-md border border-blue-900 px-5 py-3 text-sm font-semibold text-blue-900 transition-colors hover:bg-blue-50"
+              >
+                Edit PO
+              </button>
+            )}
             <button
               onClick={handleDownloadVendorQuote}
               disabled={
@@ -653,13 +811,112 @@ export default function PurchaseOrderDetails() {
             >
               {downloadingQuote ? "Downloading..." : "Download Vendor Quote"}
             </button>
-            <button
-              onClick={handleDownloadPO}
-              disabled={downloading}
-              className="rounded-md bg-blue-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {downloading ? "Downloading..." : "Download PO"}
-            </button>
+            {/* C6: Gate Download PO button — only available after full approval */}
+            {purchaseOrder.status === "approved" && (
+              <button
+                onClick={handleDownloadPO}
+                disabled={downloading}
+                className="rounded-md bg-blue-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {downloading ? "Downloading..." : "Download PO"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* H4: Inline edit mode panel for PM */}
+        {isPm && isEditMode && (
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="text-sm uppercase tracking-[0.3em] text-gray-500 mb-4">
+              Edit PO Items
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 text-gray-500">
+                    <th className="py-3 pr-4 font-medium">Description</th>
+                    <th className="py-3 pr-4 font-medium">Qty</th>
+                    <th className="py-3 pr-4 font-medium">UOM</th>
+                    <th className="py-3 pr-4 font-medium">Unit Price</th>
+                    <th className="py-3 font-medium">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {editedItems.map((item, index) => (
+                    <tr key={item._id || index} className="border-b border-gray-100">
+                      <td className="py-3 pr-4">
+                        <input
+                          type="text"
+                          value={item.itemDescription}
+                          onChange={(e) => {
+                            const updated = [...editedItems];
+                            updated[index] = { ...updated[index], itemDescription: e.target.value };
+                            setEditedItems(updated);
+                          }}
+                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                        />
+                      </td>
+                      <td className="py-3 pr-4">
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const updated = [...editedItems];
+                            const qty = parseFloat(e.target.value) || 0;
+                            updated[index] = { ...updated[index], quantity: qty, totalPrice: qty * updated[index].unitPrice };
+                            setEditedItems(updated);
+                          }}
+                          className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                        />
+                      </td>
+                      <td className="py-3 pr-4">
+                        <input
+                          type="text"
+                          value={item.uom}
+                          onChange={(e) => {
+                            const updated = [...editedItems];
+                            updated[index] = { ...updated[index], uom: e.target.value };
+                            setEditedItems(updated);
+                          }}
+                          className="w-24 border border-gray-300 rounded px-2 py-1 text-sm"
+                        />
+                      </td>
+                      <td className="py-3 pr-4">
+                        <input
+                          type="number"
+                          value={item.unitPrice}
+                          onChange={(e) => {
+                            const updated = [...editedItems];
+                            const price = parseFloat(e.target.value) || 0;
+                            updated[index] = { ...updated[index], unitPrice: price, totalPrice: price * updated[index].quantity };
+                            setEditedItems(updated);
+                          }}
+                          className="w-28 border border-gray-300 rounded px-2 py-1 text-sm"
+                        />
+                      </td>
+                      <td className="py-3 text-gray-700">
+                        {formatMoney(editedItems[index].quantity * editedItems[index].unitPrice)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={handleSaveEdit}
+                disabled={savingEdit}
+                className="rounded-md bg-blue-900 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+              >
+                {savingEdit ? "Saving..." : "Save Changes"}
+              </button>
+              <button
+                onClick={() => setIsEditMode(false)}
+                className="rounded-md border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>

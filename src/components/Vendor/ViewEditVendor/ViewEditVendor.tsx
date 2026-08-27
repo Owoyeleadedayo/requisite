@@ -320,82 +320,92 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
               </>
             ) : (
               <>
-                <Button
-                  onClick={() => setIsEditMode(true)}
-                  className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
-                >
-                  Edit
-                </Button>
-                {vendorData.status === "pending" && (
-                  <Button
-                    onClick={handleApprove}
-                    disabled={actionLoading}
-                    className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
-                  >
-                    {actionLoading ? "Approving..." : "Approve & Verify"}
-                  </Button>
-                )}
-                {vendorData.isActive ? (
-                  <Button
-                    onClick={handleDeactivate}
-                    disabled={actionLoading}
-                    className="bg-orange-600 hover:bg-orange-700 text-white flex-1 py-6"
-                  >
-                    {actionLoading ? "Deactivating..." : "Deactivate"}
-                  </Button>
+                {/* D4: HHRA can only approve vendors; PM gets edit/deactivate/delete */}
+                {isHhraVendor ? (
+                  /* HHRA view: Approve & Verify only */
+                  <>
+                    {vendorData.status === "pending" && (
+                      <Button
+                        onClick={handleApprove}
+                        disabled={actionLoading}
+                        className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
+                      >
+                        {actionLoading ? "Approving..." : "Approve & Verify"}
+                      </Button>
+                    )}
+                  </>
                 ) : (
-                  <Button
-                    onClick={handleActivate}
-                    disabled={actionLoading}
-                    className="bg-blue-600 hover:bg-blue-700 text-white flex-1 py-6"
-                  >
-                    {actionLoading ? "Activating..." : "Activate"}
-                  </Button>
-                )}
-                <Dialog
-                  open={showDeleteModal}
-                  onOpenChange={setShowDeleteModal}
-                >
-                  <DialogTrigger asChild>
+                  /* PM view: Edit, Deactivate/Activate, Delete — no Approve (that's HHR's role) */
+                  <>
                     <Button
-                      variant="destructive"
-                      className="flex-1 py-6 bg-red-600 hover:bg-red-700"
+                      onClick={() => setIsEditMode(true)}
+                      className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6"
                     >
-                      Delete Vendor
+                      Edit
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl bg-white">
-                    <DialogHeader>
-                      <DialogTitle>Delete Vendor</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Reason for deletion</Label>
-                        <Textarea
-                          value={deleteReason}
-                          onChange={(e) => setDeleteReason(e.target.value)}
-                          placeholder="Please provide a reason for deleting this vendor"
-                          className="mt-2"
-                        />
-                      </div>
-                      <div className="flex gap-2 justify-end">
+                    {vendorData.isActive ? (
+                      <Button
+                        onClick={handleDeactivate}
+                        disabled={actionLoading}
+                        className="bg-orange-600 hover:bg-orange-700 text-white flex-1 py-6"
+                      >
+                        {actionLoading ? "Deactivating..." : "Deactivate"}
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={handleActivate}
+                        disabled={actionLoading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white flex-1 py-6"
+                      >
+                        {actionLoading ? "Activating..." : "Activate"}
+                      </Button>
+                    )}
+                    <Dialog
+                      open={showDeleteModal}
+                      onOpenChange={setShowDeleteModal}
+                    >
+                      <DialogTrigger asChild>
                         <Button
-                          variant="outline"
-                          onClick={() => setShowDeleteModal(false)}
+                          variant="destructive"
+                          className="flex-1 py-6 bg-red-600 hover:bg-red-700"
                         >
-                          Cancel
+                          Delete Vendor
                         </Button>
-                        <Button
-                          onClick={handleDelete}
-                          disabled={actionLoading}
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                          {actionLoading ? "Deleting..." : "Confirm Delete"}
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl bg-white">
+                        <DialogHeader>
+                          <DialogTitle>Delete Vendor</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <Label>Reason for deletion</Label>
+                            <Textarea
+                              value={deleteReason}
+                              onChange={(e) => setDeleteReason(e.target.value)}
+                              placeholder="Please provide a reason for deleting this vendor"
+                              className="mt-2"
+                            />
+                          </div>
+                          <div className="flex gap-2 justify-end">
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowDeleteModal(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={handleDelete}
+                              disabled={actionLoading}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                            >
+                              {actionLoading ? "Deleting..." : "Confirm Delete"}
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </>
+                )}
               </>
             )}
           </div>
