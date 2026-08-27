@@ -16,7 +16,7 @@ export default function HODViewEditRequest() {
   return (
     <ViewEditRequest
       requisitionId={requisitionId as string}
-      userType="hod"
+      userType="hhra"
       isEditMode={isEditMode}
       onEditModeChange={setIsEditMode}
     />

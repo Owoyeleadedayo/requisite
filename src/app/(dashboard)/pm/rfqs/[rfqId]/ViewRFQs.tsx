@@ -81,7 +81,13 @@ interface RFQData {
 const ViewRFQs = () => {
   const params = useParams<{ rfqId: string }>();
   const router = useRouter();
-  const rfqId = params?.rfqId ?? "";
+  const rfqId = params.rfqId as string;
+  const authData = getAuthData();
+  const isHhra =
+    authData?.user?.role === "departmentHead" &&
+    authData?.user?.designation === "Head, Human Resources & Admin";
+  const isReadOnly = isHhra;
+  const basePath = isHhra ? "/hhra" : "/pm";
 
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectedVendor, setSelectedVendor] = useState<string | null>(null);

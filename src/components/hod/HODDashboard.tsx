@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NumericFormat } from "react-number-format";
 import DashboardCard from "@/components/DashboardCard";
+import StatusBadge from "@/components/StatusBadge";
 import DataTable, { Column } from "@/components/DataTable";
 import { API_BASE_URL } from "@/lib/config";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
@@ -61,19 +62,7 @@ export default function HDODashboard({
     {
       key: "status",
       label: "Status",
-      render: (value) => {
-        const statusColors: Record<string, string> = {
-          draft: "text-gray-500",
-          departmentApproved: "text-green-500",
-          cancelled: "text-red-500",
-          pending: "text-orange-500",
-        };
-        return (
-          <span className={statusColors[value] ?? "text-gray-500"}>
-            {value}
-          </span>
-        );
-      },
+      render: (value) => <StatusBadge status={value} />,
     },
     {
       key: "_id",
@@ -294,7 +283,7 @@ export default function HDODashboard({
             asChild
             className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
           >
-            <Link href={"/hod/my-requests/create-new" as any}>
+            <Link href={`${routePrefix}/my-requests/create-new` as any}>
               <Plus size={22} />{" "}
               <span className="hidden lg:flex">New Request</span>
             </Link>

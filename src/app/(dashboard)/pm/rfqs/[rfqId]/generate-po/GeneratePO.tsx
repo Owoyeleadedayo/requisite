@@ -128,6 +128,7 @@ const GeneratePO = () => {
   const rfqId = params?.rfqId ?? "";
 
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [bulkAction, setBulkAction] = useState("");
   const [vendorId, setVendorId] = useState<string>("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -262,9 +263,8 @@ const GeneratePO = () => {
   const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
 
   const handleCompletePO = async () => {
-    // New Implementation
     if (!rfqId) return;
-
+    setSubmitting(true);
     try {
       const token = getToken();
       const payload = {
@@ -293,28 +293,25 @@ const GeneratePO = () => {
       );
       const data = await response.json();
       if (data.success) {
-        toast.success("Purchase Order created successfully, submitting...");
-        const poId = data.data._id;
-
-        // Now, submit the PO
-        const submitResponse = await fetch(
-          `${API_BASE_URL}/purchase-orders/${poId}/submit`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${token}`,
+        const newPoId = data.data?._id;
+        if (newPoId) {
+          const submitResponse = await fetch(
+            `${API_BASE_URL}/purchase-orders/${newPoId}/submit`,
+            {
+              method: "PUT",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
             },
+          );
+          const submitData = await submitResponse.json();
+          if (!submitData.success) {
+            toast.error(submitData.message || "PO created but could not be submitted");
           }
-        );
-
-        const submitData = await submitResponse.json();
-        if (submitData.success) {
-          toast.success("Purchase Order submitted for approval.");
-        } else {
-          toast.error(`PO created but failed to submit: ${submitData.message}`);
         }
-
-        localStorage.removeItem("poData"); // Clean up
+        toast.success("Purchase Order created and submitted successfully");
+        localStorage.removeItem("poData");
         router.push("/pm/pos");
       } else {
         toast.error(data.message || "Failed to create Purchase Order");
@@ -322,6 +319,8 @@ const GeneratePO = () => {
     } catch (error) {
       console.error("Error creating PO:", error);
       toast.error("Failed to create Purchase Order");
+    } finally {
+      setSubmitting(false);
     }
 
     /* Old Implementation
@@ -739,9 +738,10 @@ const GeneratePO = () => {
             <div className="w-full md:max-w-md flex flex-col sm:flex-row gap-3 pt-4">
               <button
                 onClick={handleCompletePO}
-                className="flex-1 px-6 py-3 bg-[#0F1E7A] text-white rounded-md font-semibold hover:bg-blue-800 transition-colors"
+                disabled={submitting}
+                className="flex-1 px-6 py-3 bg-[#0F1E7A] text-white rounded-md font-semibold hover:bg-blue-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Complete PO
+                {submitting ? "Submitting..." : "Complete PO"}
               </button>
               <button
                 onClick={handleCancel}

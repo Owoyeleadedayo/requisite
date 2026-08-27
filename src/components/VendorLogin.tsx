@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
+import { setAuthCookies } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
 export default function VendorLogin() {
@@ -61,11 +62,16 @@ export default function VendorLogin() {
         JSON.stringify({
           token: data.token,
           user: data.user,
-        })
+        }),
+      );
+      setAuthCookies(
+        data.token,
+        data.user?.role ?? "vendor",
+        data.user?.designation ?? "",
       );
 
       toast.success("Login successful!");
-      router.push("/vendor"); // Redirect to vendor dashboard
+      router.push("/vendor");
     } catch (err) {
       console.error("Login error:", err);
       toast.error("Something went wrong. Try again.");
@@ -194,15 +200,15 @@ export default function VendorLogin() {
                 <p className="text-sm text-[var(--primary-color)] hover:underline cursor-pointer">
                   Forgot password?
                 </p>
-                <p className="text-sm text-gray-500">
-                  New to Rwquisite Software?{" "}
+                {/* <p className="text-sm text-gray-500">
+                  New to Requisite Software?{" "}
                   <Link
                     href="/signup"
                     className="text-[#0A1A6B] hover:underline font-medium"
                   >
                     Sign up
                   </Link>
-                </p>
+                </p> */}
               </div>
             </form>
           )}
