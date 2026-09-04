@@ -861,6 +861,13 @@ export default function ViewEditRequest({
       setTimeout(() => setShowItemsError(false), 10000);
       return;
     }
+    const hasUnapprovedWorkTool = items?.some(
+      (item) => item.isWorkTool === true && item.status !== "hrApproved",
+    );
+    if (hasUnapprovedWorkTool) {
+      toast.error("All work tools must be approved by HR before generating an RFQ");
+      return;
+    }
     const selectedItemsParam = selectedItems.join(",");
     router.push(
       `/pm/requisitions/${requisitionId}/generate-rfq?selectedItems=${selectedItemsParam}`,

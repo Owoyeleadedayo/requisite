@@ -27,6 +27,7 @@ interface POItem {
   total: number;
   selected: boolean;
   detailsSpecification: string;
+  isService?: boolean;
 }
 
 interface VendorInfo {
@@ -56,6 +57,9 @@ interface RequestItem {
   uom: string;
   quantity: number;
   expectedDeliveryDate: string;
+  itemType?: string;
+  lineType?: string;
+  isService?: boolean;
 }
 
 interface APIVendor {
@@ -113,6 +117,7 @@ interface POItemData {
   unitPrice: number;
   totalPrice: number;
   detailsSpecification: string;
+  isService?: boolean;
 }
 
 interface Location {
@@ -138,6 +143,7 @@ const GeneratePO = () => {
   const [vendorInfo, setVendorInfo] = useState<VendorInfo | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
   const [date, setDate] = useState<Date | undefined>();
+  const [vendorQuoteFiles, setVendorQuoteFiles] = useState<File[]>([]);
 
   const [formData, setFormData] = useState({
     poTitle: "",
@@ -212,6 +218,10 @@ const GeneratePO = () => {
           total: 0,
           selected: false,
           detailsSpecification: item.detailedSpecification || "",
+          isService:
+            item.isService === true ||
+            item.itemType === "service" ||
+            item.lineType === "service",
         }));
       setItems(selectedItemDetails);
       setFormData({
@@ -264,6 +274,10 @@ const GeneratePO = () => {
 
   const handleCompletePO = async () => {
     if (!rfqId) return;
+    if (items.some((item) => item.total <= 0)) {
+      toast.error("Enter a positive amount for every PO item before submitting");
+      return;
+    }
     setSubmitting(true);
     try {
       const token = getToken();
@@ -278,6 +292,17 @@ const GeneratePO = () => {
         deliveryContact: formData.deliveryContact,
         shipping: formData.shipping,
         generalTerms: formData.termsOfService,
+        items: items.map((item) => ({
+          itemId: item.id,
+          itemDescription: item.itemDescription,
+          detailsSpecification: item.detailsSpecification,
+          lineType: item.isService ? "service" : "requisition",
+          quantity: item.isService ? 1 : item.quantity,
+          uom: item.isService ? "service" : item.uom,
+          brand: item.brand,
+          unitPrice: item.isService ? item.total : item.unitPrice,
+          totalPrice: item.total,
+        })),
       };
 
       const response = await fetch(
@@ -294,6 +319,24 @@ const GeneratePO = () => {
       const data = await response.json();
       if (data.success) {
         const newPoId = data.data?._id;
+        if (newPoId && vendorQuoteFiles.length > 0) {
+          for (const file of vendorQuoteFiles) {
+            const formData = new FormData();
+            formData.append("file", file);
+            const uploadResponse = await fetch(
+              `${API_BASE_URL}/purchase-orders/${newPoId}/attachments`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+              },
+            );
+            const uploadData = await uploadResponse.json();
+            if (!uploadResponse.ok || !uploadData.success) {
+              throw new Error(uploadData.message || `Failed to upload ${file.name}`);
+            }
+          }
+        }
         if (newPoId) {
           const submitResponse = await fetch(
             `${API_BASE_URL}/purchase-orders/${newPoId}/submit`,
@@ -670,12 +713,17 @@ const GeneratePO = () => {
                       <input
                         type="text"
                         readOnly
-                        placeholder="Upload file"
+                        value={vendorQuoteFiles.map((file) => file.name).join(", ")}
+                        placeholder="Upload file(s)"
                         className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-900 cursor-pointer"
                       />
                       <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input
                         type="file"
+                        multiple
+                        onChange={(event) =>
+                          setVendorQuoteFiles(Array.from(event.target.files || []))
+                        }
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
                     </div>
@@ -775,6 +823,7 @@ const GeneratePO = () => {
                 unitPrice: editingItem.unitPrice,
                 totalPrice: editingItem.total,
                 detailsSpecification: editingItem.detailsSpecification,
+                isService: editingItem.isService,
               }
             : undefined
         }

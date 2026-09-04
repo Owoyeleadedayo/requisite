@@ -53,9 +53,10 @@ export default function ItemViewDialog({
 
   const isHhra = userType === "hhra";
   const isHod = userType === "hod";
+  const isHof = userType === "hof";
   const isHrReview = currentItem.status === "hrReview";
   const useHrActions = isHhra && isHrReview;
-  const canUseDepartmentActions = isHod || isHhra;
+  const canUseDepartmentActions = isHod || isHhra || isHof;
   const approveHandler = useHrActions
     ? approveHrRequisitionItem
     : approveRequisitionItem;

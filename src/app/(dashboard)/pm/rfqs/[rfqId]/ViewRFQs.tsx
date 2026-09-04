@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { getToken } from "@/lib/auth";
+import { getAuthData, getToken } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/config";
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";

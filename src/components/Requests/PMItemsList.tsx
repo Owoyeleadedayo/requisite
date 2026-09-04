@@ -88,7 +88,7 @@ export default function PMItemsList({
                 }
               />
             </TableHead>
-            <TableHead>Item Name</TableHead>
+            <TableHead>Item Description</TableHead>
             <TableHead>QTY</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>

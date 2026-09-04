@@ -15,6 +15,7 @@ interface POItemData {
   unitPrice: number;
   totalPrice: number;
   detailsSpecification: string;
+  isService?: boolean;
 }
 
 interface EditPOItemProps {
@@ -38,6 +39,7 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
     unitPrice: itemData?.unitPrice || 0,
     totalPrice: itemData?.totalPrice || 0,
     detailsSpecification: itemData?.detailsSpecification || "",
+    isService: itemData?.isService || false,
   });
 
   useEffect(() => {
@@ -50,6 +52,7 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
         unitPrice: itemData.unitPrice || 0,
         totalPrice: itemData.totalPrice || 0,
         detailsSpecification: itemData.detailsSpecification || "",
+        isService: itemData.isService || false,
       });
     }
   }, [itemData]);
@@ -62,13 +65,14 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
       const updated = {
         ...prev,
         [name]:
-          name === "quantity" || name === "unitPrice"
+          name === "quantity" || name === "unitPrice" || name === "totalPrice"
             ? parseFloat(value) || 0
             : value,
       };
 
-      // Auto-calculate total price when quantity or unit price changes
-      if (name === "quantity" || name === "unitPrice") {
+      if (name === "totalPrice" && updated.isService) {
+        updated.totalPrice = parseFloat(value) || 0;
+      } else if (name === "quantity" || name === "unitPrice") {
         updated.totalPrice = updated.quantity * updated.unitPrice;
       }
 
@@ -122,6 +126,7 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
               />
             </div>
 
+            {!formData.isService && <>
             {/* Quantity */}
             <div className="space-y-2">
               <Label>Quantity</Label>
@@ -157,16 +162,20 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
                 className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
               />
             </div>
+            </>}
 
             {/* Total Price */}
             <div className="space-y-2">
-              <Label>Total Price</Label>
+              <Label>{formData.isService ? "Service Fee / Amount" : "Total Price"}</Label>
               <Input
-                type="text"
+                type={formData.isService ? "number" : "text"}
                 name="totalPrice"
-                value={formData.totalPrice.toLocaleString()}
-                readOnly
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm bg-gray-50"
+                value={formData.isService ? formData.totalPrice : formData.totalPrice.toLocaleString()}
+                onChange={formData.isService ? handleInputChange : undefined}
+                readOnly={!formData.isService}
+                min={formData.isService ? 0 : undefined}
+                step={formData.isService ? "0.01" : undefined}
+                className={`!p-4 rounded-xl border border-[#9f9f9f] shadow-sm ${formData.isService ? "" : "bg-gray-50"}`}
               />
             </div>
 
