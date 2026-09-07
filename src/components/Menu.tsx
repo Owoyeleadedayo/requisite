@@ -62,9 +62,13 @@ const menuItems: Record<string, MenuItem[]> = {
   hhra: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
     { icon: FileCog, label: "Requisitions", href: "/hhra/requisitions" },
-    { icon: FileCog, label: "Request", href: "/hhra/my-requests" },
-    // { icon: ShoppingCart, label: "Vendor", href: "/hhra/vendor" },
-    // { icon: User, label: "Profile", href: "/hhra/profile" },
+    { icon: Package, label: "My Requests", href: "/hhra/my-requests" },
+    { icon: SquarePen, label: "All Requests", href: "/hhra/requests" },
+    { icon: CircleDollarSign, label: "RFQs", href: "/hhra/rfqs" },
+    { icon: FileSpreadsheet, label: "POs", href: "/hhra/pos" },
+    { icon: Store, label: "Vendors", href: "/hhra/vendors" },
+    // D4: Locations management is PM-only; HHRA should not add/manage locations
+    // { icon: MapPin, label: "Locations", href: "/hhra/locations" },
   ],
 };
 

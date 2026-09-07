@@ -16,6 +16,7 @@ interface POItemData {
   totalPrice: number;
   detailsSpecification: string;
   isService?: boolean;
+  itemType?: "product" | "service";
 }
 
 interface EditPOItemProps {
@@ -39,7 +40,8 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
     unitPrice: itemData?.unitPrice || 0,
     totalPrice: itemData?.totalPrice || 0,
     detailsSpecification: itemData?.detailsSpecification || "",
-    isService: itemData?.isService || false,
+    itemType:
+      itemData?.itemType || (itemData?.isService ? "service" : "product"),
   });
 
   useEffect(() => {
@@ -52,10 +54,24 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
         unitPrice: itemData.unitPrice || 0,
         totalPrice: itemData.totalPrice || 0,
         detailsSpecification: itemData.detailsSpecification || "",
-        isService: itemData.isService || false,
+        itemType:
+          itemData.itemType || (itemData.isService ? "service" : "product"),
+      });
+    } else {
+      setFormData({
+        itemDescription: "",
+        brand: "",
+        quantity: 0,
+        uom: "",
+        unitPrice: 0,
+        totalPrice: 0,
+        detailsSpecification: "",
+        itemType: "product",
       });
     }
   }, [itemData]);
+
+  const isService = formData.itemType === "service";
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -70,7 +86,7 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
             : value,
       };
 
-      if (name === "totalPrice" && updated.isService) {
+      if (name === "totalPrice" && isService) {
         updated.totalPrice = parseFloat(value) || 0;
       } else if (name === "quantity" || name === "unitPrice") {
         updated.totalPrice = updated.quantity * updated.unitPrice;
@@ -102,6 +118,25 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
         </DialogHeader>
         <div className="space-y-4 overflow-y-auto flex-1 p-1">
           <div className="flex flex-col gap-3">
+            {/* H7: Item Type override — PM can classify as product or service */}
+            <div className="space-y-2">
+              <Label>Item Type</Label>
+              <select
+                name="itemType"
+                value={formData.itemType}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    itemType: e.target.value as "product" | "service",
+                  }))
+                }
+                className="w-full !p-4 rounded-xl border border-[#9f9f9f] shadow-sm text-sm"
+              >
+                <option value="product">Product</option>
+                <option value="service">Service</option>
+              </select>
+            </div>
+
             {/* Item Description */}
             <div className="space-y-2">
               <Label>Item Description</Label>
@@ -126,56 +161,59 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
               />
             </div>
 
-            {!formData.isService && <>
-            {/* Quantity */}
-            <div className="space-y-2">
-              <Label>Quantity</Label>
-              <Input
-                type="number"
-                name="quantity"
-                value={formData.quantity}
-                onChange={handleInputChange}
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
-            </div>
+            {/* H8: Hide Qty/UOM/Unit Price for service items */}
+            {!isService && (
+              <>
+                {/* Quantity */}
+                <div className="space-y-2">
+                  <Label>Quantity</Label>
+                  <Input
+                    type="number"
+                    name="quantity"
+                    value={formData.quantity}
+                    onChange={handleInputChange}
+    className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
+  />
+</div>
 
-            {/* UOM */}
-            <div className="space-y-2">
-              <Label>UOM</Label>
-              <Input
-                type="text"
-                name="uom"
-                value={formData.uom}
-                onChange={handleInputChange}
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
-            </div>
+{/* UOM */}
+<div className="space-y-2">
+  <Label>UOM</Label>
+  <Input
+                    type="text"
+                    name="uom"
+                    value={formData.uom}
+                    onChange={handleInputChange}
+                    className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
+                  />
+                </div>
 
-            {/* Unit Price */}
-            <div className="space-y-2">
-              <Label>Unit Price</Label>
-              <Input
-                type="number"
-                name="unitPrice"
-                value={formData.unitPrice}
-                onChange={handleInputChange}
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-              />
-            </div>
-            </>}
+                {/* Unit Price */}
+                <div className="space-y-2">
+                  <Label>Unit Price</Label>
+                  <Input
+                    type="number"
+                    name="unitPrice"
+                    value={formData.unitPrice}
+                    onChange={handleInputChange}
+                    className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
+                  />
+                </div>
+              </>
+            )}
 
             {/* Total Price */}
             <div className="space-y-2">
-              <Label>{formData.isService ? "Service Fee / Amount" : "Total Price"}</Label>
+              <Label>{isService ? "Service Fee / Amount" : "Total Price"}</Label>
               <Input
-                type={formData.isService ? "number" : "text"}
+                type={isService ? "number" : "text"}
                 name="totalPrice"
-                value={formData.isService ? formData.totalPrice : formData.totalPrice.toLocaleString()}
-                onChange={formData.isService ? handleInputChange : undefined}
-                readOnly={!formData.isService}
-                min={formData.isService ? 0 : undefined}
-                step={formData.isService ? "0.01" : undefined}
-                className={`!p-4 rounded-xl border border-[#9f9f9f] shadow-sm ${formData.isService ? "" : "bg-gray-50"}`}
+                value={isService ? formData.totalPrice : formData.totalPrice.toLocaleString()}
+                onChange={isService ? handleInputChange : undefined}
+                readOnly={!isService}
+                min={isService ? 0 : undefined}
+                step={isService ? "0.01" : undefined}
+                className={`!p-4 rounded-xl border border-[#9f9f9f] shadow-sm ${isService ? "" : "bg-gray-50"}`}
               />
             </div>
 

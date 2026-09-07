@@ -15,7 +15,7 @@ import getLocationName, { Location } from "@/lib/getLocationName";
 import { RequisitionShape } from "@/types/requisition";
 
 interface HDODashboardProps {
-  page?: "hodDashboard" | "hodRequisitions" | "hodRequests";
+  page?: "hodDashboard" | "hodRequisitions" | "hodRequests" | "hhraRequisitions";
   routePrefix?: string;
 }
 
@@ -163,10 +163,13 @@ export default function HDODashboard({
       setLoading(true);
 
       try {
+        // D3: hhraRequisitions uses the unfiltered /requisitions endpoint so HHRA sees all
         const endpoint =
-          page === "hodDashboard" || page === "hodRequisitions"
-            ? `${API_BASE_URL}/departments/${departmentId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
-            : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
+          page === "hhraRequisitions"
+            ? `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
+            : page === "hodDashboard" || page === "hodRequisitions"
+              ? `${API_BASE_URL}/departments/${departmentId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
+              : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
 
         const response = await fetch(endpoint, {
           headers: {

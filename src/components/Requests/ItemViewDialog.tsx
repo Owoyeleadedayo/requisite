@@ -95,7 +95,7 @@ export default function ItemViewDialog({
           )}
           <div className="w-full flex gap-2">
             <div className="w-full space-y-2">
-              <Label className="font-bold">Name of Item</Label>
+              <Label className="font-bold">Item Description</Label>
               <div className="p-4 rounded-md text-gray-700">
                 {currentItem.itemName || "N/A"}
               </div>
@@ -130,7 +130,7 @@ export default function ItemViewDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label className="font-bold">Item Description</Label>
+            <Label className="font-bold">Detailed Specification</Label>
             <div className="p-4 rounded-md text-gray-700">
               {currentItem.itemDescription || "N/A"}
             </div>

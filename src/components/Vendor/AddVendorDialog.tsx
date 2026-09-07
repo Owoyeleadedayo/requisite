@@ -50,6 +50,7 @@ export default function AddVendorDialog({ onVendorAdded, trigger }: AddVendorDia
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<{_id: string; name: string}[]>([]);
   const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
   const [openStart, setOpenStart] = useState(false);
   const [mydateStart, setMydateStart] = useState("");
   const [monthStart, setMonthStart] = useState<Date | undefined>(undefined);
@@ -127,7 +128,8 @@ export default function AddVendorDialog({ onVendorAdded, trigger }: AddVendorDia
     if (!formData.email) errors.push('email');
     if (!formData.phone) errors.push('phone');
     if (!formData.address) errors.push('address');
-    if (!formData.dateOfIncorporation) errors.push('dateOfIncorporation');
+    // F1: Date of incorporation made optional — comment out required check
+    // if (!formData.dateOfIncorporation) errors.push('dateOfIncorporation');
     if (formData.categories.length === 0) errors.push('categories');
     
     if (formData.dateOfIncorporation && new Date(formData.dateOfIncorporation) > new Date()) {
@@ -272,7 +274,7 @@ export default function AddVendorDialog({ onVendorAdded, trigger }: AddVendorDia
                 />
               </div>
               <div className="space-y-2">
-                <Label>Date of Incorporation <span className="text-red-500 -ml-1">*</span></Label>
+                <Label>Date of Incorporation</Label>
                 <div className="relative flex gap-2">
                   <Input
                     id="date-start"
@@ -345,23 +347,80 @@ export default function AddVendorDialog({ onVendorAdded, trigger }: AddVendorDia
                   </PopoverTrigger>
                   <PopoverContent className="w-full p-0 bg-white">
                     <Command>
-                      <CommandInput placeholder="Search categories..." />
+                      <CommandInput
+                        placeholder="Search or type to create..."
+                        value={categorySearch}
+                        onValueChange={setCategorySearch}
+                      />
                       <CommandList>
-                        <CommandEmpty>No categories found.</CommandEmpty>
+                        {/* F2: Inline category creation from typed text */}
+                        {categorySearch.trim() &&
+                          !categories.some(
+                            (c) =>
+                              c.name.toLowerCase() ===
+                              categorySearch.trim().toLowerCase(),
+                          ) && (
+                            <CommandGroup>
+                              <CommandItem
+                                onSelect={async () => {
+                                  const name = categorySearch.trim();
+                                  setAddingCategory(true);
+                                  try {
+                                    const response = await fetch(
+                                      `${API_BASE_URL}/vendor-categories`,
+                                      {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                          Authorization: `Bearer ${token}`,
+                                        },
+                                        body: JSON.stringify({ name }),
+                                      },
+                                    );
+                                    const data = await response.json();
+                                    if (data.success) {
+                                      const newCat = data.data;
+                                      setCategories((prev) => [...prev, newCat]);
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        categories: [...prev.categories, newCat._id],
+                                      }));
+                                      setCategorySearch("");
+                                      toast.success(`Category "${name}" created`);
+                                    } else {
+                                      toast.error(
+                                        data.message || "Failed to create category",
+                                      );
+                                    }
+                                  } catch {
+                                    toast.error("Failed to create category");
+                                  } finally {
+                                    setAddingCategory(false);
+                                  }
+                                }}
+                              >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Create &quot;{categorySearch.trim()}&quot;
+                              </CommandItem>
+                            </CommandGroup>
+                          )}
+                        <CommandEmpty>
+                          {categorySearch.trim()
+                            ? "No match — select above to create"
+                            : "No categories found."}
+                        </CommandEmpty>
                         <CommandGroup>
-                          <CommandItem onSelect={() => setNewCategoryDialog(true)}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Add Category
-                          </CommandItem>
                           {categories.map((category) => (
                             <CommandItem
                               key={category._id}
                               onSelect={() => {
-                                setFormData(prev => ({
+                                setFormData((prev) => ({
                                   ...prev,
                                   categories: prev.categories.includes(category._id)
-                                    ? prev.categories.filter(id => id !== category._id)
-                                    : [...prev.categories, category._id]
+                                    ? prev.categories.filter(
+                                        (id) => id !== category._id,
+                                      )
+                                    : [...prev.categories, category._id],
                                 }));
                               }}
                             >
