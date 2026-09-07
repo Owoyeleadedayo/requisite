@@ -215,9 +215,9 @@ const GeneratePO = () => {
       });
       setVendorId(selectedVendor);
       setRequisitionId(rfqData.requisition._id);
-      const selectedItemDetails = reqItems
+      const selectedItemDetails: POItem[] = reqItems
         .filter((item: RequestItem) => selItems.includes(item.itemId))
-        .map((item: RequestItem) => ({
+        .map((item: RequestItem): POItem => ({
           id: item.itemId,
           itemId: item.itemId,
           itemDescription: item.itemDescription,
