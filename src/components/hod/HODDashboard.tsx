@@ -15,7 +15,7 @@ import getLocationName, { Location } from "@/lib/getLocationName";
 import { RequisitionShape } from "@/types/requisition";
 
 interface HDODashboardProps {
-  page?: "hodDashboard" | "hodRequisitions" | "hodRequests" | "hhraRequisitions";
+  page?: "hodDashboard" | "hodRequisitions" | "hodRequests" | "hhraRequisitions" | "hofRequisitions" | "hofDashboard";
   routePrefix?: string;
 }
 
@@ -163,9 +163,9 @@ export default function HDODashboard({
       setLoading(true);
 
       try {
-        // D3: hhraRequisitions uses the unfiltered /requisitions endpoint so HHRA sees all
+        // D3: hhraRequisitions/hofRequisitions use the unfiltered /requisitions endpoint so HHRA and HOF see all
         const endpoint =
-          page === "hhraRequisitions"
+          page === "hhraRequisitions" || page === "hofRequisitions" || page === "hofDashboard"
             ? `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
             : page === "hodDashboard" || page === "hodRequisitions"
               ? `${API_BASE_URL}/departments/${departmentId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
@@ -239,7 +239,7 @@ export default function HDODashboard({
 
   return (
     <div className="flex flex-col gap-4 p-6 lg:p-12 !pb-16">
-      {page === "hodDashboard" && (
+      {(page === "hodDashboard" || page === "hofDashboard") && (
         <div className="flex flex-col gap-4">
           <p className="text-2xl text-[#0F1E7A] font-semibold font-normal">
             Summary
@@ -274,14 +274,14 @@ export default function HDODashboard({
         <p className="text-md md:text-2xl text-[#0F1E7A] font-semibold leading-5">
           {page === "hodRequests"
             ? "My Requests"
-            : page === "hodRequisitions"
+            : page === "hodRequisitions" || page === "hofRequisitions" || page === "hhraRequisitions"
               ? "Requests"
-              : page === "hodDashboard"
+              : page === "hodDashboard" || page === "hofDashboard"
                 ? "Requests summary"
                 : ""}
         </p>
 
-        {page !== "hodRequisitions" && (
+        {page !== "hodRequisitions" && page !== "hofRequisitions" && page !== "hhraRequisitions" && (
           <Button
             asChild
             className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
