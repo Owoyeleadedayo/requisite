@@ -15,6 +15,7 @@ interface POItemData {
   unitPrice: number;
   totalPrice: number;
   detailsSpecification: string;
+  isService?: boolean;
   itemType?: "product" | "service";
 }
 
@@ -39,7 +40,8 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
     unitPrice: itemData?.unitPrice || 0,
     totalPrice: itemData?.totalPrice || 0,
     detailsSpecification: itemData?.detailsSpecification || "",
-    itemType: itemData?.itemType || "product",
+    itemType:
+      itemData?.itemType || (itemData?.isService ? "service" : "product"),
   });
 
   useEffect(() => {
@@ -52,7 +54,8 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
         unitPrice: itemData.unitPrice || 0,
         totalPrice: itemData.totalPrice || 0,
         detailsSpecification: itemData.detailsSpecification || "",
-        itemType: itemData.itemType || "product",
+        itemType:
+          itemData.itemType || (itemData.isService ? "service" : "product"),
       });
     } else {
       setFormData({
@@ -78,13 +81,14 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
       const updated = {
         ...prev,
         [name]:
-          name === "quantity" || name === "unitPrice"
+          name === "quantity" || name === "unitPrice" || name === "totalPrice"
             ? parseFloat(value) || 0
             : value,
       };
 
-      // Auto-calculate total price when quantity or unit price changes
-      if (name === "quantity" || name === "unitPrice") {
+      if (name === "totalPrice" && isService) {
+        updated.totalPrice = parseFloat(value) || 0;
+      } else if (name === "quantity" || name === "unitPrice") {
         updated.totalPrice = updated.quantity * updated.unitPrice;
       }
 
@@ -168,14 +172,14 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
                     name="quantity"
                     value={formData.quantity}
                     onChange={handleInputChange}
-                    className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
-                  />
-                </div>
+    className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm"
+  />
+</div>
 
-                {/* UOM */}
-                <div className="space-y-2">
-                  <Label>UOM</Label>
-                  <Input
+{/* UOM */}
+<div className="space-y-2">
+  <Label>UOM</Label>
+  <Input
                     type="text"
                     name="uom"
                     value={formData.uom}
@@ -200,13 +204,16 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
 
             {/* Total Price */}
             <div className="space-y-2">
-              <Label>Total Price</Label>
+              <Label>{isService ? "Service Fee / Amount" : "Total Price"}</Label>
               <Input
-                type="text"
+                type={isService ? "number" : "text"}
                 name="totalPrice"
-                value={formData.totalPrice.toLocaleString()}
-                readOnly
-                className="!p-4 rounded-xl border border-[#9f9f9f] shadow-sm bg-gray-50"
+                value={isService ? formData.totalPrice : formData.totalPrice.toLocaleString()}
+                onChange={isService ? handleInputChange : undefined}
+                readOnly={!isService}
+                min={isService ? 0 : undefined}
+                step={isService ? "0.01" : undefined}
+                className={`!p-4 rounded-xl border border-[#9f9f9f] shadow-sm ${isService ? "" : "bg-gray-50"}`}
               />
             </div>
 

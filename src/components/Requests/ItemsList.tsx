@@ -71,6 +71,7 @@ export default function ItemsList({
     const [bulkAction, setBulkAction] = useState('')
     const [bulkItemModalOpen, setBulkItemModalOpen] = useState(false)
     const pendingItems = items.filter(item => item.status === "pending");
+    const showSelection = (userType === 'hod' || userType === 'hof' || userType === 'hhra') && !isEditMode;
 
   if (items.length === 0) {
     return (
@@ -96,7 +97,7 @@ export default function ItemsList({
 
     return (
     <div className="w-full bg-white border-2 border-[#e5e5e5e5] rounded-xl shadow-xl p-5">
-      {userType === 'hod' && (<div className="flex gap-2 sm:w-8/25 mb-2">
+      {showSelection && (<div className="flex gap-2 sm:w-8/25 mb-2">
         <Select
           value={bulkAction}
           onValueChange={(value) => {
@@ -187,7 +188,7 @@ export default function ItemsList({
       <Table>
         <TableHeader>
           <TableRow>
-            {userType === 'hod' && (<TableHead> <Checkbox
+            {showSelection && (<TableHead> <Checkbox
               id='header-checkbox'
               disabled={!pendingItems.length}
               checked={(pendingItems.length && (selectedItems.length === pendingItems.length)) || ((selectedItems.length < items.length && selectedItems.length > 0) && 'indeterminate')}
@@ -196,7 +197,7 @@ export default function ItemsList({
               }
               aria-label="Select all" />
             </TableHead>)}
-            <TableHead>Item Name</TableHead>
+            <TableHead>Item Description</TableHead>
             <TableHead>QTY</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
@@ -206,7 +207,7 @@ export default function ItemsList({
         <TableBody>
           {items.map((item) => (
             <TableRow key={item._id}>
-              {userType === 'hod' && (<TableCell> <Checkbox
+              {showSelection && (<TableCell> <Checkbox
                 id={item._id}
                 disabled={item.status !== 'pending'}
                 checked={selectedItems.includes(item._id)}

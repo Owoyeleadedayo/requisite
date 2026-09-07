@@ -78,11 +78,12 @@ type MenuProps = {
 
 const Menu = ({ showText = true }: MenuProps) => {
   const pathname = usePathname();
+  const currentPathname = pathname ?? "";
   const router = useRouter();
   const user = getUser();
 
   // Get role from URL first, fallback to user's role if on shared routes
-  let role = pathname.split("/")[1] as keyof typeof menuItems;
+  let role = (currentPathname.split("/")[1] || user?.role || "user") as keyof typeof menuItems;
   if (!menuItems[role] && user?.role) {
     role = user.role as keyof typeof menuItems;
   }
@@ -118,8 +119,8 @@ const Menu = ({ showText = true }: MenuProps) => {
         const Icon = item.icon;
         const isActive =
           item.href === `/${role}`
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(item.href + "/");
+            ? currentPathname === item.href
+            : currentPathname === item.href || currentPathname.startsWith(item.href + "/");
 
         return (
           <Link

@@ -28,6 +28,7 @@ interface POItem {
   total: number;
   selected: boolean;
   detailsSpecification: string;
+  isService?: boolean;
   itemType?: "product" | "service";
 }
 
@@ -58,6 +59,9 @@ interface RequestItem {
   uom: string;
   quantity: number;
   expectedDeliveryDate: string;
+  itemType?: string;
+  lineType?: string;
+  isService?: boolean;
 }
 
 interface APIVendor {
@@ -115,6 +119,8 @@ interface POItemData {
   unitPrice: number;
   totalPrice: number;
   detailsSpecification: string;
+  isService?: boolean;
+  itemType?: "product" | "service";
 }
 
 interface Location {
@@ -126,9 +132,9 @@ interface Location {
 }
 
 const GeneratePO = () => {
-  const params = useParams();
+  const params = useParams<{ rfqId: string }>();
   const router = useRouter();
-  const rfqId = params.rfqId as string;
+  const rfqId = params?.rfqId ?? "";
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -209,9 +215,9 @@ const GeneratePO = () => {
       });
       setVendorId(selectedVendor);
       setRequisitionId(rfqData.requisition._id);
-      const selectedItemDetails = reqItems
+      const selectedItemDetails: POItem[] = reqItems
         .filter((item: RequestItem) => selItems.includes(item.itemId))
-        .map((item: RequestItem) => ({
+        .map((item: RequestItem): POItem => ({
           id: item.itemId,
           itemId: item.itemId,
           itemDescription: item.itemDescription,
@@ -222,6 +228,16 @@ const GeneratePO = () => {
           total: 0,
           selected: false,
           detailsSpecification: item.detailedSpecification || "",
+          itemType:
+            item.itemType === "service" ||
+            item.lineType === "service" ||
+            item.isService === true
+              ? "service"
+              : "product",
+          isService:
+            item.isService === true ||
+            item.itemType === "service" ||
+            item.lineType === "service",
         }));
       setItems(selectedItemDetails);
       setFormData({
@@ -285,42 +301,47 @@ const GeneratePO = () => {
     if (!rfqId) return;
     // H6: Validate that total amount is greater than 0 before submission
     if (totalAmount <= 0) {
-      toast.error("Total amount must be greater than 0. Please fill in unit prices for all items.");
-      return;
+toast.error("Total amount must be greater than 0. Please fill in unit prices for all items.");
+return;
     }
     setSubmitting(true);
     try {
-      const token = getToken();
-      const submissionItems = visibleItems.map((item) => ({
-        itemId: item.itemId,
-        itemDescription: item.itemDescription,
-        quantity: item.quantity,
-        uom: item.uom,
-        brand: item.brand,
-        unitPrice: item.unitPrice,
-        totalPrice: item.total,
-        detailsSpecification: item.detailsSpecification,
-      }));
+const token = getToken();
+const submissionItems = visibleItems.map((item) => {
+  const isService = item.itemType === "service" || item.isService === true;
+  return {
+    itemId: item.itemId || item.id,
+    itemDescription: item.itemDescription,
+    detailsSpecification: item.detailsSpecification,
+    lineType: isService ? "service" : "requisition",
+    quantity: isService ? 1 : item.quantity,
+    uom: isService ? "service" : item.uom,
+    brand: item.brand,
+    unitPrice: isService ? item.total : item.unitPrice,
+    totalPrice: item.total,
+  };
+});
 
-      const payload = {
-        title: formData.poTitle,
-        selectedItemIds: visibleItems.map((item) => item.id),
-        selectedVendorId: vendorId,
-        deliveryDate: date ? format(date, "yyyy-MM-dd") : "",
-        deliveryLocation: formData.deliveryLocation,
-        deliveryContact: formData.deliveryContact,
-        shipping: formData.shipping,
-        generalTerms: formData.termsOfService,
-        // H3: evaluationCriteria removed from payload
-        // evaluationCriteria: formData.evaluationCriteria,
-        termsOfService: formData.termsOfService,
-        // H2: Include discount/VAT in payload
-        discount: discountPct,
-        vat: vatPct,
-        paymentTerms: formData.paymentTerms,
-        items: submissionItems,
-        totalAmount,
-      };
+const payload = {
+  title: formData.poTitle,
+  selectedItemIds:
+    selectedItems.length > 0 ? selectedItems : visibleItems.map((item) => item.id),
+  selectedVendorId: vendorId,
+  deliveryDate: date ? format(date, "yyyy-MM-dd") : "",
+  deliveryLocation: formData.deliveryLocation,
+  deliveryContact: formData.deliveryContact,
+  shipping: formData.shipping,
+  generalTerms: formData.termsOfService,
+  // H3: evaluationCriteria removed from payload
+  // evaluationCriteria: formData.evaluationCriteria,
+  termsOfService: formData.termsOfService,
+  // H2: Include discount/VAT in payload
+  discount: discountPct,
+  vat: vatPct,
+  paymentTerms: formData.paymentTerms,
+  items: submissionItems,
+  totalAmount,
+};
 
       const response = await fetch(
         `${API_BASE_URL}/rfqs/${rfqId}/purchase-order`,
@@ -336,6 +357,24 @@ const GeneratePO = () => {
       const data = await response.json();
       if (data.success) {
         const newPoId = data.data?._id;
+        if (newPoId && vendorQuoteFiles.length > 0) {
+          for (const file of vendorQuoteFiles) {
+            const formData = new FormData();
+            formData.append("file", file);
+            const uploadResponse = await fetch(
+              `${API_BASE_URL}/purchase-orders/${newPoId}/attachments`,
+              {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+              },
+            );
+            const uploadData = await uploadResponse.json();
+            if (!uploadResponse.ok || !uploadData.success) {
+              throw new Error(uploadData.message || `Failed to upload ${file.name}`);
+            }
+          }
+        }
         if (newPoId) {
           const submitResponse = await fetch(
             `${API_BASE_URL}/purchase-orders/${newPoId}/submit`,
@@ -465,7 +504,7 @@ const GeneratePO = () => {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-200">
+                <table className="w-full min-w-[800px]">
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-2">
@@ -885,6 +924,9 @@ const GeneratePO = () => {
                     ...itemData,
                     total: itemData.totalPrice,
                     itemType: (itemData as any).itemType || i.itemType,
+                    isService:
+                      (itemData as any).itemType === "service" ||
+                      itemData.isService === true,
                   }
                 : i,
             ),
@@ -900,6 +942,9 @@ const GeneratePO = () => {
                 unitPrice: editingItem.unitPrice,
                 totalPrice: editingItem.total,
                 detailsSpecification: editingItem.detailsSpecification,
+                itemType:
+                  editingItem.itemType ||
+                  (editingItem.isService ? "service" : "product"),
               }
             : undefined
         }
@@ -922,6 +967,9 @@ const GeneratePO = () => {
             selected: false,
             detailsSpecification: itemData.detailsSpecification,
             itemType: (itemData as any).itemType || "product",
+            isService:
+              (itemData as any).itemType === "service" ||
+              itemData.isService === true,
           };
           setItems((prev) => [...prev, newItem]);
         }}
