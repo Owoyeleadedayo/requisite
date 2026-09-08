@@ -39,7 +39,7 @@ const GenerateRFQ = () => {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const requisitionId = params.requisitionId as string;
+  const requisitionId = params?.requisitionId as string;
 
   const today = new Date();
   const [rfqTitle, setRfqTitle] = useState("");
@@ -63,6 +63,7 @@ const GenerateRFQ = () => {
   const [requestData, setRequestData] = useState<RequestData | null>(null);
   const [dialogSelectedItems, setDialogSelectedItems] = useState<string[]>([]);
   const [recommendedVendors, setRecommendedVendors] = useState<Vendor[]>([]);
+  const selectedItemsParam = searchParams?.get("selectedItems");
 
   const fetchVendors = useCallback(async () => {
     setVendorsLoading(true);
@@ -104,7 +105,7 @@ const GenerateRFQ = () => {
 
   useEffect(() => {
     // Check if requisitionId exists and selectedItems are provided
-    if (!requisitionId || !searchParams.get("selectedItems")) {
+    if (!requisitionId || !selectedItemsParam) {
       toast.error("Invalid requisition ID or no items selected.");
       router.push("/pm/requisitions");
       return;
@@ -181,7 +182,6 @@ const GenerateRFQ = () => {
             });
 
             // Get selected items from URL params
-            const selectedItemsParam = searchParams.get("selectedItems");
             if (selectedItemsParam) {
               const selectedIds = selectedItemsParam.split(",");
               setSelectedItems(selectedIds);

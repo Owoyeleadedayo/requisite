@@ -1,6 +1,10 @@
+import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: path.resolve(__dirname, ".."),
+  },
   images: {
     remotePatterns: [
       {
@@ -8,14 +12,6 @@ const nextConfig: NextConfig = {
         hostname: "example.com",
       },
     ],
-  },
-  // Temporarily ignore TypeScript build errors so CI/build can complete while
-  // we address type issues incrementally. Remove or set to false when ready.
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  turbopack: {
-    root: process.cwd(),
   },
 };
 
