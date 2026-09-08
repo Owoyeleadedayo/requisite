@@ -8,8 +8,11 @@ export interface UrgencyFormatResult {
 }
 
 export function formatUrgencyText(
-  urgency: string | number
+  urgency: string | number | undefined | null
 ): UrgencyFormatResult {
+  if (urgency === undefined || urgency === null) {
+    return { text: "Unknown", color: "text-gray-500", icon: <Clock className="w-4 h-4" /> };
+  }
   const urgencyValue =
     typeof urgency === "number" ? urgency : urgency.toLowerCase();
 
@@ -44,7 +47,7 @@ export function formatUrgencyText(
   }
 }
 
-export function UrgencyDisplay({ urgency }: { urgency: string | number }) {
+export function UrgencyDisplay({ urgency }: { urgency: string | number | undefined | null }) {
   const { text, color, icon } = formatUrgencyText(urgency);
 
   return (
