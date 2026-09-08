@@ -2,21 +2,31 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 export type RequisitionStatus =
+  // Requisition lifecycle
   | "draft"
   | "submitted"
+  | "pending"
   | "departmentApproved"
   | "departmentRejected"
+  | "procurementApproved"
+  | "cancelled"
+  // Bidding
   | "vendorBidding"
   | "bidding"
+  | "hrReview"
   | "hhraReview"
   | "hhraApproved"
   | "hhraRejected"
   | "negotiation"
   | "vendorAcknowledged"
-  | "cancelled"
-  | "procurementApproved"
-  | "pending"
-  | string; // Allow any string for graceful fallback
+  // PO approvals
+  | "hofApproved"
+  | "hhrApproved"
+  // RFQ / PO lifecycle
+  | "issued"
+  | "approved"
+  | "rejected"
+  | string; // graceful fallback for unknown values
 
 interface StatusMap {
   label: string;
@@ -26,7 +36,7 @@ interface StatusMap {
 const statusMap: Record<string, StatusMap> = {
   draft: { label: "Draft", color: "bg-gray-100 text-gray-800" },
   submitted: {
-    label: "Pending HOD Approval",
+    label: "Submitted",
     color: "bg-orange-100 text-orange-800",
   },
   pending: {
@@ -75,11 +85,25 @@ const statusMap: Record<string, StatusMap> = {
     label: "Approved by Procurement",
     color: "bg-green-100 text-green-800",
   },
-  default: { label: "Unknown", color: "bg-gray-100 text-gray-800" },
+  // ── PO approvals ──────────────────────────────────────────────────────────
+  hofApproved: {
+    label: "Approved by Finance",
+    color: "bg-teal-100 text-teal-800",
+  },
+  hhrApproved: {
+    label: "Approved by HHRA",
+    color: "bg-teal-100 text-teal-800",
+  },
+  // ── RFQ / PO / generic ────────────────────────────────────────────────────
+  issued: { label: "Issued", color: "bg-green-100 text-green-800" },
+  approved: { label: "Approved", color: "bg-green-100 text-green-800" },
+  rejected: { label: "Rejected", color: "bg-red-100 text-red-800" },
 };
 
-const getStatus = (status: RequisitionStatus) => {
-  return statusMap[status] || { ...statusMap.default, label: status };
+const getStatus = (status: RequisitionStatus): StatusMap => {
+  return (
+    statusMap[status] ?? { label: status, color: "bg-gray-100 text-gray-800" }
+  );
 };
 
 interface StatusBadgeProps {
@@ -95,7 +119,7 @@ export default function StatusBadge({ status, className }: StatusBadgeProps) {
       className={cn(
         "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
         color,
-        className
+        className,
       )}
     >
       {label}
@@ -104,7 +128,7 @@ export default function StatusBadge({ status, className }: StatusBadgeProps) {
 }
 
 // •⁠  ⁠"draft" = Draft
-// •⁠  ⁠⁠"submitted" = Pending HOD Approval
+// •⁠  ⁠⁠"submitted" = Submitted
 // •⁠  ⁠⁠"departmentApproved" = Approved by HOD
 // •⁠  ⁠⁠"departmentRejected" = Rejected by HOD
 // •⁠  ⁠“vendorBidding" = Active Bidding Ongoing

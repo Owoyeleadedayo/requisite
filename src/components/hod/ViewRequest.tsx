@@ -1,22 +1,22 @@
-"use client"
+"use client";
+import Image from "next/image";
+import { Slider } from "@mui/material";
+import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { AlarmClock, ArrowLeft, Upload, X } from "lucide-react";
-import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useRef, useState } from "react";
 import { styled } from "@mui/material/styles";
-import { Slider } from "@mui/material";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Upload, X } from "lucide-react";
 import {
   Dialog,
   DialogClose,
-  DialogContent,
-  DialogDescription,
   DialogHeader,
+  DialogContent,
   DialogTrigger,
+  DialogDescription,
 } from "../ui/dialog";
 
 const CustomSlider = styled(Slider)({
@@ -89,7 +89,7 @@ const ViewRequest = () => {
                   Confirm Urgency Level
                 </Label>
                 <div className="py-3 border rounded-md">
-                <div className="px-3">
+                  <div className="px-3">
                     <Slider
                       getAriaLabel={() => "Temperature range"}
                       value={value}
@@ -166,7 +166,7 @@ const ViewRequest = () => {
               <div className="flex justify-center items-center mt-4 gap-3">
                 <Dialog>
                   <DialogTrigger>
-                  <Button className="bg-[#26850B] w-[100px] text-base text-white hover:bg-[#26850B] cursor-pointer">
+                    <Button className="bg-[#26850B] w-[100px] text-base text-white hover:bg-[#26850B] cursor-pointer">
                       Approve
                     </Button>
                   </DialogTrigger>

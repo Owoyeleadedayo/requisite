@@ -75,7 +75,7 @@ export default function ItemFormDialog({
         </DialogHeader>
         <div className="flex flex-col w-full max-w-xl space-y-5 overflow-y-auto flex-1 px-1">
           <div className="space-y-2">
-            <Label>Name of Item <span className="compulsory-field">*</span></Label>
+            <Label>Item Description <span className="compulsory-field">*</span></Label>
             <Input
               placeholder="e.g., A4 Paper"
               className="!p-4 rounded-md border shadow-sm bg-white"
@@ -116,7 +116,7 @@ export default function ItemFormDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Item Description <span className="compulsory-field">*</span></Label>
+            <Label>Detailed Specification <span className="compulsory-field">*</span></Label>
             <Textarea
               className="min-h-[100px] rounded-md border shadow-sm bg-white"
               value={currentItem.itemDescription}
@@ -170,6 +170,7 @@ export default function ItemFormDialog({
             </div>
           </div>
           <div className="w-full flex gap-3">
+            {/* A5: Recommended Vendor section commented out — not required at requisition stage
             <div className="w-full space-y-2">
               <Label>Recommended Vendor</Label>
               <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
@@ -227,8 +228,9 @@ export default function ItemFormDialog({
                 </PopoverContent>
               </Popover>
             </div>
+            */}
             <div className="w-full space-y-2">
-              <Label>Is this a worktool? <span className="compulsory-field">*</span></Label>
+              <Label>Is this a worktool? (e.g. computers and accessories, phones and accessories) <span className="compulsory-field">*</span></Label>
               <Select
                 value={
                   typeof currentItem.isWorkTool === "boolean"

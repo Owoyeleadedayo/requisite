@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import AddVendorDialog from "./AddVendorDialog";
 import { Vendor } from "@/components/Requests/types";
 import DashboardCard from "@/components/DashboardCard";
+import StatusBadge from "@/components/StatusBadge";
 import DataTable, { Column } from "@/components/DataTable";
 import React, { useEffect, useState, useCallback } from "react";
 
 export default function VendorDashboard({ routePrefix = "/pm" }: { routePrefix?: string }) {
+  const isPmRoute = routePrefix === "/pm";
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -65,18 +67,7 @@ export default function VendorDashboard({ routePrefix = "/pm" }: { routePrefix?:
     {
       key: "status",
       label: "Status",
-      render: (value) => {
-        const statusColors: Record<string, string> = {
-          approved: "text-green-500",
-          pending: "text-orange-500",
-          rejected: "text-red-500",
-        };
-        return (
-          <span className={statusColors[value || "pending"] ?? "text-gray-500"}>
-            {value || "pending"}
-          </span>
-        );
-      },
+      render: (value) => <StatusBadge status={value || "pending"} />,
     },
     {
       key: "isVerified",
@@ -273,17 +264,20 @@ export default function VendorDashboard({ routePrefix = "/pm" }: { routePrefix?:
           Vendors
         </p>
 
-        <AddVendorDialog
-          onVendorAdded={() => {
-            fetchVendors(1);
-            fetchAllVendorsForStats();
-          }}
-          trigger={
-            <Button className="bg-[#0F1E7A] text-white cursor-pointer">
-              <Plus size={22} /> Add New Vendor
-            </Button>
-          }
-        />
+        {/* D4: Add New Vendor is PM-only; HHRA can only approve existing vendors */}
+        {isPmRoute && (
+          <AddVendorDialog
+            onVendorAdded={() => {
+              fetchVendors(1);
+              fetchAllVendorsForStats();
+            }}
+            trigger={
+              <Button className="bg-[#0F1E7A] text-white cursor-pointer">
+                <Plus size={22} /> Add New Vendor
+              </Button>
+            }
+          />
+        )}
       </div>
 
       {loading ? (

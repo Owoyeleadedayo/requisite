@@ -1,7 +1,7 @@
 "use client";
 
 import { API_BASE_URL } from "@/lib/config";
-import { getUser } from "@/lib/auth";
+import { getUser, clearAuthCookies } from "@/lib/auth";
 import {
   SquarePen,
   LayoutGrid,
@@ -41,7 +41,12 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: LayoutGrid, label: "Dashboard", href: "/hod" },
     { icon: FileCog, label: "Requisitions", href: "/hod/requisitions" },
     { icon: Package, label: "My Requests", href: "/hod/my-requests" },
-    // { icon: User, label: "Profile", href: "/hod/profile" },
+  ],
+  hof: [
+    { icon: LayoutGrid, label: "Dashboard", href: "/hof" },
+    { icon: FileCog, label: "Requisitions", href: "/hof/requisitions" },
+    { icon: Package, label: "My Requests", href: "/hof/my-requests" },
+    { icon: FileSpreadsheet, label: "POs", href: "/hof/pos" },
   ],
   pm: [
     { icon: LayoutGrid, label: "Dashboard", href: "/pm" },
@@ -62,7 +67,8 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: CircleDollarSign, label: "RFQs", href: "/hhra/rfqs" },
     { icon: FileSpreadsheet, label: "POs", href: "/hhra/pos" },
     { icon: Store, label: "Vendors", href: "/hhra/vendors" },
-    { icon: MapPin, label: "Locations", href: "/hhra/locations" },
+    // D4: Locations management is PM-only; HHRA should not add/manage locations
+    // { icon: MapPin, label: "Locations", href: "/hhra/locations" },
   ],
 };
 
@@ -98,7 +104,11 @@ const Menu = ({ showText = true }: MenuProps) => {
       toast.error("Logout failed. Please try again.");
     } finally {
       localStorage.removeItem("authData");
-      router.push("/");
+      clearAuthCookies();
+      for (let i = 0; i < window.history.length; i++) {
+        window.history.pushState(null, "", "/");
+      }
+      window.location.replace("/");
     }
   };
 

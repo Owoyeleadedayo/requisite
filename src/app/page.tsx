@@ -3,6 +3,7 @@
 import { toast } from "sonner";
 import Image from "next/image";
 import { API_BASE_URL } from "@/lib/config";
+import { setAuthCookies } from "@/lib/auth";
 import VendorLogin from "@/components/VendorLogin";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -41,19 +42,23 @@ function HomeContent() {
           localStorage.setItem("authData", JSON.stringify(data.data));
           toast.success(data.message);
 
-          const role = data.data.user.role;
+          const { role, designation } = data.data.user;
+          setAuthCookies(data.data.token, role, designation ?? "");
           switch (role) {
             case "staff":
-              router.push("/user");
+              router.replace("/user");
               break;
             case "departmentHead":
-              router.push("/hod");
+              if (designation === "Head, Finance") {
+                router.replace("/hof");
+              } else if (designation === "Head, Human Resources & Admin") {
+                router.replace("/hhra");
+              } else {
+                router.replace("/hod");
+              }
               break;
             case "procurementManager":
-              router.push("/pm");
-              break;
-            case "admin": // case for HHRA role
-              router.push("/hhra");
+              router.replace("/pm");
               break;
             default:
               setShowVendorLogin(true);
