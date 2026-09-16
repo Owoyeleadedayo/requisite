@@ -845,15 +845,20 @@ export default function ViewEditRequest({
 
     setApprovalLoading(true);
     try {
+      const isHof = userType === "hof";
       const res = await fetch(
-        `${API_BASE_URL}/requisitions/${requisitionId}/cancel`,
+        isHof
+          ? `${API_BASE_URL}/requisitions/${requisitionId}/department-approval`
+          : `${API_BASE_URL}/requisitions/${requisitionId}/cancel`,
         {
           method: "PUT",
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ reason: denialReason }),
+          body: isHof
+            ? JSON.stringify({ status: "rejected", comments: denialReason })
+            : JSON.stringify({ reason: denialReason }),
         },
       );
       const data = await res.json();
@@ -1129,7 +1134,16 @@ export default function ViewEditRequest({
                       >
                         <DialogTrigger asChild>
                           <Button
-                            disabled={formData.status !== "submitted"}
+                            disabled={
+                              userType === "hof"
+                                ? ![
+                                    "submitted",
+                                    "departmentApproved",
+                                    "hrReview",
+                                    "hrApproved",
+                                  ].includes(formData.status ?? "")
+                                : formData.status !== "submitted"
+                            }
                             className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
                           >
                             Approve
@@ -1183,7 +1197,16 @@ export default function ViewEditRequest({
                         <DialogTrigger asChild>
                           {/* Todo: refactor status check */}
                           <Button
-                            disabled={formData.status !== "submitted"}
+                            disabled={
+                              userType === "hof"
+                                ? ![
+                                    "submitted",
+                                    "departmentApproved",
+                                    "hrReview",
+                                    "hrApproved",
+                                  ].includes(formData.status ?? "")
+                                : formData.status !== "submitted"
+                            }
                             className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
                           >
                             Deny
