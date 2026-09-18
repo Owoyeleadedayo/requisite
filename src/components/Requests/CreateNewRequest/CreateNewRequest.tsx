@@ -11,6 +11,7 @@ import { parseDate } from "@/lib/parseDate";
 import RequestForm from "../RequestForm";
 import ItemsList from "../ItemsList";
 import ItemFormDialog from "../ItemFormDialog";
+import BatchItemUpload from "../BatchItemUpload";
 import { Item, Vendor } from "../types";
 
 interface CreateNewRequestProps {
@@ -48,6 +49,7 @@ export default function CreateNewRequest({
     UOM: "",
     recommendedVendor: "",
     isWorkTool: "",
+    workToolSubcategory: [],
   });
 
   const urgencyMap = ["low", "medium", "high"];
@@ -197,7 +199,7 @@ export default function CreateNewRequest({
 
   const handleItemFormChange = (
     field: keyof Item,
-    value: string | number | boolean | File | null,
+    value: string | number | boolean | File | null | string[],
   ) => {
     setCurrentItem((prev) => ({ ...prev, [field]: value }));
   };
@@ -210,6 +212,10 @@ export default function CreateNewRequest({
       typeof currentItem.isWorkTool !== "boolean"
     ) {
       toast.error("Please fill all required fields marked with *");
+      return;
+    }
+    if (currentItem.itemType === "product" && !currentItem.units) {
+      toast.error("Units is required for product items");
       return;
     }
 
@@ -285,22 +291,36 @@ export default function CreateNewRequest({
 
       <div className="grid grid-cols-1 lg:grid-cols-[50%_45%]  w-full lg:max-w-7xl gap-10">
         <RequestForm
-          formData={formData}
-          setFormData={setFormData}
           urgency={urgency}
-          setUrgency={setUrgency}
-          dateStart={dateStart}
-          setDateStart={setDateStart}
-          handleSubmit={handleSubmit}
           loading={loading}
           isCreating={true} // isEditMode will default to true
+          formData={formData}
+          dateStart={dateStart}
+          setUrgency={setUrgency}
+          setFormData={setFormData}
+          setDateStart={setDateStart}
+          handleSubmit={handleSubmit}
         />
 
-        <div className="flex lg:flex-col">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <p className="text-lg font-semibold text-[#0F1E7A]">Items</p>
+            <BatchItemUpload
+              onItemsAdded={(newItems) =>
+                setItems((prev) => [...prev, ...newItems])
+              }
+            />
+          </div>
+
           <ItemsList
             items={items}
+            onDeleteItem={handleDeleteItem}
             onAddNewItem={() => {
               resetCurrentItem();
+              setIsItemDialogOpen(true);
+            }}
+            onViewItem={(item) => {
+              setCurrentItem(item);
               setIsItemDialogOpen(true);
             }}
             onEditItem={(item) => {
@@ -308,21 +328,17 @@ export default function CreateNewRequest({
               setEditingItemId(item._id);
               setIsItemDialogOpen(true);
             }}
-            onViewItem={(item) => {
-              setCurrentItem(item);
-              setIsItemDialogOpen(true);
-            }}
-            onDeleteItem={handleDeleteItem}
           />
+
           <ItemFormDialog
-            isOpen={isItemDialogOpen}
-            onOpenChange={setIsItemDialogOpen}
-            currentItem={currentItem}
-            handleItemFormChange={handleItemFormChange}
-            handleAddItem={handleAddItem}
-            editingItemId={editingItemId}
             vendors={vendors}
+            isOpen={isItemDialogOpen}
+            currentItem={currentItem}
+            editingItemId={editingItemId}
+            handleAddItem={handleAddItem}
             vendorsLoading={vendorsLoading}
+            onOpenChange={setIsItemDialogOpen}
+            handleItemFormChange={handleItemFormChange}
           />
         </div>
       </div>

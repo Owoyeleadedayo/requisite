@@ -664,7 +664,7 @@ export default function PurchaseOrderDetails() {
 
         {/* C6: HOF Approve + Reject buttons */}
         {isHof && canHofApprove && (
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               disabled={approving}
               onClick={() => setPendingApproval("hof")}
@@ -683,7 +683,7 @@ export default function PurchaseOrderDetails() {
         )}
         {/* C6: HHRA Approve + Reject buttons */}
         {isHhra && canHhraApprove && (
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               disabled={approving}
               onClick={() => setPendingApproval("hhr")}
@@ -787,7 +787,7 @@ export default function PurchaseOrderDetails() {
         </Dialog>
 
         {isPm && (
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             {/* H4: Edit PO button for PM when status is submitted */}
             {purchaseOrder.status === "submitted" && (
               <button
@@ -902,7 +902,7 @@ export default function PurchaseOrderDetails() {
                 </tbody>
               </table>
             </div>
-            <div className="flex gap-3 mt-4">
+            <div className="flex flex-wrap gap-3 mt-4">
               <button
                 onClick={handleSaveEdit}
                 disabled={savingEdit}
