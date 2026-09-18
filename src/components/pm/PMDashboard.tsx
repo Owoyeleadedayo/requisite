@@ -7,16 +7,15 @@ import { CONSTANTS } from "@/lib/constants";
 import { API_BASE_URL } from "@/lib/config";
 import { Button } from "@/components/ui/button";
 import { Location } from "@/lib/getLocationName";
+import StatusBadge from "@/components/StatusBadge";
 import getLocationName from "@/lib/getLocationName";
-import { NumericFormat } from "react-number-format";
 import { RequisitionShape } from "@/types/requisition";
 import DashboardCard from "@/components/DashboardCard";
-import StatusBadge from "@/components/StatusBadge";
+import { useEffect, useState, useCallback } from "react";
 import DataTable, { Column } from "@/components/DataTable";
 import { locationService } from "@/services/locationService";
 import { getToken, getUserId, getAuthData } from "@/lib/auth";
 import { Edit, Eye, Folder, Plus, Trash2 } from "lucide-react";
-import React, { useEffect, useState, useCallback } from "react";
 import LocationsFormDialog from "@/components/pm/LocationsFormDialog";
 
 const PAGE_CAN_ROUTE_TO_NEW_REQUEST: string[] = [

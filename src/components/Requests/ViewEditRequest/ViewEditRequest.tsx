@@ -153,6 +153,7 @@ export default function ViewEditRequest({
     UOM: "",
     recommendedVendor: "",
     isWorkTool: "",
+    workToolSubcategory: [],
   });
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -366,7 +367,7 @@ export default function ViewEditRequest({
 
   const handleItemFormChange = (
     field: keyof Item,
-    value: string | number | boolean | File | null,
+    value: string | number | boolean | File | null | string[],
   ) => {
     setCurrentItem((prev) => ({ ...prev, [field]: value }));
   };
@@ -379,6 +380,10 @@ export default function ViewEditRequest({
       typeof currentItem.isWorkTool !== "boolean"
     ) {
       toast.error("Please fill all required fields marked with *");
+      return;
+    }
+    if (currentItem.itemType === "product" && !currentItem.units) {
+      toast.error("Units is required for product items");
       return;
     }
 
@@ -510,8 +515,9 @@ export default function ViewEditRequest({
     }
   };
 
-  const approveBulkRequisitionItems = async () => {
-    if (!itemComment.trim()) {
+  const approveBulkRequisitionItems = async (silentComment?: string) => {
+    const comment = silentComment ?? itemComment;
+    if (!silentComment && !comment.trim()) {
       // Errors were thrown to allow the modal close only when the request is successful
       throw toast.error(
         CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN,
@@ -520,8 +526,7 @@ export default function ViewEditRequest({
 
     const body = {
       itemIds: selectedItems,
-      comments:
-        itemComment.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
+      comments: comment.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
     };
 
     setIsItemRequestLoading(true);
@@ -802,6 +807,16 @@ export default function ViewEditRequest({
   const handleApproval = async () => {
     setApprovalLoading(true);
     try {
+      // Silently approve all selected items before approving the request
+      if (selectedItems.length > 0) {
+        const silentComment = approvalComment.trim() || "Approved for procurement";
+        const body = {
+          itemIds: selectedItems,
+          comments: silentComment,
+        };
+        await requisitionService.approveBulkRequisitionItems(requisitionId, body);
+      }
+
       const res = await fetch(
         `${API_BASE_URL}/requisitions/${requisitionId}/department-approval`,
         {
@@ -1112,25 +1127,19 @@ export default function ViewEditRequest({
                       <Dialog
                         open={showApprovalModal}
                         onOpenChange={(open) => {
-                          if (
-                            items!.some(
-                              (item) =>
-                                item.status === "departmentApproved" ||
-                                item.status === "hrReview",
-                            )
-                          ) {
+                          if (selectedItems.length > 0) {
                             setShowApprovalModal(open);
                           } else {
                             toast.error(
-                              "Approve at least one item before proceeding",
+                              "Select at least one item to approve before proceeding",
                             );
                           }
                         }}
                       >
                         <DialogTrigger asChild>
                           <Button
-                            disabled={formData.status !== "submitted"}
-                            className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
+                            disabled={formData.status !== "submitted" || selectedItems.length === 0}
+                            className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Approve
                           </Button>
@@ -1143,10 +1152,10 @@ export default function ViewEditRequest({
                             <div>
                               <Label>Approval Comment</Label>
                               {(userType === "hod" || userType === "hhra" || userType === "hof") && (
-                                <span className="flex text-xs pt-2 leading-none">
-                                  Confirm that all relevant items have been
-                                  approved before proceeding, as the process
-                                  cannot be reversed.
+                                <span className="flex text-xs pt-2 leading-none text-gray-500">
+                                  {selectedItems.length} of {items?.filter(i => i.status === "pending").length ?? 0} pending item(s) selected.
+                                  {(items?.filter(i => i.status === "pending").length ?? 0) - selectedItems.length > 0 &&
+                                    ` ${(items?.filter(i => i.status === "pending").length ?? 0) - selectedItems.length} item(s) will remain pending.`}
                                 </span>
                               )}
                               <Textarea

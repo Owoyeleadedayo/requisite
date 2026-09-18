@@ -34,7 +34,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Item, ItemType, Vendor } from "./types";
+import { Item, ItemType, Vendor, WORK_TOOL_SUBCATEGORIES } from "./types";
 
 interface ItemFormDialogProps {
   isOpen: boolean;
@@ -42,7 +42,7 @@ interface ItemFormDialogProps {
   currentItem: Item;
   handleItemFormChange: (
     field: keyof Item,
-    value: string | number | boolean | File | null
+    value: string | number | boolean | File | null | string[]
   ) => void;
   handleAddItem: () => void;
   editingItemId: string | null;
@@ -61,6 +61,16 @@ export default function ItemFormDialog({
   vendorsLoading,
 }: ItemFormDialogProps) {
   const [comboboxOpen, setComboboxOpen] = React.useState(false);
+  const isService = currentItem.itemType === "service";
+  const isWorkTool = currentItem.isWorkTool === true || currentItem.isWorkTool === "true";
+
+  const handleSubcategoryToggle = (option: string) => {
+    const current = currentItem.workToolSubcategory ?? [];
+    const updated = current.includes(option)
+      ? current.filter((s) => s !== option)
+      : [...current, option];
+    handleItemFormChange("workToolSubcategory", updated);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -84,7 +94,7 @@ export default function ItemFormDialog({
               required
             />
           </div>
-          <div className="w-full flex gap-3">
+          <div className="w-full flex flex-col sm:flex-row gap-3">
             <div className="w-full space-y-2">
               <Label>Item Type <span className="compulsory-field">*</span></Label>
               <Select
@@ -143,32 +153,35 @@ export default function ItemFormDialog({
               />
             </div>
           </div>
-          <div className="w-full flex gap-3">
-            <div className="w-full space-y-2">
-              <Label>Units</Label>
-              <Input
-                type="number"
-                placeholder="e.g., 10"
-                className="!p-4 rounded-md border shadow-sm bg-white"
-                value={currentItem.units}
-                onChange={(e) =>
-                  handleItemFormChange(
-                    "units",
-                    e.target.value ? parseInt(e.target.value) : ""
-                  )
-                }
-              />
+          {!isService && (
+            <div className="w-full flex flex-col sm:flex-row gap-3">
+              <div className="w-full space-y-2">
+                <Label>Units <span className="compulsory-field">*</span></Label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 10"
+                  className="!p-4 rounded-md border shadow-sm bg-white"
+                  value={currentItem.units}
+                  onChange={(e) =>
+                    handleItemFormChange(
+                      "units",
+                      e.target.value ? parseInt(e.target.value) : ""
+                    )
+                  }
+                  required
+                />
+              </div>
+              <div className="w-full space-y-2">
+                <Label>UOM (Unit of Measure)</Label>
+                <Input
+                  placeholder="e.g., Reams, Pieces, Packs"
+                  className="!p-4 rounded-md border shadow-sm bg-white"
+                  value={currentItem.UOM}
+                  onChange={(e) => handleItemFormChange("UOM", e.target.value)}
+                />
+              </div>
             </div>
-            <div className="w-full space-y-2">
-              <Label>UOM (Unit of Measure)</Label>
-              <Input
-                placeholder="e.g., Reams, Pieces, Packs"
-                className="!p-4 rounded-md border shadow-sm bg-white"
-                value={currentItem.UOM}
-                onChange={(e) => handleItemFormChange("UOM", e.target.value)}
-              />
-            </div>
-          </div>
+          )}
           <div className="w-full flex gap-3">
             {/* A5: Recommended Vendor section commented out — not required at requisition stage
             <div className="w-full space-y-2">
@@ -252,9 +265,37 @@ export default function ItemFormDialog({
               </Select>
             </div>
           </div>
+          {isWorkTool && (
+            <div className="space-y-2">
+              <Label>Work Tool Category <span className="compulsory-field">*</span></Label>
+              <div className="grid grid-cols-2 gap-2">
+                {WORK_TOOL_SUBCATEGORIES.map((option) => {
+                  const checked = (currentItem.workToolSubcategory ?? []).includes(option);
+                  return (
+                    <label
+                      key={option}
+                      className={`flex items-center gap-2 cursor-pointer rounded-md border px-3 py-2 text-sm transition-colors ${
+                        checked
+                          ? "border-[#0F1E7A] bg-blue-50 text-[#0F1E7A]"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="accent-[#0F1E7A]"
+                        checked={checked}
+                        onChange={() => handleSubcategoryToggle(option)}
+                      />
+                      {option}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="w-full flex gap-3 mt-4 flex-shrink-0">
+        <div className="w-full flex flex-col sm:flex-row gap-3 mt-4 flex-shrink-0">
           <div className="w-1/2">
             <Button
               onClick={handleAddItem}
