@@ -195,7 +195,7 @@ export default function AddVendorDialog({ onVendorAdded, trigger }: AddVendorDia
         <DialogTrigger asChild>
           {trigger}
         </DialogTrigger>
-        <DialogContent className="bg-white max-w-[500px] max-h-[600px] overflow-hidden flex flex-col">
+        <DialogContent className="bg-white w-full sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <div className="flex justify-center items-center">
               <p className="text-xl font-semibold text-center text-[#100A1A]">
@@ -478,7 +478,7 @@ export default function AddVendorDialog({ onVendorAdded, trigger }: AddVendorDia
       </Dialog>
 
       <Dialog open={newCategoryDialog} onOpenChange={setNewCategoryDialog}>
-        <DialogContent className="bg-white max-w-[400px]">
+        <DialogContent className="bg-white w-full sm:max-w-[400px]">
           <DialogHeader>
             <h2 className="text-xl font-semibold text-center">Add New Category</h2>
           </DialogHeader>

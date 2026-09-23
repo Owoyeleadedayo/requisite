@@ -22,7 +22,17 @@ export interface Item {
   UOM: string;
   recommendedVendor: string;
   isWorkTool: boolean | string;
+  workToolSubcategory?: string[];
 }
+
+export const WORK_TOOL_SUBCATEGORIES = [
+  "Laptop Accessories",
+  "Phone Accessories",
+  "Office Equipment",
+  "Security Accessories",
+] as const;
+
+export type WorkToolSubcategory = typeof WORK_TOOL_SUBCATEGORIES[number];
 
 export interface RequestData {
   _id: string;

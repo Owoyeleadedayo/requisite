@@ -103,7 +103,7 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-white max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="bg-white w-full sm:max-w-[500px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <div className="flex justify-center items-center">
             <p className="text-xl font-semibold text-center text-[#100A1A]">

@@ -187,7 +187,7 @@ export default function ItemViewDialog({
                     Approve
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl bg-white">
+                <DialogContent className="w-full sm:max-w-2xl bg-white">
                   <DialogHeader>
                     <DialogTitle>Approve Item</DialogTitle>
                   </DialogHeader>
@@ -236,7 +236,7 @@ export default function ItemViewDialog({
                     Deny
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl bg-white">
+                <DialogContent className="w-full sm:max-w-2xl bg-white">
                   <DialogHeader>
                     <DialogTitle>Deny Item</DialogTitle>
                   </DialogHeader>
