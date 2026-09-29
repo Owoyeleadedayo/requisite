@@ -13,9 +13,9 @@ import AdvancedSearchModal from "@/components/AdvancedSearchModal";
 import NotificationDropdown from "@/components/NotificationDropdown";
 import {
   DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 import {
   Gem,
