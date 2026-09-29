@@ -80,4 +80,22 @@ export const requisitionService = {
       body,
     );
   },
+  hofApproveRequisition: (
+    requisitionId: string,
+    body: RequisitionHandleComment,
+  ): Promise<HandledRequisitionResponse> => {
+    return apiClient.put<HandledRequisitionResponse>(
+      CONSTANTS.REQUISITION.API.HOF_APPROVE_REQUISITION(requisitionId),
+      body,
+    );
+  },
+  hofRejectRequisition: (
+    requisitionId: string,
+    body: RequisitionHandleComment,
+  ): Promise<HandledRequisitionResponse> => {
+    return apiClient.put<HandledRequisitionResponse>(
+      CONSTANTS.REQUISITION.API.HOF_REJECT_REQUISITION(requisitionId),
+      body,
+    );
+  },
 };

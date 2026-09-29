@@ -16,6 +16,10 @@ export const CONSTANTS = {
         `/requisitions/${requisitionId}/items/${itemId}/hr-reject`,
       REJECT_REQUISITION: (requisitionId: string) =>
         `/requisitions/${requisitionId}/department-rejection`,
+      HOF_APPROVE_REQUISITION: (requisitionId: string) =>
+        `/requisitions/${requisitionId}/hof-approval`,
+      HOF_REJECT_REQUISITION: (requisitionId: string) =>
+        `/requisitions/${requisitionId}/hof-reject`,
     },
     COMMENT: {
       ITEM_APPROVAL: "Approved for requisition",

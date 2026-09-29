@@ -777,10 +777,9 @@ export default function ViewEditRequest({
     };
 
     try {
-      const data = await requisitionService.rejectRequisition(
-        requisitionId,
-        body,
-      );
+      const data = userType === "hof"
+        ? await requisitionService.hofRejectRequisition(requisitionId, body)
+        : await requisitionService.rejectRequisition(requisitionId, body);
       if (data.success) {
         toast.success(
           CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_SUCCESS,
@@ -817,32 +816,49 @@ export default function ViewEditRequest({
         await requisitionService.approveBulkRequisitionItems(requisitionId, body);
       }
 
-      const res = await fetch(
-        `${API_BASE_URL}/requisitions/${requisitionId}/department-approval`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: "approved",
-            comments: approvalComment.trim() || "Approved for procurement",
-          }),
-        },
-      );
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Request approved successfully");
-        // J1: Merge response data so status always reflects the approval even if API returns partial data
-        setFormData((prev) => ({
-          ...prev,
-          ...(data.data || {}),
-          status: data.data?.status || "departmentApproved",
-        }));
-        setShowApprovalModal(false);
+      const comment = approvalComment.trim() || "Approved for procurement";
+
+      if (userType === "hof") {
+        const data = await requisitionService.hofApproveRequisition(
+          requisitionId,
+          { comments: comment },
+        );
+        if (data.success) {
+          toast.success("Request approved successfully");
+          setFormData((prev) => ({
+            ...prev,
+            ...(data.data || {}),
+            status: data.data?.status || "hofApproved",
+          }));
+          setShowApprovalModal(false);
+        } else {
+          toast.error(data.message || "Failed to approve request");
+        }
       } else {
-        toast.error(data.message || "Failed to approve request");
+        const res = await fetch(
+          `${API_BASE_URL}/requisitions/${requisitionId}/department-approval`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: "approved", comments: comment }),
+          },
+        );
+        const data = await res.json();
+        if (data.success) {
+          toast.success("Request approved successfully");
+          // J1: Merge response data so status always reflects the approval even if API returns partial data
+          setFormData((prev) => ({
+            ...prev,
+            ...(data.data || {}),
+            status: data.data?.status || "departmentApproved",
+          }));
+          setShowApprovalModal(false);
+        } else {
+          toast.error(data.message || "Failed to approve request");
+        }
       }
     } catch (error) {
       console.error(error);
@@ -1124,10 +1140,17 @@ export default function ViewEditRequest({
                   )}
                   {(userType === "hod" || userType === "hhra" || userType === "hof") && (
                     <>
+                      {(() => {
+                        const canActOnRequest =
+                          userType === "hof"
+                            ? formData.status === "departmentApproved"
+                            : formData.status === "submitted";
+                        return (
+                      <>
                       <Dialog
                         open={showApprovalModal}
                         onOpenChange={(open) => {
-                          if (selectedItems.length > 0) {
+                          if (userType === "hof" || selectedItems.length > 0) {
                             setShowApprovalModal(open);
                           } else {
                             toast.error(
@@ -1138,7 +1161,7 @@ export default function ViewEditRequest({
                       >
                         <DialogTrigger asChild>
                           <Button
-                            disabled={formData.status !== "submitted" || selectedItems.length === 0}
+                            disabled={!canActOnRequest || (userType !== "hof" && selectedItems.length === 0)}
                             className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Approve
@@ -1190,9 +1213,8 @@ export default function ViewEditRequest({
                         onOpenChange={setShowDenialModal}
                       >
                         <DialogTrigger asChild>
-                          {/* Todo: refactor status check */}
                           <Button
-                            disabled={formData.status !== "submitted"}
+                            disabled={!canActOnRequest}
                             className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
                           >
                             Deny
@@ -1232,6 +1254,9 @@ export default function ViewEditRequest({
                           </div>
                         </DialogContent>
                       </Dialog>
+                      </>
+                        );
+                      })()}
                     </>
                   )}
                 </>
