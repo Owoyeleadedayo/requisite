@@ -83,6 +83,7 @@ export default function ItemsList({
 }: ItemsListProps) {
   const [bulkAction, setBulkAction] = useState("");
   const [bulkItemModalOpen, setBulkItemModalOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingItems = items.filter((item) => item.status === "pending");
   const showSelection =
     (userType === "hod" || userType === "hof" || userType === "hhra") &&
@@ -324,14 +325,38 @@ export default function ItemsList({
                         >
                           <Edit size={24} className="!text-[#0F1E7A]" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          className="!px-2 !lg:px-1"
-                          disabled={!isEditMode}
-                          onClick={() => onDeleteItem(item._id)}
-                        >
-                          <Trash2 size={24} className="!text-red-500" />
-                        </Button>
+                        {pendingDeleteId === item._id ? (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-600 hover:bg-red-50 text-xs px-2 h-8 cursor-pointer"
+                              onClick={() => {
+                                onDeleteItem(item._id);
+                                setPendingDeleteId(null);
+                              }}
+                            >
+                              Delete
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-gray-500 hover:text-gray-700 text-xs px-2 h-8 cursor-pointer"
+                              onClick={() => setPendingDeleteId(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            className="!px-2 !lg:px-1"
+                            disabled={!isEditMode}
+                            onClick={() => setPendingDeleteId(item._id)}
+                          >
+                            <Trash2 size={24} className="!text-red-500" />
+                          </Button>
+                        )}
                       </>
                     )}
                   </TableCell>

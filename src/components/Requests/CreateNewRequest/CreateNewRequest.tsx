@@ -31,6 +31,7 @@ export default function CreateNewRequest({
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [vendorsLoading, setVendorsLoading] = useState(true);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [isViewMode, setIsViewMode] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -338,15 +339,20 @@ export default function CreateNewRequest({
             onDeleteItem={handleDeleteItem}
             onAddNewItem={() => {
               resetCurrentItem();
+              setEditingItemId(null);
+              setIsViewMode(false);
               setIsItemDialogOpen(true);
             }}
             onViewItem={(item) => {
               setCurrentItem(item);
+              setEditingItemId(null);
+              setIsViewMode(true);
               setIsItemDialogOpen(true);
             }}
             onEditItem={(item) => {
               setCurrentItem(item);
               setEditingItemId(item._id);
+              setIsViewMode(false);
               setIsItemDialogOpen(true);
             }}
           />
@@ -358,7 +364,15 @@ export default function CreateNewRequest({
             editingItemId={editingItemId}
             handleAddItem={handleAddItem}
             vendorsLoading={vendorsLoading}
-            onOpenChange={setIsItemDialogOpen}
+            isViewMode={isViewMode}
+            onStartEdit={() => {
+              setIsViewMode(false);
+              setEditingItemId(currentItem._id);
+            }}
+            onOpenChange={(open) => {
+              setIsItemDialogOpen(open);
+              if (!open) setIsViewMode(false);
+            }}
             handleItemFormChange={handleItemFormChange}
           />
         </div>
