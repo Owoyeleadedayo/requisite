@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useSidebar } from "@/components/ui/sidebar";
 
 type MenuItem = {
   icon: LucideIcon;
@@ -81,6 +82,7 @@ const Menu = ({ showText = true }: MenuProps) => {
   const currentPathname = pathname ?? "";
   const router = useRouter();
   const user = getUser();
+  const { setOpenMobile } = useSidebar();
 
   // Get role from URL first, fallback to user's role if on shared routes
   let role = (currentPathname.split("/")[1] || user?.role || "user") as keyof typeof menuItems;
@@ -126,6 +128,7 @@ const Menu = ({ showText = true }: MenuProps) => {
           <Link
             key={item.label}
             href={item.href}
+            onClick={() => setOpenMobile(false)}
             className={`flex items-center w-full ${
               showText ? "gap-3 px-6 justify-start" : "justify-center"
             } text-md py-2 mx-2 transition-colors duration-200 ${
