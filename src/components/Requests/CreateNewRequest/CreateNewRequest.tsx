@@ -130,28 +130,6 @@ export default function CreateNewRequest({
         const submitData = await submitResponse.json();
 
         if (submitData.success) {
-          // Step 3: HOD requests are auto-approved at department level immediately after submission
-          if (page === "hod") {
-            try {
-              await fetch(
-                `${API_BASE_URL}/requisitions/${createData.data._id}/department-approval`,
-                {
-                  method: "PUT",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    status: "approved",
-                    comments: "Auto-approved by HOD",
-                  }),
-                },
-              );
-            } catch (err) {
-              console.warn("HOD auto-approval step failed:", err);
-            }
-          }
-
           toast.success("Requisition created and submitted successfully!");
           const redirectPath =
             page === "hod"
