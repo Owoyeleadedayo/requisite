@@ -60,6 +60,11 @@ const menuItems: Record<string, MenuItem[]> = {
     // { icon: ShoppingCart, label: "Vendors", href: "/pm/vendors" },
     // { icon: Gavel, label: "Bids", href: "/pm/bids" },
   ],
+  // TODO: update role key once backend finalises Warehouse Manager role name
+  wm: [
+    { icon: LayoutGrid, label: "Dashboard", href: "/wm" },
+    { icon: FileSpreadsheet, label: "POs", href: "/wm/pos" },
+  ],
   hhra: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },
     { icon: FileCog, label: "Requisitions", href: "/hhra/requisitions" },
