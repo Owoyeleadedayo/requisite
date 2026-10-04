@@ -97,6 +97,12 @@ export function SiteHeader() {
           className="mx-2 bg-white/30 data-[orientation=vertical]:h-4"
         />
 
+        {user?.role && (
+          <span className="hidden sm:inline-flex items-center rounded-full border border-white/30 bg-white/10 px-2.5 py-0.5 text-xs font-medium text-white capitalize">
+            {user.role}
+          </span>
+        )}
+
         <div className="ml-auto flex items-center gap-4">
           <AdvancedSearchModal
             trigger={
