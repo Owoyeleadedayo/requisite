@@ -46,6 +46,9 @@ import PMItemsList from "../PMItemsList";
 import Related from "./Related";
 import { requisitionService } from "@/services/requisitionService";
 import { CONSTANTS } from "@/lib/constants";
+import ConfirmDeliveryDialog, {
+  ConfirmDeliveryData,
+} from "@/components/GRN/ConfirmDeliveryDialog";
 
 interface RequestData {
   _id: string;
@@ -165,6 +168,9 @@ export default function ViewEditRequest({
   const [showItemsError, setShowItemsError] = useState(false);
   const [itemComment, setItemComment] = useState("");
   const [isItemRequestLoading, setIsItemRequestLoading] = useState(false);
+  const [pendingDeliveryConfirmation, setPendingDeliveryConfirmation] =
+    useState<ConfirmDeliveryData | null>(null);
+  const [isConfirmDeliveryOpen, setIsConfirmDeliveryOpen] = useState(false);
 
   const priorityMap: Record<number, RequestData["priority"]> = {
     0: "low",
@@ -363,7 +369,31 @@ export default function ViewEditRequest({
     if (token) {
       fetchAllVendors(token);
     }
-  }, [requisitionId, token, isEditMode]);
+
+    // TODO: Replace with real endpoint once backend provides it.
+    // GET /requisitions/:id/pending-delivery-confirmation
+    // Expected response: { success: true, data: ConfirmDeliveryData | null }
+    // This fetches any GRN (product) or JCF (service) that is awaiting originator confirmation.
+    const fetchPendingConfirmation = async () => {
+      if (userType !== "user") return;
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/requisitions/${requisitionId}/pending-delivery-confirmation`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        const data = await res.json();
+        if (data.success && data.data) {
+          setPendingDeliveryConfirmation(data.data);
+        }
+      } catch {
+        // silently ignore — endpoint may not exist yet
+      }
+    };
+
+    if (token) {
+      fetchPendingConfirmation();
+    }
+  }, [requisitionId, token, isEditMode, userType]);
 
   const handleItemFormChange = (
     field: keyof Item,
@@ -909,6 +939,13 @@ export default function ViewEditRequest({
     }
   };
 
+  const handleConfirmDelivery = async () => {
+    // TODO: wire to POST /purchase-orders/:poId/grns/:grnId/confirm (or /jcfs/:jcfId/confirm)
+    // when the backend endpoint is available.
+    toast.info("Delivery confirmation endpoint not yet available.");
+    setPendingDeliveryConfirmation(null);
+  };
+
   const handleGenerateRFQ = async () => {
     if (selectedItems.length === 0) {
       toast.error("Please select at least one item to generate RFQ");
@@ -1410,6 +1447,38 @@ export default function ViewEditRequest({
           {/* )} */}
         </div>
       </div>
+
+      {/* Pending delivery confirmation banner — visible to request originator only */}
+      {userType === "user" && pendingDeliveryConfirmation && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-lg px-4">
+          <div className="flex items-center justify-between gap-4 bg-[#0F1E7A] text-white px-5 py-4 rounded-xl shadow-2xl">
+            <div className="flex flex-col">
+              <p className="font-semibold text-sm">Delivery awaiting your confirmation</p>
+              <p className="text-xs text-blue-200 mt-0.5">
+                {pendingDeliveryConfirmation.poNumber} ·{" "}
+                {pendingDeliveryConfirmation.type === "grn" ? "Goods received" : "Service completed"}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="shrink-0 bg-white text-[#0F1E7A] hover:bg-blue-50 font-semibold text-xs px-4"
+              onClick={() => setIsConfirmDeliveryOpen(true)}
+            >
+              Review &amp; Confirm
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm delivery dialog */}
+      {pendingDeliveryConfirmation && (
+        <ConfirmDeliveryDialog
+          isOpen={isConfirmDeliveryOpen}
+          onClose={() => setIsConfirmDeliveryOpen(false)}
+          data={pendingDeliveryConfirmation}
+          onConfirm={handleConfirmDelivery}
+        />
+      )}
     </div>
   );
 }

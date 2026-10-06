@@ -69,11 +69,7 @@ export default function ItemFormDialog({
   const isWorkTool = currentItem.isWorkTool === true || currentItem.isWorkTool === "true";
 
   const handleSubcategoryToggle = (option: string) => {
-    const current = currentItem.workToolSubcategory ?? [];
-    const updated = current.includes(option)
-      ? current.filter((s) => s !== option)
-      : [...current, option];
-    handleItemFormChange("workToolSubcategory", updated);
+    handleItemFormChange("workToolSubcategory", [option]);
   };
 
   return (
@@ -298,7 +294,8 @@ export default function ItemFormDialog({
                       }`}
                     >
                       <input
-                        type="checkbox"
+                        type="radio"
+                        name="workToolSubcategory"
                         className="accent-[#0F1E7A]"
                         checked={checked}
                         disabled={isViewMode}

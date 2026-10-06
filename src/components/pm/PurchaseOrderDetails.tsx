@@ -7,7 +7,16 @@ import { useEffect, useState } from "react";
 import { getAuthData, getToken } from "@/lib/auth";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { ArrowLeft, Download, FileText, ShieldCheck } from "lucide-react";
-import Related from "@/components/Requests/ViewEditRequest/Related";
+import Related, { GRNRecord, JCFRecord } from "@/components/Requests/ViewEditRequest/Related";
+import GenerateGRNDialog, {
+  GRNPayload,
+  GRNSubmitResult,
+  GRNExistingRecord,
+} from "@/components/GRN/GenerateGRNDialog";
+import GenerateJCFDialog, {
+  JCFPayload,
+  JCFSubmitResult,
+} from "@/components/GRN/GenerateJCFDialog";
 import {
   Dialog,
   DialogContent,
@@ -112,6 +121,8 @@ export default function PurchaseOrderDetails() {
     authData?.user?.role === "departmentHead" &&
     authData?.user?.designation === "Head, Finance";
   const isPm = authData?.user?.role === "procurementManager";
+  // TODO: update role key once backend defines the Warehouse Manager role
+  const isWm = authData?.user?.role === "warehouseManager";
 
   const [loading, setLoading] = useState(true);
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(
@@ -126,6 +137,12 @@ export default function PurchaseOrderDetails() {
   );
   const [pendingRejection, setPendingRejection] = useState<"hhr" | "hof" | null>(null);
   const [rejectionFeedback, setRejectionFeedback] = useState("");
+  // GRN state
+  const [isGRNDialogOpen, setIsGRNDialogOpen] = useState(false);
+  const [grns, setGrns] = useState<GRNRecord[]>([]);
+  // JCF state
+  const [isJCFDialogOpen, setIsJCFDialogOpen] = useState(false);
+  const [jcfs, setJcfs] = useState<JCFRecord[]>([]);
   // H4: PM edit mode for submitted POs
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedItems, setEditedItems] = useState<PurchaseOrderItem[]>([]);
@@ -167,6 +184,92 @@ export default function PurchaseOrderDetails() {
 
     fetchPurchaseOrder();
   }, [poId, router]);
+
+  // TODO: replace with real endpoint once backend defines GET /purchase-orders/:id/grns
+  const fetchGRNs = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/grns`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setGrns(data.data ?? []);
+    } catch {
+      // silently ignore — GRN list is non-critical
+    }
+  };
+
+  // TODO: replace stub with real API call once endpoint is ready
+  const handleGRNSubmit = async (payload: GRNPayload): Promise<GRNSubmitResult> => {
+    const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/grn`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || "Failed to create GRN");
+    await fetchGRNs();
+    return {
+      grnNumber: data.data?.grnNumber ?? "GRN-XXXX",
+      receivingEmployee: payload.receivingEmployee,
+      submittedDate: new Date().toLocaleString("en-GB", {
+        day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      }),
+      totalDeliveredQty: payload.items.reduce((sum, i) => sum + i.deliveredQty, 0),
+    };
+  };
+
+  const handleDownloadGRN = async (grn: GRNRecord) => {
+    // TODO: wire to GET /grns/:id/download once endpoint exists
+    toast.info("GRN download will be available once the endpoint is ready.");
+    console.log("Download GRN:", grn._id);
+  };
+
+  // TODO: replace with real endpoint once backend defines GET /purchase-orders/:id/jcfs
+  const fetchJCFs = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/jcfs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setJcfs(data.data ?? []);
+    } catch {
+      // silently ignore — JCF list is non-critical
+    }
+  };
+
+  // TODO: replace stub with real API call once endpoint is ready
+  const handleJCFSubmit = async (payload: JCFPayload): Promise<JCFSubmitResult> => {
+    const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/jcf`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || "Failed to create JCF");
+    await fetchJCFs();
+    return {
+      jcfNumber: data.data?.jcfNumber ?? "JCF-XXXX",
+      receivingEmployee: payload.receivingEmployee,
+      submittedDate: new Date().toLocaleString("en-GB", {
+        day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit",
+      }),
+      totalItems: payload.items.length,
+    };
+  };
+
+  const handleDownloadJCF = async (jcf: JCFRecord) => {
+    // TODO: wire to GET /jcfs/:id/download once endpoint exists
+    toast.info("JCF download will be available once the endpoint is ready.");
+    console.log("Download JCF:", jcf._id);
+  };
 
   const handleDownloadPO = async () => {
     setDownloading(true);
@@ -383,6 +486,17 @@ export default function PurchaseOrderDetails() {
   const canHofApprove =
     purchaseOrder.status === "issued" || purchaseOrder.status === "submitted";
   const canHhraApprove = purchaseOrder.status === "hofApproved";
+
+  // A PO is treated as a service PO when all items lack a meaningful brand.
+  // TODO: replace with an explicit `type` field once backend provides it.
+  const isServicePO = !!(
+    purchaseOrder.items?.length &&
+    purchaseOrder.items.every(
+      (item) =>
+        !item.brand ||
+        ["", "n/a"].includes(item.brand.trim().toLowerCase()),
+    )
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 md:px-16 py-6 md:py-8">
@@ -649,18 +763,17 @@ export default function PurchaseOrderDetails() {
           </div>
         </div>
 
-        {purchaseOrder.related &&
-          (purchaseOrder.related.requests?.length ?? 0) +
-            (purchaseOrder.related.rfqs?.length ?? 0) +
-            (purchaseOrder.related.pos?.length ?? 0) >
-            0 && (
-            <Related
-              requests={purchaseOrder.related.requests || []}
-              rfqs={purchaseOrder.related.rfqs || []}
-              pos={purchaseOrder.related.pos || []}
-              onViewItem={handleRelatedView}
-            />
-          )}
+        <Related
+          requests={purchaseOrder.related?.requests || []}
+          rfqs={purchaseOrder.related?.rfqs || []}
+          pos={purchaseOrder.related?.pos || []}
+          grns={isServicePO ? undefined : grns}
+          jcfs={isServicePO ? jcfs : undefined}
+          defaultTab={isServicePO ? "jcf" : "grn"}
+          onViewItem={handleRelatedView}
+          onDownloadGRN={handleDownloadGRN}
+          onDownloadJCF={handleDownloadJCF}
+        />
 
         {/* C6: HOF Approve + Reject buttons */}
         {isHof && canHofApprove && (
@@ -821,6 +934,24 @@ export default function PurchaseOrderDetails() {
                 {downloading ? "Downloading..." : "Download PO"}
               </button>
             )}
+            {/* GRN: product POs — available to Warehouse Manager and PM once approved */}
+            {(isWm || isPm) && !isServicePO && purchaseOrder.status === "approved" && (
+              <button
+                onClick={() => setIsGRNDialogOpen(true)}
+                className="rounded-md bg-[#0F1E7A] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0a1555]"
+              >
+                Generate GRN
+              </button>
+            )}
+            {/* JCF: service POs — available to PM once approved */}
+            {isPm && isServicePO && purchaseOrder.status === "approved" && (
+              <button
+                onClick={() => setIsJCFDialogOpen(true)}
+                className="rounded-md bg-[#0F1E7A] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0a1555]"
+              >
+                Generate JCF
+              </button>
+            )}
           </div>
         )}
 
@@ -918,6 +1049,47 @@ export default function PurchaseOrderDetails() {
               </button>
             </div>
           </div>
+        )}
+
+        {/* GRN Dialog — product POs */}
+        {(isWm || isPm) && purchaseOrder && !isServicePO && (
+          <GenerateGRNDialog
+            isOpen={isGRNDialogOpen}
+            onClose={() => setIsGRNDialogOpen(false)}
+            poNumber={purchaseOrder.poNumber ?? ""}
+            items={(purchaseOrder.items ?? []).map((item) => ({
+              _id: item._id,
+              itemDescription: item.itemDescription,
+              brand: item.brand,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            }))}
+            existingGRNs={grns.map<GRNExistingRecord>((grn) => ({
+              items: grn.items.map((i) => ({
+                itemId: (i as { itemId?: string; deliveredQty: number }).itemId ?? "",
+                deliveredQty: i.deliveredQty,
+              })),
+            }))}
+            onSubmit={handleGRNSubmit}
+          />
+        )}
+
+        {/* JCF Dialog — service POs, PM only */}
+        {isPm && purchaseOrder && isServicePO && (
+          <GenerateJCFDialog
+            isOpen={isJCFDialogOpen}
+            onClose={() => setIsJCFDialogOpen(false)}
+            poNumber={purchaseOrder.poNumber ?? ""}
+            rfqNumber={purchaseOrder.rfq?.rfqNumber}
+            items={(purchaseOrder.items ?? []).map((item) => ({
+              _id: item._id,
+              itemDescription: item.itemDescription,
+              vendor: purchaseOrder.vendor?.name ?? "—",
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+            }))}
+            onSubmit={handleJCFSubmit}
+          />
         )}
       </div>
     </div>
