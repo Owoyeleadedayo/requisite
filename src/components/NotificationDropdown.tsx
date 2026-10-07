@@ -2,7 +2,7 @@
 
 import { Bell, FileText, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getToken } from "@/lib/auth";
 import {
   DropdownMenu,
@@ -46,32 +46,83 @@ export default function NotificationDropdown({
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [browserPermission, setBrowserPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("default");
+  const seenNotificationIds = useRef(new Set<string>());
 
   useEffect(() => {
+    if ("Notification" in window) {
+      setBrowserPermission(window.Notification.permission);
+    } else {
+      setBrowserPermission("unsupported");
+    }
+
+    let initialFetchComplete = false;
     const fetchNotifications = async () => {
       const token = getToken();
       if (!token) return;
 
       try {
         const response = await fetch(
-          `${API_BASE_URL}/notifications?limit=5`,
+          `${API_BASE_URL}/notifications?limit=20`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
         const data = await response.json();
         if (data.success) {
-          setNotifications(data.data);
+          const fetchedNotifications = data.data as Notification[];
+          setNotifications(fetchedNotifications.slice(0, 5));
           setUnreadCount(
-            data.data.filter((n: Notification) => !n.isRead).length
+            fetchedNotifications.filter((n) => !n.isRead).length
           );
+
+          if (
+            initialFetchComplete &&
+            window.Notification?.permission === "granted"
+          ) {
+            for (const notification of fetchedNotifications) {
+              if (seenNotificationIds.current.has(notification._id)) continue;
+              const title = notification.metadata?.title || "New notification";
+              const body =
+                notification.metadata?.message ||
+                notification.metadata?.text ||
+                "You have a new notification.";
+              const browserNotification = new window.Notification(title, {
+                body,
+                tag: notification._id,
+                icon: "/favicon.ico",
+              });
+              browserNotification.onclick = () => {
+                window.focus();
+                window.location.href = `${notificationsPath}?id=${notification._id}`;
+              };
+            }
+          }
+
+          fetchedNotifications.forEach((notification) => {
+            seenNotificationIds.current.add(notification._id);
+          });
+          initialFetchComplete = true;
         }
       } catch (error) {
         console.error("Failed to fetch notifications:", error);
       }
     };
-    fetchNotifications();
-  }, []);
+    void fetchNotifications();
+    const intervalId = window.setInterval(() => void fetchNotifications(), 30000);
+    return () => window.clearInterval(intervalId);
+  }, [notificationsPath]);
+
+  const enableBrowserNotifications = async () => {
+    if (!("Notification" in window)) {
+      setBrowserPermission("unsupported");
+      return;
+    }
+    const permission = await window.Notification.requestPermission();
+    setBrowserPermission(permission);
+  };
 
   const markAllAsRead = async () => {
     const token = getToken();
@@ -162,6 +213,18 @@ export default function NotificationDropdown({
         <div className="border-b-1 border-[#e5e5e5]" />
 
         <DropdownMenuGroup>
+          <DropdownMenuItem
+            disabled={browserPermission === "granted" || browserPermission === "denied" || browserPermission === "unsupported"}
+            onSelect={() => void enableBrowserNotifications()}
+          >
+            {browserPermission === "granted"
+              ? "Browser alerts enabled"
+              : browserPermission === "denied"
+                ? "Browser alerts blocked in browser settings"
+                : browserPermission === "unsupported"
+                  ? "Browser alerts are not supported"
+                  : "Enable browser alerts"}
+          </DropdownMenuItem>
           {notifications.map((notification) => (
             <div key={notification._id}>
               <DropdownMenuItem 

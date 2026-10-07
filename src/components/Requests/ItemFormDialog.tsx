@@ -190,7 +190,7 @@ export default function ItemFormDialog({
               </div>
             </div>
           )}
-          <div className="w-full flex gap-3">
+          {!isService && <div className="w-full flex gap-3">
             {/* A5: Recommended Vendor section commented out — not required at requisition stage
             <div className="w-full space-y-2">
               <Label>Recommended Vendor</Label>
@@ -273,8 +273,8 @@ export default function ItemFormDialog({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-          {isWorkTool && (
+          </div>}
+          {!isService && isWorkTool && (
             <div className="space-y-2">
               <Label>Work Tool Category {!isViewMode && <span className="compulsory-field">*</span>}</Label>
               <div className="grid grid-cols-2 gap-2">

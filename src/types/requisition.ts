@@ -17,9 +17,12 @@ export type ItemShape = {
 
 export type ApprovalShape = {
   stage: string;
-  approver: string;
+  approver: string | { _id: string; firstName: string; lastName: string; email?: string; name?: string };
+  approverName?: string;
+  approverRole?: string;
   status: string;
   timestamp: string;
+  approvedAt?: string;
   _id: string;
   comments?: string;
 };
