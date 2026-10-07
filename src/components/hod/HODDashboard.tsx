@@ -109,7 +109,11 @@ export default function HDODashboard({
   const userId = getUserId();
   const token = getToken();
   const authdata = getAuthData();
-  const departmentId = authdata?.user?.department?._id;
+  const departmentId =
+    authdata?.user?.department?._id ||
+    (authdata?.user?.department as any)?.id ||
+    (authdata?.user as any)?.departmentId ||
+    (typeof authdata?.user?.department === "string" ? authdata?.user?.department : undefined);
 
   const dashboardCardItems = [
     {
@@ -167,9 +171,11 @@ export default function HDODashboard({
         const endpoint =
           page === "hhraRequisitions" || page === "hofRequisitions" || page === "hofDashboard"
             ? `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
-            : page === "hodDashboard" || page === "hodRequisitions"
+            : (page === "hodDashboard" || page === "hodRequisitions") && departmentId
               ? `${API_BASE_URL}/departments/${departmentId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
-              : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
+              : page === "hodDashboard" || page === "hodRequisitions"
+                ? `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
+                : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
 
         const response = await fetch(endpoint, {
           headers: {
@@ -211,8 +217,21 @@ export default function HDODashboard({
               req.status === "submitted"
             )
               stats.pending++;
-            else if (req.status === "departmentApproved") stats.approved++;
-            else if (req.status === "cancelled") stats.rejected++;
+            else if (
+              req.status === "departmentApproved" ||
+              req.status === "hofApproved" ||
+              req.status === "hhrApproved" ||
+              req.status === "procurementApproved" ||
+              req.status === "approved" ||
+              req.status?.toLowerCase().includes("approved")
+            )
+              stats.approved++;
+            else if (
+              req.status === "cancelled" ||
+              req.status === "rejected" ||
+              req.status?.toLowerCase().includes("reject")
+            )
+              stats.rejected++;
           });
 
           setDashboardStats(stats);

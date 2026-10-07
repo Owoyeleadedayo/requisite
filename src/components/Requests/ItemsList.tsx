@@ -85,9 +85,7 @@ export default function ItemsList({
   const [bulkItemModalOpen, setBulkItemModalOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const pendingItems = items.filter((item) => item.status === "pending");
-  const showSelection =
-    (userType === "hod" || userType === "hof" || userType === "hhra") &&
-    !isEditMode;
+  const showSelection = userType === "hod" && !isEditMode;
 
   if (items.length === 0) {
     return (
