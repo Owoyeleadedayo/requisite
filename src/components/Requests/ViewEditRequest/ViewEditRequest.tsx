@@ -1180,14 +1180,16 @@ export default function ViewEditRequest({
                       {(() => {
                         const canActOnRequest =
                           userType === "hof"
-                            ? formData.status === "departmentApproved"
-                            : formData.status === "submitted";
+                            ? formData.status === "departmentApproved" || formData.status === "hrApproved"
+                            : userType === "hhra"
+                              ? formData.status === "submitted" || formData.status === "hrReview"
+                              : formData.status === "submitted";
                         return (
                       <>
                       <Dialog
                         open={showApprovalModal}
                         onOpenChange={(open) => {
-                          if (userType === "hof" || selectedItems.length > 0) {
+                          if (userType === "hof" || userType === "hhra" || selectedItems.length > 0) {
                             setShowApprovalModal(open);
                           } else {
                             toast.error(
@@ -1198,7 +1200,7 @@ export default function ViewEditRequest({
                       >
                         <DialogTrigger asChild>
                           <Button
-                            disabled={!canActOnRequest || (userType !== "hof" && selectedItems.length === 0)}
+                            disabled={!canActOnRequest || (userType !== "hof" && userType !== "hhra" && selectedItems.length === 0)}
                             className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Approve
