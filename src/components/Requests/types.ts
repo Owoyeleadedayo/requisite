@@ -65,9 +65,13 @@ export interface RequestData {
   paymentAmount?: number;
   approvals?: {
     stage: string;
-    approver: string;
+    approver: string | { _id?: string; firstName?: string; lastName?: string; email?: string; name?: string };
+    approverName?: string;
+    approverRole?: string;
     status: string;
     timestamp: string;
+    approvedAt?: string;
+    comments?: string;
     _id: string;
   }[];
   shortlistedVendors?: string[];

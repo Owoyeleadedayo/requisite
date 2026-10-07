@@ -24,13 +24,13 @@ type LocationsFormDialogProps = {
 
 
 export default function LocationsFormDialog({
-                                              children,
-                                              handleLocationFormChange,
-                                              currentLocation,
-                                              submit,
-                                              mode,
-                                              isLocationLoading
-                                            }: LocationsFormDialogProps) {
+  children,
+  handleLocationFormChange,
+  currentLocation,
+  submit,
+  mode,
+  isLocationLoading
+}: LocationsFormDialogProps) {
   const [locationFormDialogOpen, setLocationFormDialogOpen] = useState<boolean>(false);
   let title = '';
   let submitButtonText = '';
@@ -71,9 +71,9 @@ export default function LocationsFormDialog({
               </DialogTitle>
             </DialogHeader>
             {mode === 'delete' ? <span className="flex text-sm pt-2">
-                                  Are you sure you want to delete this location?
-                                </span> : <fieldset disabled={mode === 'view'}
-                                                    className="[&_*]:disabled:opacity-100 flex flex-col w-full max-w-xl space-y-5 overflow-y-auto flex-1 px-1">
+              Are you sure you want to delete this location?
+            </span> : <fieldset disabled={mode === 'view'}
+              className="[&_*]:disabled:opacity-100 flex flex-col w-full max-w-xl space-y-5 overflow-y-auto flex-1 px-1">
               <div className="space-y-2">
                 <Label>Name<span className="compulsory-field">*</span></Label>
                 <Input

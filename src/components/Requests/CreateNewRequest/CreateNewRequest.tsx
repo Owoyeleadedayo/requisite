@@ -115,34 +115,16 @@ export default function CreateNewRequest({
       const createData = await createResponse.json();
 
       if (createData.success) {
-        // Step 2: Submit requisition for all users
-        const submitResponse = await fetch(
-          `${API_BASE_URL}/requisitions/${createData.data._id}/submit`,
-          {
-            method: "PUT",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        const submitData = await submitResponse.json();
-
-        if (submitData.success) {
-          toast.success("Requisition created and submitted successfully!");
-          const redirectPath =
-            page === "hod"
-              ? "/hod/my-requests/"
-              : page === "pm"
-                ? "/pm/my-requests/"
-                : page === "hhra"
-                  ? "/hhra/my-requests/"
-                  : "/user/requisition/";
-          router.push(redirectPath);
-        } else {
-          toast.error("Failed to submit requisition");
-        }
+        toast.success("Requisition created and submitted successfully!");
+        const redirectPath =
+          page === "hod"
+            ? "/hod/my-requests/"
+            : page === "pm"
+              ? "/pm/my-requests/"
+              : page === "hhra"
+                ? "/hhra/my-requests/"
+                : "/user/requisition/";
+        router.push(redirectPath);
       } else {
         if (createData.errors) {
           // Handle validation errors from the API
@@ -201,7 +183,11 @@ export default function CreateNewRequest({
     field: keyof Item,
     value: string | number | boolean | File | null | string[],
   ) => {
-    setCurrentItem((prev) => ({ ...prev, [field]: value }));
+    setCurrentItem((prev) =>
+      field === "itemType" && value === "service"
+        ? { ...prev, itemType: "service", isWorkTool: false, workToolSubcategory: [] }
+        : { ...prev, [field]: value },
+    );
   };
 
   const handleAddItem = () => {

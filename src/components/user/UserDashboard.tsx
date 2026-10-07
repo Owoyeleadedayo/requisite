@@ -180,8 +180,21 @@ export default function UserDashboard({
               req.status === "submitted"
             )
               stats.pending++;
-            else if (req.status === "departmentApproved") stats.approved++;
-            else if (req.status === "cancelled") stats.rejected++;
+            else if (
+              req.status === "departmentApproved" ||
+              req.status === "hofApproved" ||
+              req.status === "hhrApproved" ||
+              req.status === "procurementApproved" ||
+              req.status === "approved" ||
+              req.status?.toLowerCase().includes("approved")
+            )
+              stats.approved++;
+            else if (
+              req.status === "cancelled" ||
+              req.status === "rejected" ||
+              req.status?.toLowerCase().includes("reject")
+            )
+              stats.rejected++;
           });
 
           setDashboardStats(stats);
