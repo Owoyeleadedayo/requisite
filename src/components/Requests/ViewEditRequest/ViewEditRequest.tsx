@@ -1144,7 +1144,7 @@ export default function ViewEditRequest({
                                   ].includes(formData.status ?? "")
                                 : formData.status !== "submitted"
                             }
-                            className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
+                            className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Approve
                           </Button>
