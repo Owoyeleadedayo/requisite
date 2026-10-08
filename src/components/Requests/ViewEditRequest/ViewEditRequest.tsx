@@ -46,6 +46,9 @@ import PMItemsList from "../PMItemsList";
 import Related from "./Related";
 import { requisitionService } from "@/services/requisitionService";
 import { CONSTANTS } from "@/lib/constants";
+import ConfirmDeliveryDialog, {
+  ConfirmDeliveryData,
+} from "@/components/GRN/ConfirmDeliveryDialog";
 
 interface RequestData {
   _id: string;
@@ -76,6 +79,7 @@ interface RequestData {
   approvals?: {
     stage?: string;
     approver?: string | { firstName?: string; lastName?: string };
+    approverName?: string;
     approverRole?: string;
     approvedAt?: string;
     status?: string;
@@ -153,6 +157,7 @@ export default function ViewEditRequest({
     UOM: "",
     recommendedVendor: "",
     isWorkTool: "",
+    workToolSubcategory: [],
   });
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -164,6 +169,25 @@ export default function ViewEditRequest({
   const [showItemsError, setShowItemsError] = useState(false);
   const [itemComment, setItemComment] = useState("");
   const [isItemRequestLoading, setIsItemRequestLoading] = useState(false);
+  const [pendingDeliveryConfirmation, setPendingDeliveryConfirmation] =
+    useState<ConfirmDeliveryData | null>(null);
+  const [isConfirmDeliveryOpen, setIsConfirmDeliveryOpen] = useState(false);
+
+  const refreshRequisitionState = async () => {
+    const response = await fetch(`${API_BASE_URL}/requisitions/${requisitionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (!data.success) return;
+
+    setFormData((previous) => ({ ...previous, ...data.data }));
+    setItems(
+      (data.data.items || []).map((item: BackendItem, index: number) => ({
+        ...item,
+        id: item._id || index,
+      })),
+    );
+  };
 
   const priorityMap: Record<number, RequestData["priority"]> = {
     0: "low",
@@ -362,13 +386,41 @@ export default function ViewEditRequest({
     if (token) {
       fetchAllVendors(token);
     }
-  }, [requisitionId, token, isEditMode]);
+
+    // TODO: Replace with real endpoint once backend provides it.
+    // GET /requisitions/:id/pending-delivery-confirmation
+    // Expected response: { success: true, data: ConfirmDeliveryData | null }
+    // This fetches any GRN (product) or JCF (service) that is awaiting originator confirmation.
+    const fetchPendingConfirmation = async () => {
+      if (userType !== "user") return;
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/requisitions/${requisitionId}/pending-delivery-confirmation`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        const data = await res.json();
+        if (data.success && data.data) {
+          setPendingDeliveryConfirmation(data.data);
+        }
+      } catch {
+        // silently ignore — endpoint may not exist yet
+      }
+    };
+
+    if (token) {
+      fetchPendingConfirmation();
+    }
+  }, [requisitionId, token, isEditMode, userType]);
 
   const handleItemFormChange = (
     field: keyof Item,
-    value: string | number | boolean | string[] | File | null,
+    value: string | number | boolean | File | null | string[],
   ) => {
-    setCurrentItem((prev) => ({ ...prev, [field]: value } as Item));
+    setCurrentItem((prev) =>
+      field === "itemType" && value === "service"
+        ? { ...prev, itemType: "service", isWorkTool: false, workToolSubcategory: [] }
+        : { ...prev, [field]: value },
+    );
   };
 
   const handleAddItem = () => {
@@ -379,6 +431,10 @@ export default function ViewEditRequest({
       typeof currentItem.isWorkTool !== "boolean"
     ) {
       toast.error("Please fill all required fields marked with *");
+      return;
+    }
+    if (currentItem.itemType === "product" && !currentItem.units) {
+      toast.error("Units is required for product items");
       return;
     }
 
@@ -406,8 +462,8 @@ export default function ViewEditRequest({
     try {
       const formattedDate = dateStart
         ? new Date(dateStart.getTime() - dateStart.getTimezoneOffset() * 60000)
-            .toISOString()
-            .split("T")[0]
+          .toISOString()
+          .split("T")[0]
         : undefined;
 
       const requestBody = buildRequisitionFormData(formattedDate);
@@ -510,8 +566,9 @@ export default function ViewEditRequest({
     }
   };
 
-  const approveBulkRequisitionItems = async () => {
-    if (!itemComment.trim()) {
+  const approveBulkRequisitionItems = async (silentComment?: string) => {
+    const comment = silentComment ?? itemComment;
+    if (!silentComment && !comment.trim()) {
       // Errors were thrown to allow the modal close only when the request is successful
       throw toast.error(
         CONSTANTS.REQUISITION.NOTIFICATION.PROVIDE_APPROVAL_COMMENT_WARN,
@@ -520,8 +577,7 @@ export default function ViewEditRequest({
 
     const body = {
       itemIds: selectedItems,
-      comments:
-        itemComment.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
+      comments: comment.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
     };
 
     setIsItemRequestLoading(true);
@@ -539,7 +595,7 @@ export default function ViewEditRequest({
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
+          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -580,7 +636,7 @@ export default function ViewEditRequest({
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
+          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -615,14 +671,14 @@ export default function ViewEditRequest({
       if (data.success) {
         toast.success(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
+          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
+          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -657,14 +713,14 @@ export default function ViewEditRequest({
       if (data.success) {
         toast.success(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
+          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items);
         setViewingItem(data.data.item);
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
+          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -700,14 +756,14 @@ export default function ViewEditRequest({
       if (data.success) {
         toast.success(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
+          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
+          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -743,14 +799,14 @@ export default function ViewEditRequest({
       if (data.success) {
         toast.success(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
+          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items);
         setViewingItem(data.data.item);
       } else {
         throw toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
+          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -772,10 +828,15 @@ export default function ViewEditRequest({
     };
 
     try {
-      const data = await requisitionService.rejectRequisition(
-        requisitionId,
-        body,
-      );
+      const data = userType === "hof"
+        ? await requisitionService.hofRejectRequisition(requisitionId, body)
+        : userType === "hhra"
+          ? await fetch(`${API_BASE_URL}/requisitions/${requisitionId}/hhra-approval`, {
+            method: "PUT",
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "rejected", comments: body.comments }),
+          }).then((response) => response.json())
+          : await requisitionService.rejectRequisition(requisitionId, body);
       if (data.success) {
         toast.success(
           CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_SUCCESS,
@@ -785,7 +846,7 @@ export default function ViewEditRequest({
       } else {
         toast.error(
           data.message ||
-            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_FAIL,
+          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_FAIL,
         );
       }
     } catch (error) {
@@ -802,32 +863,82 @@ export default function ViewEditRequest({
   const handleApproval = async () => {
     setApprovalLoading(true);
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/requisitions/${requisitionId}/department-approval`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: "approved",
-            comments: approvalComment.trim() || "Approved for procurement",
-          }),
-        },
-      );
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Request approved successfully");
-        // J1: Merge response data so status always reflects the approval even if API returns partial data
-        setFormData((prev) => ({
-          ...prev,
-          ...(data.data || {}),
-          status: data.data?.status || "departmentApproved",
-        }));
+      // Silently approve all selected items before approving the request
+      if (selectedItems.length > 0) {
+        const silentComment = approvalComment.trim() || "Approved for procurement";
+        const body = {
+          itemIds: selectedItems,
+          comments: silentComment,
+        };
+        await requisitionService.approveBulkRequisitionItems(requisitionId, body);
+      }
+
+      const comment = approvalComment.trim() || "Approved for procurement";
+
+      if (userType === "hof") {
+        const data = await requisitionService.hofApproveRequisition(
+          requisitionId,
+          { comments: comment },
+        );
+        if (data.success) {
+          toast.success("Request approved successfully");
+          await refreshRequisitionState();
+          setShowApprovalModal(false);
+        } else {
+          toast.error(data.message || "Failed to approve request");
+        }
+      } else if (userType === "hhra") {
+        const workToolIds = items
+          .filter(
+            (item) =>
+              item.itemType !== "service" &&
+              item.isWorkTool === true &&
+              item.status === "hrReview",
+          )
+          .map((item) => item._id);
+
+        if (workToolIds.length === 0) {
+          toast.error("There are no work-tool items awaiting HHRA approval");
+          return;
+        }
+
+        // The API retains per-item HR approval. Keep it invisible to HHRA by
+        // approving every eligible tool item as part of the request action.
+        for (const itemId of workToolIds) {
+          const itemResponse = await requisitionService.approveHrRequisitionItem(
+            requisitionId,
+            itemId,
+            { comments: comment },
+          );
+          if (!itemResponse.success) {
+            toast.error(itemResponse.message || "Failed to approve work-tool items");
+            return;
+          }
+        }
+
+        await refreshRequisitionState();
+        toast.success("Work-tool items approved; requisition is awaiting the HoD tool comment");
         setShowApprovalModal(false);
       } else {
-        toast.error(data.message || "Failed to approve request");
+        const res = await fetch(
+          `${API_BASE_URL}/requisitions/${requisitionId}/department-approval`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ status: "approved", comments: comment }),
+          },
+        );
+        const data = await res.json();
+        if (data.success) {
+          toast.success("Request approved successfully");
+          await refreshRequisitionState();
+          setShowApprovalModal(false);
+        } else {
+          toast.error(data.message || "Failed to approve request");
+        }
       }
     } catch (error) {
       console.error(error);
@@ -878,6 +989,43 @@ export default function ViewEditRequest({
     }
   };
 
+  const submitHodToolComment = async () => {
+    const comments = approvalComment.trim();
+    if (!comments) {
+      toast.error("Please provide the required tool comment");
+      return;
+    }
+    setApprovalLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/requisitions/${requisitionId}/hod-tool-comment`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ comments }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        toast.error(data.message || "Failed to submit tool comment");
+        return;
+      }
+      toast.success("Tool comment submitted for Head of Finance review");
+      await refreshRequisitionState();
+      setApprovalComment("");
+      setShowApprovalModal(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Error submitting tool comment");
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
+
+  const handleConfirmDelivery = async () => {
+    // TODO: wire to POST /purchase-orders/:poId/grns/:grnId/confirm (or /jcfs/:jcfId/confirm)
+    // when the backend endpoint is available.
+    toast.info("Delivery confirmation endpoint not yet available.");
+    setPendingDeliveryConfirmation(null);
+  };
+
   const handleGenerateRFQ = async () => {
     if (selectedItems.length === 0) {
       toast.error("Please select at least one item to generate RFQ");
@@ -885,13 +1033,13 @@ export default function ViewEditRequest({
       setTimeout(() => setShowItemsError(false), 10000);
       return;
     }
-    // C7: Block RFQ generation if any selected work-tool items haven't completed HHR review
+    // Work-tool items (never services) must have completed HHRA review.
     const workToolsPendingReview = selectedItems.some((id) => {
       const item = items.find((i) => i._id === id || (i as any).id === id);
       return (
+        item?.itemType !== "service" &&
         item?.isWorkTool === true &&
-        item?.status !== "hrReview" &&
-        item?.status !== "departmentApproved"
+        item?.status !== "hrApproved"
       );
     });
     if (workToolsPendingReview) {
@@ -953,22 +1101,7 @@ export default function ViewEditRequest({
           {formData.requisitionNumber}{" "}
         </h1>
         {formData.status && (
-          <span className="status-badge ml-4">
-            <span
-              className={`py-3 px-4 rounded-full text-sm font-semibold text-white ${
-                formData.status === "submitted"
-                  ? "bg-orange-500"
-                  : formData.status === "departmentApproved"
-                    ? "bg-green-500"
-                    : formData.status === "cancelled"
-                      ? "bg-red-500"
-                      : "bg-gray-500"
-              }`}
-            >
-              {formData.status[0].toUpperCase() + formData.status.slice(1)}
-            </span>
-            {/* {formatStatus(formData.status)} */}
-          </span>
+          <span className="status-badge ml-4">{formatStatus(formData.status)}</span>
         )}
       </div>
 
@@ -1036,19 +1169,22 @@ export default function ViewEditRequest({
                 {formData.approvals.map((approval, i) => (
                   <div key={i} className="flex flex-col gap-1 border-l-2 border-green-400 pl-3 text-sm">
                     <p className="font-semibold text-gray-800">
-                      {approval.approverRole === "hod"
-                        ? "Head of Department"
-                        : approval.approverRole === "hof"
-                          ? "Head of Finance"
-                          : approval.approverRole === "hhr"
-                            ? "Head of Human Resources"
-                            : approval.approverRole || "Approver"}
+                      {approval.approverRole === "hodToolComment"
+                        ? "Head of Department Tool Comment"
+                        : approval.approverRole === "hod"
+                          ? "Head of Department"
+                          : approval.approverRole === "hof"
+                            ? "Head of Finance"
+                            : approval.approverRole === "hhr"
+                              ? "Head of Human Resources"
+                              : approval.approverRole || "Approver"}
                     </p>
-                    {approval.approver && (
+                    {(approval.approverName || approval.approver) && (
                       <p className="text-gray-600">
-                        {typeof approval.approver === "string"
-                          ? approval.approver
-                          : `${approval.approver.firstName || ""} ${approval.approver.lastName || ""}`.trim()}
+                        {approval.approverName ||
+                          (typeof approval.approver === "string"
+                            ? approval.approver
+                            : `${approval.approver?.firstName || ""} ${approval.approver?.lastName || ""}`.trim())}
                       </p>
                     )}
                     {approval.approvedAt && (
@@ -1064,7 +1200,7 @@ export default function ViewEditRequest({
               </div>
             )}
 
-            {formData.status === "departmentApproved" &&
+            {formData.status === "hofApproved" &&
               userType === "procurementManager" && (
                 <div className="flex flex-col sm:flex-row gap-3 pt-6">
                   <Button
@@ -1105,197 +1241,205 @@ export default function ViewEditRequest({
                 <>
                   {(userType === "user" ||
                     user?.id === formData.requester?._id) && (
-                    <Button
-                      onClick={() => onEditModeChange(true)}
-                      className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6 w-full"
-                    >
-                      Edit
-                    </Button>
+                      <Button
+                        onClick={() => onEditModeChange(true)}
+                        className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6 w-full"
+                      >
+                        Edit
+                      </Button>
+                    )}
+                  {(userType === "hod" || user?.role === "headOfHr" || user?.role === "headOfFinance" || user?.role === "hhra") && formData.status === "hodToolComment" && (
+                    <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
+                      <DialogTrigger asChild>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white flex-1 py-6">
+                          Add Tool Comment
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl bg-white">
+                        <DialogHeader><DialogTitle>Required Tool Comment</DialogTitle></DialogHeader>
+                        <div className="space-y-4">
+                          <Textarea value={approvalComment} onChange={(e) => setApprovalComment(e.target.value)} placeholder="Add your comment for the work tool" />
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowApprovalModal(false)}>Cancel</Button>
+                            <Button onClick={submitHodToolComment} disabled={approvalLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                              {approvalLoading ? "Submitting..." : "Submit Comment"}
+                            </Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   )}
-                  {(userType === "hod" || userType === "hhra" || userType === "hof") && (
+                  {(userType === "hod" || userType === "hhra" || userType === "hof") && formData.status !== "hodToolComment" && (
                     <>
-                      <Dialog
-                        open={showApprovalModal}
-                        onOpenChange={(open) => {
-                          if (
-                            items!.some(
-                              (item) =>
-                                item.status === "departmentApproved" ||
-                                item.status === "hrReview",
-                            )
-                          ) {
-                            setShowApprovalModal(open);
-                          } else {
-                            toast.error(
-                              "Approve at least one item before proceeding",
-                            );
-                          }
-                        }}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            disabled={
-                              userType === "hof"
-                                ? ![
-                                    "submitted",
-                                    "departmentApproved",
-                                    "hrReview",
-                                    "hrApproved",
-                                  ].includes(formData.status ?? "")
-                                : formData.status !== "submitted"
-                            }
-                            className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Approve
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl bg-white">
-                          <DialogHeader>
-                            <DialogTitle>Approve Request</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Approval Comment</Label>
-                              {(userType === "hod" || userType === "hhra" || userType === "hof") && (
-                                <span className="flex text-xs pt-2 leading-none">
-                                  Confirm that all relevant items have been
-                                  approved before proceeding, as the process
-                                  cannot be reversed.
-                                </span>
-                              )}
-                              <Textarea
-                                value={approvalComment}
-                                onChange={(e) =>
-                                  setApprovalComment(e.target.value)
+                      {(() => {
+                        const canActOnRequest =
+                          userType === "hof"
+                            ? formData.status === "departmentApproved"
+                            : userType === "hhra"
+                              ? formData.status === "hrReview"
+                              : formData.status === "submitted";
+                        return (
+                          <>
+                            <Dialog
+                              open={showApprovalModal}
+                              onOpenChange={(open) => {
+                                if (userType !== "hod" || selectedItems.length > 0) {
+                                  setShowApprovalModal(open);
+                                } else {
+                                  toast.error(
+                                    "Select at least one item to approve before proceeding",
+                                  );
                                 }
-                                placeholder="Add a comment for approval"
-                                className="mt-2"
-                              />
-                            </div>
-                            <div className="flex gap-2 justify-end">
-                              <Button
-                                variant="outline"
-                                onClick={() => setShowApprovalModal(false)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                onClick={handleApproval}
-                                disabled={approvalLoading}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                              >
-                                {approvalLoading ? "Approving..." : "Approve"}
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Dialog
-                        open={showDenialModal}
-                        onOpenChange={setShowDenialModal}
-                      >
-                        <DialogTrigger asChild>
-                          {/* Todo: refactor status check */}
-                          <Button
-                            disabled={
-                              userType === "hof"
-                                ? ![
-                                    "submitted",
-                                    "departmentApproved",
-                                    "hrReview",
-                                    "hrApproved",
-                                  ].includes(formData.status ?? "")
-                                : formData.status !== "submitted"
-                            }
-                            className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
-                          >
-                            Deny
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl bg-white">
-                          <DialogHeader>
-                            <DialogTitle>Deny Request</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label>Reason for Denial</Label>
-                              <Textarea
-                                value={denialReason}
-                                onChange={(e) =>
-                                  setDenialReason(e.target.value)
-                                }
-                                placeholder="Please provide a reason for denying this request"
-                                className="mt-2"
-                              />
-                            </div>
-                            <div className="flex gap-2 justify-end">
-                              <Button
-                                variant="outline"
-                                onClick={() => setShowDenialModal(false)}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                onClick={rejectRequisition}
-                                disabled={approvalLoading}
-                                className="bg-red-600 hover:bg-red-700 text-white"
-                              >
-                                {approvalLoading ? "Denying..." : "Deny"}
-                              </Button>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
+                              }}
+                            >
+                              <DialogTrigger asChild>
+                                <Button
+                                  disabled={!canActOnRequest || (userType === "hod" && selectedItems.length === 0)}
+                                  className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  Approve
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl bg-white">
+                                <DialogHeader>
+                                  <DialogTitle>Approve Request</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label>Approval Comment</Label>
+                                    {(userType === "hod" || userType === "hhra" || userType === "hof") && (
+                                      <span className="flex text-xs pt-2 leading-none text-gray-500">
+                                        {selectedItems.length} of {items?.filter(i => i.status === "pending").length ?? 0} pending item(s) selected.
+                                        {(items?.filter(i => i.status === "pending").length ?? 0) - selectedItems.length > 0 &&
+                                          ` ${(items?.filter(i => i.status === "pending").length ?? 0) - selectedItems.length} item(s) will remain pending.`}
+                                      </span>
+                                    )}
+                                    <Textarea
+                                      value={approvalComment}
+                                      onChange={(e) =>
+                                        setApprovalComment(e.target.value)
+                                      }
+                                      placeholder="Add a comment for approval"
+                                      className="mt-2"
+                                    />
+                                  </div>
+                                  <div className="flex gap-2 justify-end">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => setShowApprovalModal(false)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      onClick={handleApproval}
+                                      disabled={approvalLoading}
+                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                    >
+                                      {approvalLoading ? "Approving..." : "Approve"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <Dialog
+                              open={showDenialModal}
+                              onOpenChange={setShowDenialModal}
+                            >
+                              <DialogTrigger asChild>
+                                <Button
+                                  disabled={!canActOnRequest}
+                                  className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
+                                >
+                                  Deny
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl bg-white">
+                                <DialogHeader>
+                                  <DialogTitle>Deny Request</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                  <div>
+                                    <Label>Reason for Denial</Label>
+                                    <Textarea
+                                      value={denialReason}
+                                      onChange={(e) =>
+                                        setDenialReason(e.target.value)
+                                      }
+                                      placeholder="Please provide a reason for denying this request"
+                                      className="mt-2"
+                                    />
+                                  </div>
+                                  <div className="flex gap-2 justify-end">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => setShowDenialModal(false)}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      onClick={rejectRequisition}
+                                      disabled={approvalLoading}
+                                      className="bg-red-600 hover:bg-red-700 text-white"
+                                    >
+                                      {approvalLoading ? "Denying..." : "Deny"}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </>
+                        );
+                      })()}
                     </>
                   )}
                 </>
               )}
               {(userType === "user" ||
                 user?.id === formData.requester?._id) && (
-                <Dialog
-                  open={showCancelModal}
-                  onOpenChange={setShowCancelModal}
-                >
-                  <DialogTrigger className="bg-white max-w-2xl" asChild>
-                    <Button
-                      variant="destructive"
-                      className="flex-1 py-6 bg-red-600 hover:bg-red-700"
-                    >
-                      Cancel Request
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl bg-white">
-                    <DialogHeader>
-                      <DialogTitle>Cancel Request</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label>Reason for cancellation</Label>
-                        <Textarea
-                          value={cancelReason}
-                          onChange={(e) => setCancelReason(e.target.value)}
-                          placeholder="Please provide a reason for cancelling this request"
-                          className="mt-2"
-                        />
+                  <Dialog
+                    open={showCancelModal}
+                    onOpenChange={setShowCancelModal}
+                  >
+                    <DialogTrigger className="bg-white max-w-2xl" asChild>
+                      <Button
+                        variant="destructive"
+                        className="flex-1 py-6 bg-red-600 hover:bg-red-700"
+                      >
+                        Cancel Request
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl bg-white">
+                      <DialogHeader>
+                        <DialogTitle>Cancel Request</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label>Reason for cancellation</Label>
+                          <Textarea
+                            value={cancelReason}
+                            onChange={(e) => setCancelReason(e.target.value)}
+                            placeholder="Please provide a reason for cancelling this request"
+                            className="mt-2"
+                          />
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            onClick={() => setShowCancelModal(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleCancel}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                          >
+                            Confirm Cancel
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2 justify-end">
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowCancelModal(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={handleCancel}
-                          className="bg-red-600 hover:bg-red-700 text-white"
-                        >
-                          Confirm Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              )}
+                    </DialogContent>
+                  </Dialog>
+                )}
             </div>
           </div>
         </div>
@@ -1307,7 +1451,14 @@ export default function ViewEditRequest({
               <div className="flex flex-col gap-10">
                 <ItemsList
                   isEditMode={isEditMode}
-                  items={items}
+                  items={
+                    userType === "hhra"
+                      ? items.filter(
+                        (item) =>
+                          item.itemType !== "service" && item.isWorkTool === true,
+                      )
+                      : items
+                  }
                   selectedItems={selectedItems}
                   approveBulkRequisitionItems={approveBulkRequisitionItems}
                   rejectBulkRequisitionItems={rejectBulkRequisitionItems}
@@ -1394,6 +1545,38 @@ export default function ViewEditRequest({
           {/* )} */}
         </div>
       </div>
+
+      {/* Pending delivery confirmation banner — visible to request originator only */}
+      {userType === "user" && pendingDeliveryConfirmation && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-lg px-4">
+          <div className="flex items-center justify-between gap-4 bg-[#0F1E7A] text-white px-5 py-4 rounded-xl shadow-2xl">
+            <div className="flex flex-col">
+              <p className="font-semibold text-sm">Delivery awaiting your confirmation</p>
+              <p className="text-xs text-blue-200 mt-0.5">
+                {pendingDeliveryConfirmation.poNumber} ·{" "}
+                {pendingDeliveryConfirmation.type === "grn" ? "Goods received" : "Service completed"}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="shrink-0 bg-white text-[#0F1E7A] hover:bg-blue-50 font-semibold text-xs px-4"
+              onClick={() => setIsConfirmDeliveryOpen(true)}
+            >
+              Review &amp; Confirm
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm delivery dialog */}
+      {pendingDeliveryConfirmation && (
+        <ConfirmDeliveryDialog
+          isOpen={isConfirmDeliveryOpen}
+          onClose={() => setIsConfirmDeliveryOpen(false)}
+          data={pendingDeliveryConfirmation}
+          onConfirm={handleConfirmDelivery}
+        />
+      )}
     </div>
   );
 }
