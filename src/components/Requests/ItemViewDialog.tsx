@@ -52,10 +52,15 @@ export default function ItemViewDialog({
   const [rejectItemDialogOpen, setRejectItemDialogOpen] = useState(false);
 
   const isHod = userType === "hod";
-  const canUseDepartmentActions = isHod;
-  const approveHandler = approveRequisitionItem;
-  const rejectHandler = rejectRequisitionItem;
-  const approvalDisabled = currentItem.status !== "pending";
+  const isHhra = userType === "hhra";
+  const canUseDepartmentActions = isHod || isHhra;
+  const approveHandler = isHhra
+    ? approveHrRequisitionItem
+    : approveRequisitionItem;
+  const rejectHandler = isHhra
+    ? rejectHrRequisitionItem
+    : rejectRequisitionItem;
+  const approvalDisabled = currentItem.status !== (isHhra ? "hrReview" : "pending");
 
   const getVendorName = (vendorId: string) => {
     const vendor = vendors.find((v) => v._id === vendorId);
