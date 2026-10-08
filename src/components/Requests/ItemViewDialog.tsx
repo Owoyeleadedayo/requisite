@@ -154,14 +154,25 @@ export default function ItemViewDialog({
             <div className="w-full space-y-2">
               <Label className="font-bold">Is this a worktool?</Label>
               <div className="p-4 rounded-md text-gray-700">
-                {typeof currentItem.isWorkTool === "boolean"
-                  ? currentItem.isWorkTool
-                    ? "Yes"
-                    : "No"
-                  : "N/A"}
+                {currentItem.isWorkTool === true || currentItem.isWorkTool === "true"
+                  ? "Yes"
+                  : currentItem.isWorkTool === false || currentItem.isWorkTool === "false"
+                    ? "No"
+                    : "N/A"}
               </div>
             </div>
           </div>
+          {(currentItem.isWorkTool === true || currentItem.isWorkTool === "true") &&
+            currentItem.itemType !== "service" &&
+            Array.isArray(currentItem.workToolSubcategory) &&
+            currentItem.workToolSubcategory.length > 0 && (
+              <div className="space-y-2">
+                <Label className="font-bold">Work Tool Category</Label>
+                <div className="p-4 rounded-md text-gray-700">
+                  {currentItem.workToolSubcategory.join(", ")}
+                </div>
+              </div>
+            )}
         </div>
 
         <div className="flex gap-2 w-full mt-4">

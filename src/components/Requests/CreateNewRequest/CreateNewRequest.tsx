@@ -204,6 +204,14 @@ export default function CreateNewRequest({
       toast.error("Units is required for product items");
       return;
     }
+    if (
+      currentItem.isWorkTool === true &&
+      currentItem.itemType !== "service" &&
+      (!currentItem.workToolSubcategory || currentItem.workToolSubcategory.length === 0)
+    ) {
+      toast.error("Please select a work tool category");
+      return;
+    }
 
     if (editingItemId !== null) {
       // Update existing item
