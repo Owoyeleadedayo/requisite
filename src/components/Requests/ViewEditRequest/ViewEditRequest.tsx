@@ -440,6 +440,14 @@ export default function ViewEditRequest({
       toast.error("Units is required for product items");
       return;
     }
+    if (
+      currentItem.isWorkTool === true &&
+      currentItem.itemType !== "service" &&
+      (!currentItem.workToolSubcategory || currentItem.workToolSubcategory.length === 0)
+    ) {
+      toast.error("Please select a work tool category");
+      return;
+    }
 
     const updatedItems = editingItemId !== null
       ? items.map((item) => (item._id === editingItemId ? currentItem : item))
@@ -835,11 +843,14 @@ export default function ViewEditRequest({
   };
 
   const rejectRequisition = async () => {
+    if (!denialReason.trim()) {
+      toast.error("A reason for denial is required");
+      return;
+    }
     setApprovalLoading(true);
 
     const body = {
-      comments:
-        denialReason.trim() || CONSTANTS.REQUISITION.COMMENT.ITEM_APPROVAL,
+      comments: denialReason.trim(),
     };
 
     try {
@@ -878,9 +889,16 @@ export default function ViewEditRequest({
   const handleApproval = async () => {
     setApprovalLoading(true);
     try {
+      const genericApprovalComment =
+        userType === "hod"
+          ? "Approved by Head of Department"
+          : userType === "hhra"
+            ? "Approved by HR Administration"
+            : "Approved for procurement";
+
       // Silently approve all selected items before approving the request
       if (selectedItems.length > 0) {
-        const silentComment = approvalComment.trim() || "Approved for procurement";
+        const silentComment = approvalComment.trim() || genericApprovalComment;
         const body = {
           itemIds: selectedItems,
           comments: silentComment,
@@ -888,7 +906,7 @@ export default function ViewEditRequest({
         await requisitionService.approveBulkRequisitionItems(requisitionId, body);
       }
 
-      const comment = approvalComment.trim() || "Approved for procurement";
+      const comment = approvalComment.trim() || genericApprovalComment;
 
       if (userType === "hof") {
         const data = await requisitionService.hofApproveRequisition(
@@ -1293,9 +1311,9 @@ export default function ViewEditRequest({
                       {(() => {
                         const canActOnRequest =
                           userType === "hof"
-                            ? formData.status === "departmentApproved"
+                            ? formData.status === "departmentApproved" || formData.status === "hrApproved"
                             : userType === "hhra"
-                              ? formData.status === "hrReview"
+                              ? formData.status === "submitted" || formData.status === "hrReview"
                               : formData.status === "submitted";
                         return (
                           <>
@@ -1378,13 +1396,16 @@ export default function ViewEditRequest({
                                 </DialogHeader>
                                 <div className="space-y-4">
                                   <div>
-                                    <Label>Reason for Denial</Label>
+                                    <Label>
+                                      Reason for Denial{" "}
+                                      <span className="text-red-500">*</span>
+                                    </Label>
                                     <Textarea
                                       value={denialReason}
                                       onChange={(e) =>
                                         setDenialReason(e.target.value)
                                       }
-                                      placeholder="Please provide a reason for denying this request"
+                                      placeholder="A reason is required before denying this request"
                                       className="mt-2"
                                     />
                                   </div>
@@ -1397,8 +1418,8 @@ export default function ViewEditRequest({
                                     </Button>
                                     <Button
                                       onClick={rejectRequisition}
-                                      disabled={approvalLoading}
-                                      className="bg-red-600 hover:bg-red-700 text-white"
+                                      disabled={approvalLoading || !denialReason.trim()}
+                                      className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                       {approvalLoading ? "Denying..." : "Deny"}
                                     </Button>
