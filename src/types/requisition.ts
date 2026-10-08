@@ -9,6 +9,7 @@ export type ItemShape = {
   units: number | null;
   UOM?: string;
   isWorkTool: boolean;
+  workToolSubcategory?: string[];
   status: string;
   selectedVendorsForItem?: string[];
   createdAt: string;

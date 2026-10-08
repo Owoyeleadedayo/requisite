@@ -175,9 +175,20 @@ export default function BatchItemUpload({
             message: "Required for product items",
           });
 
+        const isWorkTool = isWorkToolRaw === "yes";
+        const workToolSubcategory = isWorkTool
+          ? parseWorkToolSubcategory(subcategoryRaw)
+          : [];
+        if (isWorkTool && workToolSubcategory.length !== 1) {
+          errors.push({
+            row: rowNum,
+            field: "Work Tool Category",
+            message: "Select exactly one valid category",
+          });
+        }
+
         if (errors.filter((e) => e.row === rowNum).length === 0) {
           const units = unitsRaw ? parseInt(unitsRaw, 10) : "";
-          const isWorkTool = isWorkToolRaw === "yes";
           items.push({
             _id: `batch-${Date.now()}-${rowNum}`,
             itemName,
@@ -189,9 +200,7 @@ export default function BatchItemUpload({
             UOM,
             recommendedVendor: "",
             isWorkTool,
-            workToolSubcategory: isWorkTool
-              ? parseWorkToolSubcategory(subcategoryRaw)
-              : [],
+            workToolSubcategory,
           });
         }
       });

@@ -171,9 +171,9 @@ export default function HDODashboard({
         const endpoint =
           page === "hhraRequisitions" || page === "hofRequisitions" || page === "hofDashboard"
             ? `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
-            : (page === "hodDashboard" || page === "hodRequisitions") && departmentId
+            : (page === "hodDashboard" || page === "hodRequisitions" || page === "hodRequests") && departmentId
               ? `${API_BASE_URL}/departments/${departmentId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
-              : page === "hodDashboard" || page === "hodRequisitions"
+              : page === "hodDashboard" || page === "hodRequisitions" || page === "hodRequests"
                 ? `${API_BASE_URL}/requisitions?page=${pageNum}&limit=${itemsPerPage}`
                 : `${API_BASE_URL}/users/${userId}/requisitions?page=${pageNum}&limit=${itemsPerPage}`;
 

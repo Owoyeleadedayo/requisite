@@ -12,7 +12,7 @@ import RequestForm from "../RequestForm";
 import ItemsList from "../ItemsList";
 import ItemFormDialog from "../ItemFormDialog";
 import BatchItemUpload from "../BatchItemUpload";
-import { Item, Vendor } from "../types";
+import { Item, Vendor, validateWorkToolItemCategories } from "../types";
 
 interface CreateNewRequestProps {
   page: "user" | "hod" | "pm" | "hhra";
@@ -89,6 +89,11 @@ export default function CreateNewRequest({
     e.preventDefault();
     if (items.length === 0) {
       toast.error("Please add at least one item before proceeding.");
+      return;
+    }
+    const categoryError = validateWorkToolItemCategories(items);
+    if (categoryError) {
+      toast.error(categoryError);
       return;
     }
 
@@ -186,6 +191,8 @@ export default function CreateNewRequest({
     setCurrentItem((prev) =>
       field === "itemType" && value === "service"
         ? { ...prev, itemType: "service", isWorkTool: false, workToolSubcategory: [] }
+        : field === "isWorkTool" && value === false
+          ? { ...prev, isWorkTool: false, workToolSubcategory: [] }
         : { ...prev, [field]: value },
     );
   };
@@ -205,15 +212,22 @@ export default function CreateNewRequest({
       return;
     }
 
+    const updatedItems = editingItemId !== null
+      ? items.map((item) => (item._id === editingItemId ? currentItem : item))
+      : [...items, { ...currentItem, _id: Date.now().toString() }];
+    const categoryError = validateWorkToolItemCategories(updatedItems);
+    if (categoryError) {
+      toast.error(categoryError);
+      return;
+    }
+
     if (editingItemId !== null) {
       // Update existing item
-      setItems(
-        items.map((item) => (item._id === editingItemId ? currentItem : item)),
-      );
+      setItems(updatedItems);
       toast.success("Item updated successfully!");
     } else {
       // Add new item
-      setItems([...items, { ...currentItem, _id: Date.now().toString() }]);
+      setItems(updatedItems);
       toast.success("Item added successfully!");
     }
 
@@ -292,9 +306,15 @@ export default function CreateNewRequest({
           <div className="flex items-center justify-between flex-wrap gap-3">
             <p className="text-lg font-semibold text-[#0F1E7A]">Items</p>
             <BatchItemUpload
-              onItemsAdded={(newItems) =>
-                setItems((prev) => [...prev, ...newItems])
-              }
+              onItemsAdded={(newItems) => {
+                const updatedItems = [...items, ...newItems];
+                const categoryError = validateWorkToolItemCategories(updatedItems);
+                if (categoryError) {
+                  toast.error(categoryError);
+                  return;
+                }
+                setItems(updatedItems);
+              }}
             />
           </div>
 

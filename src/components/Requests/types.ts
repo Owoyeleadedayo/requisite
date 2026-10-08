@@ -34,6 +34,32 @@ export const WORK_TOOL_SUBCATEGORIES = [
 
 export type WorkToolSubcategory = typeof WORK_TOOL_SUBCATEGORIES[number];
 
+export const validateWorkToolItemCategories = (
+  items: Pick<Item, "itemType" | "isWorkTool" | "workToolSubcategory">[],
+): string | undefined => {
+  const categories = new Set<string>();
+  for (const item of items) {
+    const isWorkTool =
+      item.itemType !== "service" &&
+      (item.isWorkTool === true || item.isWorkTool === "true");
+    if (!isWorkTool) continue;
+
+    const selection = item.workToolSubcategory ?? [];
+    if (
+      selection.length !== 1 ||
+      !WORK_TOOL_SUBCATEGORIES.includes(selection[0] as WorkToolSubcategory)
+    ) {
+      return "Select exactly one valid category for every work tool item";
+    }
+    categories.add(selection[0]);
+  }
+
+  if (categories.size > 1) {
+    return "All work tool items in one requisition must use the same category";
+  }
+  return undefined;
+};
+
 export interface RequestData {
   _id: string;
   title: string;

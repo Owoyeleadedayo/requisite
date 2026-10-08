@@ -40,7 +40,7 @@ import ItemsList from "../ItemsList";
 import ItemViewDialog from "../ItemViewDialog";
 import { Textarea } from "@/components/ui/textarea";
 import RequestForm from "../RequestForm";
-import { Item, UserTypes, Vendor } from "../types";
+import { Item, UserTypes, Vendor, validateWorkToolItemCategories } from "../types";
 import { formatStatus } from "@/lib/statusFormatter";
 import PMItemsList from "../PMItemsList";
 import Related from "./Related";
@@ -68,6 +68,7 @@ interface RequestData {
     lastName: string;
   };
   status?: string;
+  assignedApprover?: string | { _id: string };
   items?: Item[];
   deliveryDate?: string;
   related?: {
@@ -419,6 +420,8 @@ export default function ViewEditRequest({
     setCurrentItem((prev) =>
       field === "itemType" && value === "service"
         ? { ...prev, itemType: "service", isWorkTool: false, workToolSubcategory: [] }
+        : field === "isWorkTool" && value === false
+          ? { ...prev, isWorkTool: false, workToolSubcategory: [] }
         : { ...prev, [field]: value },
     );
   };
@@ -438,13 +441,20 @@ export default function ViewEditRequest({
       return;
     }
 
+    const updatedItems = editingItemId !== null
+      ? items.map((item) => (item._id === editingItemId ? currentItem : item))
+      : [...items, { ...currentItem, _id: Date.now().toString() }];
+    const categoryError = validateWorkToolItemCategories(updatedItems);
+    if (categoryError) {
+      toast.error(categoryError);
+      return;
+    }
+
     if (editingItemId !== null) {
-      setItems(
-        items.map((item) => (item._id === editingItemId ? currentItem : item)),
-      );
+      setItems(updatedItems);
       toast.success("Item updated successfully!");
     } else {
-      setItems([...items, { ...currentItem, _id: Date.now().toString() }]);
+      setItems(updatedItems);
       toast.success("Item added successfully!");
     }
 
@@ -458,6 +468,11 @@ export default function ViewEditRequest({
   };
 
   const handleSave = async () => {
+    const categoryError = validateWorkToolItemCategories(items);
+    if (categoryError) {
+      toast.error(categoryError);
+      return;
+    }
     setLoading(true);
     try {
       const formattedDate = dateStart
@@ -1248,7 +1263,11 @@ export default function ViewEditRequest({
                         Edit
                       </Button>
                     )}
-                  {(userType === "hod" || user?.role === "headOfHr" || user?.role === "headOfFinance" || user?.role === "hhra") && formData.status === "hodToolComment" && (
+                  {(userType === "hod" || user?.role === "headOfHr" || user?.role === "headOfFinance" || user?.role === "hhra") &&
+                    formData.status === "hodToolComment" &&
+                    (typeof formData.assignedApprover === "string"
+                      ? formData.assignedApprover === user?.id
+                      : formData.assignedApprover?._id === user?.id) && (
                     <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
                       <DialogTrigger asChild>
                         <Button className="bg-blue-600 hover:bg-blue-700 text-white flex-1 py-6">

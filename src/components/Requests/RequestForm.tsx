@@ -89,9 +89,14 @@ export default function RequestForm<
           },
         });
         const data = await response.json();
-        if (data) {
-          setLocations(data);
-        }
+        const locationList = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.data)
+            ? data.data
+            : Array.isArray(data?.locations)
+              ? data.locations
+              : [];
+        setLocations(locationList);
       } catch (error) {
         console.error("Failed to fetch locations", error);
       } finally {
