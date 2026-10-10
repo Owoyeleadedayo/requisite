@@ -7,16 +7,19 @@ import { useEffect, useState } from "react";
 import { getAuthData, getToken } from "@/lib/auth";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { ArrowLeft, Download, FileText, ShieldCheck } from "lucide-react";
-import Related, { GRNRecord, JCFRecord } from "@/components/Requests/ViewEditRequest/Related";
+import Related, {
+  GRNRecord,
+  JCFRecord,
+} from "@/components/Requests/ViewEditRequest/Related";
+import GenerateJCFDialog, {
+  JCFPayload,
+  JCFSubmitResult,
+} from "@/components/GRN/GenerateJCFDialog";
 import GenerateGRNDialog, {
   GRNPayload,
   GRNSubmitResult,
   GRNExistingRecord,
 } from "@/components/GRN/GenerateGRNDialog";
-import GenerateJCFDialog, {
-  JCFPayload,
-  JCFSubmitResult,
-} from "@/components/GRN/GenerateJCFDialog";
 import {
   Dialog,
   DialogContent,
@@ -135,7 +138,9 @@ export default function PurchaseOrderDetails() {
   const [pendingApproval, setPendingApproval] = useState<"hhr" | "hof" | null>(
     null,
   );
-  const [pendingRejection, setPendingRejection] = useState<"hhr" | "hof" | null>(null);
+  const [pendingRejection, setPendingRejection] = useState<
+    "hhr" | "hof" | null
+  >(null);
   const [rejectionFeedback, setRejectionFeedback] = useState("");
   // GRN state
   const [isGRNDialogOpen, setIsGRNDialogOpen] = useState(false);
@@ -199,7 +204,9 @@ export default function PurchaseOrderDetails() {
   };
 
   // TODO: replace stub with real API call once endpoint is ready
-  const handleGRNSubmit = async (payload: GRNPayload): Promise<GRNSubmitResult> => {
+  const handleGRNSubmit = async (
+    payload: GRNPayload,
+  ): Promise<GRNSubmitResult> => {
     const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/grn`, {
       method: "POST",
       headers: {
@@ -215,10 +222,16 @@ export default function PurchaseOrderDetails() {
       grnNumber: data.data?.grnNumber ?? "GRN-XXXX",
       receivingEmployee: payload.receivingEmployee,
       submittedDate: new Date().toLocaleString("en-GB", {
-        day: "2-digit", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       }),
-      totalDeliveredQty: payload.items.reduce((sum, i) => sum + i.deliveredQty, 0),
+      totalDeliveredQty: payload.items.reduce(
+        (sum, i) => sum + i.deliveredQty,
+        0,
+      ),
     };
   };
 
@@ -242,7 +255,9 @@ export default function PurchaseOrderDetails() {
   };
 
   // TODO: replace stub with real API call once endpoint is ready
-  const handleJCFSubmit = async (payload: JCFPayload): Promise<JCFSubmitResult> => {
+  const handleJCFSubmit = async (
+    payload: JCFPayload,
+  ): Promise<JCFSubmitResult> => {
     const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/jcf`, {
       method: "POST",
       headers: {
@@ -258,8 +273,11 @@ export default function PurchaseOrderDetails() {
       jcfNumber: data.data?.jcfNumber ?? "JCF-XXXX",
       receivingEmployee: payload.receivingEmployee,
       submittedDate: new Date().toLocaleString("en-GB", {
-        day: "2-digit", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       }),
       totalItems: payload.items.length,
     };
@@ -493,8 +511,7 @@ export default function PurchaseOrderDetails() {
     purchaseOrder.items?.length &&
     purchaseOrder.items.every(
       (item) =>
-        !item.brand ||
-        ["", "n/a"].includes(item.brand.trim().toLowerCase()),
+        !item.brand || ["", "n/a"].includes(item.brand.trim().toLowerCase()),
     )
   );
 
@@ -905,7 +922,9 @@ export default function PurchaseOrderDetails() {
             {purchaseOrder.status === "submitted" && (
               <button
                 onClick={() => {
-                  setEditedItems(purchaseOrder.items ? [...purchaseOrder.items] : []);
+                  setEditedItems(
+                    purchaseOrder.items ? [...purchaseOrder.items] : [],
+                  );
                   setIsEditMode(true);
                 }}
                 className="rounded-md border border-blue-900 px-5 py-3 text-sm font-semibold text-blue-900 transition-colors hover:bg-blue-50"
@@ -934,8 +953,8 @@ export default function PurchaseOrderDetails() {
                 {downloading ? "Downloading..." : "Download PO"}
               </button>
             )}
-            {/* GRN: product POs — available to Warehouse Manager and PM once approved */}
-            {(isWm || isPm) && !isServicePO && purchaseOrder.status === "approved" && (
+            {/* GRN: product POs — PM path */}
+            {!isServicePO && purchaseOrder.status === "approved" && (
               <button
                 onClick={() => setIsGRNDialogOpen(true)}
                 className="rounded-md bg-[#0F1E7A] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0a1555]"
@@ -944,7 +963,7 @@ export default function PurchaseOrderDetails() {
               </button>
             )}
             {/* JCF: service POs — available to PM once approved */}
-            {isPm && isServicePO && purchaseOrder.status === "approved" && (
+            {isServicePO && purchaseOrder.status === "approved" && (
               <button
                 onClick={() => setIsJCFDialogOpen(true)}
                 className="rounded-md bg-[#0F1E7A] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0a1555]"
@@ -953,6 +972,15 @@ export default function PurchaseOrderDetails() {
               </button>
             )}
           </div>
+        )}
+        {/* GRN: product POs — Warehouse Manager path */}
+        {isWm && !isServicePO && purchaseOrder.status === "approved" && (
+          <button
+            onClick={() => setIsGRNDialogOpen(true)}
+            className="rounded-md bg-[#0F1E7A] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0a1555]"
+          >
+            Generate GRN
+          </button>
         )}
 
         {/* H4: Inline edit mode panel for PM */}
@@ -974,14 +1002,20 @@ export default function PurchaseOrderDetails() {
                 </thead>
                 <tbody>
                   {editedItems.map((item, index) => (
-                    <tr key={item._id || index} className="border-b border-gray-100">
+                    <tr
+                      key={item._id || index}
+                      className="border-b border-gray-100"
+                    >
                       <td className="py-3 pr-4">
                         <input
                           type="text"
                           value={item.itemDescription}
                           onChange={(e) => {
                             const updated = [...editedItems];
-                            updated[index] = { ...updated[index], itemDescription: e.target.value };
+                            updated[index] = {
+                              ...updated[index],
+                              itemDescription: e.target.value,
+                            };
                             setEditedItems(updated);
                           }}
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
@@ -994,7 +1028,11 @@ export default function PurchaseOrderDetails() {
                           onChange={(e) => {
                             const updated = [...editedItems];
                             const qty = parseFloat(e.target.value) || 0;
-                            updated[index] = { ...updated[index], quantity: qty, totalPrice: qty * updated[index].unitPrice };
+                            updated[index] = {
+                              ...updated[index],
+                              quantity: qty,
+                              totalPrice: qty * updated[index].unitPrice,
+                            };
                             setEditedItems(updated);
                           }}
                           className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
@@ -1006,7 +1044,10 @@ export default function PurchaseOrderDetails() {
                           value={item.uom}
                           onChange={(e) => {
                             const updated = [...editedItems];
-                            updated[index] = { ...updated[index], uom: e.target.value };
+                            updated[index] = {
+                              ...updated[index],
+                              uom: e.target.value,
+                            };
                             setEditedItems(updated);
                           }}
                           className="w-24 border border-gray-300 rounded px-2 py-1 text-sm"
@@ -1019,14 +1060,21 @@ export default function PurchaseOrderDetails() {
                           onChange={(e) => {
                             const updated = [...editedItems];
                             const price = parseFloat(e.target.value) || 0;
-                            updated[index] = { ...updated[index], unitPrice: price, totalPrice: price * updated[index].quantity };
+                            updated[index] = {
+                              ...updated[index],
+                              unitPrice: price,
+                              totalPrice: price * updated[index].quantity,
+                            };
                             setEditedItems(updated);
                           }}
                           className="w-28 border border-gray-300 rounded px-2 py-1 text-sm"
                         />
                       </td>
                       <td className="py-3 text-gray-700">
-                        {formatMoney(editedItems[index].quantity * editedItems[index].unitPrice)}
+                        {formatMoney(
+                          editedItems[index].quantity *
+                            editedItems[index].unitPrice,
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1066,7 +1114,8 @@ export default function PurchaseOrderDetails() {
             }))}
             existingGRNs={grns.map<GRNExistingRecord>((grn) => ({
               items: grn.items.map((i) => ({
-                itemId: (i as { itemId?: string; deliveredQty: number }).itemId ?? "",
+                itemId:
+                  (i as { itemId?: string; deliveredQty: number }).itemId ?? "",
                 deliveredQty: i.deliveredQty,
               })),
             }))}

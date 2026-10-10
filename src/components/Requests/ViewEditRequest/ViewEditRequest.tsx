@@ -925,7 +925,7 @@ export default function ViewEditRequest({
           .filter(
             (item) =>
               item.itemType !== "service" &&
-              item.isWorkTool === true &&
+              (item.isWorkTool === true || (item.isWorkTool as unknown) === "true") &&
               item.status === "hrReview",
           )
           .map((item) => item._id);
@@ -981,6 +981,7 @@ export default function ViewEditRequest({
     }
   };
 
+  /* handleDenial — never called (Deny button uses rejectRequisition); HOF branch had wrong endpoint
   const handleDenial = async () => {
     if (!denialReason.trim()) {
       toast.error("Please provide a reason for denial");
@@ -1021,6 +1022,7 @@ export default function ViewEditRequest({
       setDenialReason("");
     }
   };
+  */
 
   const submitHodToolComment = async () => {
     const comments = approvalComment.trim();
@@ -1071,7 +1073,7 @@ export default function ViewEditRequest({
       const item = items.find((i) => i._id === id || (i as any).id === id);
       return (
         item?.itemType !== "service" &&
-        item?.isWorkTool === true &&
+        (item?.isWorkTool === true || (item?.isWorkTool as unknown) === "true") &&
         item?.status !== "hrApproved"
       );
     });
@@ -1313,7 +1315,7 @@ export default function ViewEditRequest({
                           userType === "hof"
                             ? formData.status === "departmentApproved" || formData.status === "hrApproved"
                             : userType === "hhra"
-                              ? formData.status === "submitted" || formData.status === "hrReview"
+                              ? formData.status === "hrReview"
                               : formData.status === "submitted";
                         return (
                           <>
@@ -1495,7 +1497,7 @@ export default function ViewEditRequest({
                     userType === "hhra"
                       ? items.filter(
                         (item) =>
-                          item.itemType !== "service" && item.isWorkTool === true,
+                          item.itemType !== "service" && (item.isWorkTool === true || (item.isWorkTool as unknown) === "true"),
                       )
                       : items
                   }
