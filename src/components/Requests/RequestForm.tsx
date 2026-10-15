@@ -38,6 +38,10 @@ interface RequestFormProps<
   loading: boolean;
   isEditMode?: boolean;
   isCreating?: boolean;
+  departmentId?: string;
+  departments?: { _id: string; name: string }[];
+  departmentsLoading?: boolean;
+  onDepartmentChange?: (departmentId: string) => void;
 }
 
 interface Location {
@@ -70,6 +74,10 @@ export default function RequestForm<
   loading,
   isEditMode = true,
   isCreating = false,
+  departmentId = "",
+  departments = [],
+  departmentsLoading = false,
+  onDepartmentChange,
 }: RequestFormProps<T>) {
   const [openStart, setOpenStart] = useState(false);
   const [mydateStart, setMydateStart] = useState(formatDate(dateStart));
@@ -121,6 +129,34 @@ export default function RequestForm<
             readOnly
             className="!p-4 rounded-md border shadow-sm bg-gray-50 text-gray-600"
           />
+        </div>
+      )}
+      {!departmentName && onDepartmentChange && (
+        <div className="space-y-2 mb-6">
+          <Label>
+            Requisitioning Department <span className="compulsory-field">*</span>
+          </Label>
+          <Select
+            value={departmentId}
+            onValueChange={onDepartmentChange}
+            disabled={departmentsLoading || !isEditMode}
+            required
+          >
+            <SelectTrigger className="w-full bg-white border-2 border-black">
+              <SelectValue
+                placeholder={
+                  departmentsLoading ? "Loading..." : "Select Department"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent className="bg-white">
+              {departments.map((department) => (
+                <SelectItem key={department._id} value={department._id}>
+                  {department.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       )}
 

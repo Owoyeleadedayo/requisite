@@ -854,9 +854,7 @@ export default function ViewEditRequest({
     };
 
     try {
-      const data = userType === "hof"
-        ? await requisitionService.hofRejectRequisition(requisitionId, body)
-        : userType === "hhra"
+      const data = userType === "hhra"
           ? await fetch(`${API_BASE_URL}/requisitions/${requisitionId}/hhra-approval`, {
             method: "PUT",
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -908,19 +906,7 @@ export default function ViewEditRequest({
 
       const comment = approvalComment.trim() || genericApprovalComment;
 
-      if (userType === "hof") {
-        const data = await requisitionService.hofApproveRequisition(
-          requisitionId,
-          { comments: comment },
-        );
-        if (data.success) {
-          toast.success("Request approved successfully");
-          await refreshRequisitionState();
-          setShowApprovalModal(false);
-        } else {
-          toast.error(data.message || "Failed to approve request");
-        }
-      } else if (userType === "hhra") {
+      if (userType === "hhra") {
         const workToolIds = items
           .filter(
             (item) =>
@@ -1042,7 +1028,7 @@ export default function ViewEditRequest({
         toast.error(data.message || "Failed to submit tool comment");
         return;
       }
-      toast.success("Tool comment submitted for Head of Finance review");
+      toast.success("Tool comment submitted for Procurement Manager review");
       await refreshRequisitionState();
       setApprovalComment("");
       setShowApprovalModal(false);
@@ -1079,7 +1065,7 @@ export default function ViewEditRequest({
     });
     if (workToolsPendingReview) {
       toast.error(
-        "All work-tool items must complete HHR review before generating an RFQ.",
+        "All work-tool items must complete HHRA review before generating an RFQ.",
       );
       return;
     }
@@ -1235,7 +1221,8 @@ export default function ViewEditRequest({
               </div>
             )}
 
-            {formData.status === "hofApproved" &&
+            {(formData.status === "departmentApproved" ||
+              formData.status === "hofApproved") &&
               userType === "procurementManager" && (
                 <div className="flex flex-col sm:flex-row gap-3 pt-6">
                   <Button
@@ -1283,7 +1270,7 @@ export default function ViewEditRequest({
                         Edit
                       </Button>
                     )}
-                  {(userType === "hod" || user?.role === "headOfHr" || user?.role === "headOfFinance" || user?.role === "hhra") &&
+                  {(userType === "hod" || userType === "hof" || user?.role === "headOfHr" || user?.role === "headOfFinance" || user?.role === "hhra") &&
                     formData.status === "hodToolComment" &&
                     (typeof formData.assignedApprover === "string"
                       ? formData.assignedApprover === user?.id
@@ -1308,15 +1295,13 @@ export default function ViewEditRequest({
                       </DialogContent>
                     </Dialog>
                   )}
-                  {(userType === "hod" || userType === "hhra" || userType === "hof") && formData.status !== "hodToolComment" && (
+                  {(userType === "hod" || userType === "hhra") && formData.status !== "hodToolComment" && (
                     <>
                       {(() => {
                         const canActOnRequest =
-                          userType === "hof"
-                            ? formData.status === "departmentApproved" || formData.status === "hrApproved"
-                            : userType === "hhra"
-                              ? formData.status === "hrReview"
-                              : formData.status === "submitted";
+                          userType === "hhra"
+                            ? formData.status === "hrReview"
+                            : formData.status === "submitted";
                         return (
                           <>
                             <Dialog
@@ -1346,7 +1331,7 @@ export default function ViewEditRequest({
                                 <div className="space-y-4">
                                   <div>
                                     <Label>Approval Comment</Label>
-                                    {(userType === "hod" || userType === "hhra" || userType === "hof") && (
+                                    {(userType === "hod" || userType === "hhra") && (
                                       <span className="flex text-xs pt-2 leading-none text-gray-500">
                                         {selectedItems.length} of {items?.filter(i => i.status === "pending").length ?? 0} pending item(s) selected.
                                         {(items?.filter(i => i.status === "pending").length ?? 0) - selectedItems.length > 0 &&
