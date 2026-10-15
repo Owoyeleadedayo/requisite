@@ -44,7 +44,7 @@ const statusMap: Record<string, StatusMap> = {
     color: "bg-orange-100 text-orange-800",
   },
   departmentApproved: {
-    label: "Approved by HOD",
+    label: "Approved by HOD — Ready for PM",
     color: "bg-blue-100 text-blue-800",
   },
   departmentRejected: {
@@ -52,7 +52,7 @@ const statusMap: Record<string, StatusMap> = {
     color: "bg-red-100 text-red-800",
   },
   hrReview: {
-    label: "Approved by HOD (hr review)",
+    label: "Awaiting HHRA Review",
     color: "bg-blue-100 text-blue-800",
   },
   hodToolComment: {
