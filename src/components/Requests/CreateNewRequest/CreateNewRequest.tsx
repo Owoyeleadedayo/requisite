@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
-import { getToken } from "@/lib/auth";
+import { getAuthData, getToken } from "@/lib/auth";
 import { parseDate } from "@/lib/parseDate";
 import RequestForm from "../RequestForm";
 import ItemsList from "../ItemsList";
@@ -15,8 +15,13 @@ import BatchItemUpload from "../BatchItemUpload";
 import { Item, Vendor, validateWorkToolItemCategories } from "../types";
 
 interface CreateNewRequestProps {
-  page: "user" | "hod" | "pm" | "hhra";
+  page: "user" | "hod" | "hof" | "pm" | "hhra";
   data: unknown[];
+}
+
+interface DepartmentOption {
+  _id: string;
+  name: string;
 }
 
 export default function CreateNewRequest({
@@ -24,6 +29,18 @@ export default function CreateNewRequest({
   data,
 }: CreateNewRequestProps) {
   const router = useRouter();
+  const requestsPath = {
+    user: "/user/requisition",
+    hod: "/hod/my-requests",
+    hof: "/hof/my-requests",
+    pm: "/pm/my-requests",
+    hhra: "/hhra/my-requests",
+  }[page];
+  const authDepartment = getAuthData()?.user?.department;
+  const [departmentId, setDepartmentId] = useState(authDepartment?._id || "");
+  const effectiveDepartmentId = departmentId || authDepartment?._id || "";
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [urgency, setUrgency] = useState([1]);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState<Item[]>([]);
@@ -64,6 +81,9 @@ export default function CreateNewRequest({
     // body.append("urgency", urgencyMap[urgency[0]]);
     body.append("justification", formData.justification);
     body.append("deliveryLocation", formData.deliveryLocation);
+    if (effectiveDepartmentId) {
+      body.append("departmentId", effectiveDepartmentId);
+    }
     if (formattedDate) {
       body.append("deliveryDate", formattedDate);
     }
@@ -91,6 +111,10 @@ export default function CreateNewRequest({
       toast.error("Please add at least one item before proceeding.");
       return;
     }
+    if (!effectiveDepartmentId) {
+      toast.error("Please select a requisitioning department.");
+      return;
+    }
     const categoryError = validateWorkToolItemCategories(items);
     if (categoryError) {
       toast.error(categoryError);
@@ -108,7 +132,6 @@ export default function CreateNewRequest({
     setLoading(true);
 
     try {
-      // Step 1: Create requisition as draft for all users
       const createResponse = await fetch(`${API_BASE_URL}/requisitions/`, {
         method: "POST",
         headers: {
@@ -121,15 +144,7 @@ export default function CreateNewRequest({
 
       if (createData.success) {
         toast.success("Requisition created and submitted successfully!");
-        const redirectPath =
-          page === "hod"
-            ? "/hod/my-requests/"
-            : page === "pm"
-              ? "/pm/my-requests/"
-              : page === "hhra"
-                ? "/hhra/my-requests/"
-                : "/user/requisition/";
-        router.push(redirectPath);
+        router.push(requestsPath);
       } else {
         if (createData.errors) {
           // Handle validation errors from the API
@@ -272,20 +287,41 @@ export default function CreateNewRequest({
     }
   }, [token]);
 
+  useEffect(() => {
+    if (authDepartment?._id || !token) return;
+
+    const fetchDepartments = async () => {
+      setDepartmentsLoading(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/departments?limit=1000`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success || !Array.isArray(result.data)) {
+          throw new Error(result.message || "Could not load departments.");
+        }
+        setDepartments(result.data);
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Could not load departments.",
+        );
+      } finally {
+        setDepartmentsLoading(false);
+      }
+    };
+
+    void fetchDepartments();
+  }, [authDepartment?._id, token]);
+
   return (
     <div className="w-full lg:w-full flex flex-col px-4 py-8 pb-16">
       <div className="flex flex-col items-start gap-4">
         <div className="flex items-center">
           <Link
-            href={
-              page === "hod"
-                ? "/hod/my-requests"
-                : page === "pm"
-                  ? "/pm/my-requests"
-                  : page === "hhra"
-                    ? "/hhra/my-requests"
-                    : "/user/requisition"
-            }
+            href={requestsPath}
             className="flex items-center gap-2 text-[#0d1b5e] hover:underline border rounded-full p-1"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -307,6 +343,10 @@ export default function CreateNewRequest({
           setUrgency={setUrgency}
           setFormData={setFormData}
           setDateStart={setDateStart}
+          departmentId={departmentId}
+          departments={departments}
+          departmentsLoading={departmentsLoading}
+          onDepartmentChange={setDepartmentId}
           handleSubmit={handleSubmit}
         />
 
