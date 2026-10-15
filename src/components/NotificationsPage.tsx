@@ -14,6 +14,7 @@ interface Notification {
   type: string;
   metadata: {
     title?: string;
+    notificationTitle?: string;
     message?: string;
     resourceNumber?: string;
     text?: string;
@@ -227,7 +228,9 @@ export default function NotificationsPage() {
                   </div>
 
                   <h2 className="text-sm sm:text-base font-semibold text-gray-900">
-                    {notif.metadata.title || "Notification"}
+                    {notif.metadata.title ||
+                      notif.metadata.notificationTitle ||
+                      "Notification"}
                   </h2>
 
                   <p className="text-xs sm:text-sm text-gray-500 pr-0 sm:pr-4">
@@ -302,7 +305,9 @@ export default function NotificationsPage() {
               
               <div>
                 <h3 className="font-semibold text-lg text-gray-900 mb-2">
-                  {selectedNotification.metadata.title || 'Notification'}
+                  {selectedNotification.metadata.title ||
+                    selectedNotification.metadata.notificationTitle ||
+                    "Notification"}
                 </h3>
                 
                 <p className="text-gray-700 mb-4">
