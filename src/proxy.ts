@@ -24,6 +24,14 @@ function getUserRoot(role: string, designation: string): string {
       if (designation === "Head, Finance") return "/hof";
       if (designation === "Head, Human Resources & Admin") return "/hhra";
       return "/hod";
+    case "headOfFinance":
+    case "financeManager":
+    case "accountsApprover":
+      return "/hof";
+    case "headOfHr":
+    case "hrApprover":
+    case "hhra":
+      return "/hhra";
     case "procurementManager":
       return "/pm";
     case "vendor":
