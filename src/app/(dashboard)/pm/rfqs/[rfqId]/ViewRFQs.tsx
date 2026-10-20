@@ -599,23 +599,35 @@ const ViewRFQs = () => {
               </div>
             </div>
 
-            <button
-              onClick={generatePO}
-              disabled={
-                !canGeneratePurchaseOrder ||
-                !selectedVendor ||
-                selectedItems.length === 0
-              }
-              className={`my-6 w-full md:w-auto px-8 py-3 rounded-md font-semibold transition-colors ${
-                canGeneratePurchaseOrder &&
-                selectedVendor &&
-                selectedItems.length > 0
-                  ? "bg-blue-900 text-white hover:bg-blue-800"
-                  : "bg-gray-400 text-white cursor-not-allowed"
-              }`}
-            >
-              {canGeneratePurchaseOrder ? "Generate PO" : "Issue RFQ First"}
-            </button>
+            <div className="my-6 flex flex-col gap-2">
+              <button
+                onClick={generatePO}
+                disabled={
+                  !canGeneratePurchaseOrder ||
+                  !selectedVendor ||
+                  selectedItems.length === 0
+                }
+                className={`w-full md:w-auto px-8 py-3 rounded-md font-semibold transition-colors ${
+                  canGeneratePurchaseOrder &&
+                  selectedVendor &&
+                  selectedItems.length > 0
+                    ? "bg-blue-900 text-white hover:bg-blue-800"
+                    : "bg-gray-400 text-white cursor-not-allowed"
+                }`}
+              >
+                {canGeneratePurchaseOrder ? "Generate PO" : "Issue RFQ First"}
+              </button>
+              {canGeneratePurchaseOrder && (
+                <div className="flex flex-col gap-0.5 text-xs text-gray-500">
+                  {!selectedVendor && (
+                    <span>• Select a vendor from the cards above</span>
+                  )}
+                  {selectedItems.length === 0 && (
+                    <span>• Check at least one item from the items table</span>
+                  )}
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
