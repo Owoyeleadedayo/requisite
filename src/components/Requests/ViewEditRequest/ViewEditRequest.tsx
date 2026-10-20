@@ -62,6 +62,7 @@ interface RequestData {
   deliveryLocation: string;
   priority: "low" | "medium" | "high";
   attachment?: string;
+  department?: { _id?: string; id?: string; name?: string };
   requester?: {
     _id: string;
     firstName: string;
@@ -1179,6 +1180,7 @@ export default function ViewEditRequest({
               handleSubmit={handleSave}
               loading={loading}
               isEditMode={isEditMode}
+              overrideDepartmentName={formData.department?.name}
             />
 
             {/* B2: Approval history timestamps */}

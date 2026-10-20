@@ -15,14 +15,14 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
-import { parseDate } from "@/lib/parseDate";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Slider, SliderProps } from "@mui/material";
+import { Slider } from "@mui/material";
+import { cn } from "@/lib/utils";
 // import page from "@/app/(dashboard)/pm/generate-rfq/page";
 
 interface RequestFormProps<
@@ -42,6 +42,9 @@ interface RequestFormProps<
   departments?: { _id: string; name: string }[];
   departmentsLoading?: boolean;
   onDepartmentChange?: (departmentId: string) => void;
+  /** When viewing an existing request, pass the request's own department name to
+   *  override the logged-in user's department (which would be wrong for cross-dept viewers). */
+  overrideDepartmentName?: string;
 }
 
 interface Location {
@@ -78,14 +81,16 @@ export default function RequestForm<
   departments = [],
   departmentsLoading = false,
   onDepartmentChange,
+  overrideDepartmentName,
 }: RequestFormProps<T>) {
   const [openStart, setOpenStart] = useState(false);
-  const [mydateStart, setMydateStart] = useState(formatDate(dateStart));
   const [monthStart, setMonthStart] = useState<Date | undefined>(dateStart);
   const [locations, setLocations] = useState<Location[]>([]);
   const [locationsLoading, setLocationsLoading] = useState(true);
   const authData = getAuthData();
-  const departmentName = authData?.user?.department?.name as string | undefined;
+  const authDeptName = authData?.user?.department?.name as string | undefined;
+  // Prefer the request's own department (when viewing); fall back to auth user's dept (when creating)
+  const departmentName = overrideDepartmentName ?? authDeptName;
 
   useEffect(() => {
     const fetchLocations = async () => {
@@ -124,11 +129,9 @@ export default function RequestForm<
       {departmentName && (
         <div className="space-y-2 mb-6">
           <Label>Requisitioning Department</Label>
-          <Input
-            value={departmentName}
-            readOnly
-            className="!p-4 rounded-md border shadow-sm bg-gray-50 text-gray-600"
-          />
+          <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 py-2 text-sm text-muted-foreground cursor-default select-none">
+            {departmentName}
+          </div>
         </div>
       )}
       {!departmentName && onDepartmentChange && (
@@ -142,7 +145,7 @@ export default function RequestForm<
             disabled={departmentsLoading || !isEditMode}
             required
           >
-            <SelectTrigger className="w-full bg-white border-2 border-black">
+            <SelectTrigger className="w-full bg-white">
               <SelectValue
                 placeholder={
                   departmentsLoading ? "Loading..." : "Select Department"
@@ -151,7 +154,11 @@ export default function RequestForm<
             </SelectTrigger>
             <SelectContent className="bg-white">
               {departments.map((department) => (
-                <SelectItem key={department._id} value={department._id}>
+                <SelectItem
+                  key={department._id}
+                  value={department._id}
+                  className="data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:text-white focus:bg-[#0F1E7A]/10"
+                >
                   {department.name}
                 </SelectItem>
               ))}
@@ -166,7 +173,7 @@ export default function RequestForm<
         </Label>
         <Input
           placeholder="Request title"
-          className="!p-4 rounded-md border shadow-sm bg-white"
+          className="bg-white"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           readOnly={!isEditMode}
@@ -226,7 +233,7 @@ export default function RequestForm<
         </Label>
         <Textarea
           placeholder="Justification"
-          className="rounded-md min-h-[100px] border shadow-sm bg-white"
+          className="min-h-[100px] bg-white"
           value={formData.justification}
           onChange={(e) =>
             setFormData({ ...formData, justification: e.target.value })
@@ -249,7 +256,7 @@ export default function RequestForm<
           disabled={!isEditMode || locationsLoading}
           required
         >
-          <SelectTrigger className="w-full bg-white border-2 border-black">
+          <SelectTrigger className="w-full bg-white">
             <SelectValue
               placeholder={locationsLoading ? "Loading..." : "Select Location"}
             />
@@ -273,59 +280,41 @@ export default function RequestForm<
         <Label>
           Preferred Delivery Date <span className="compulsory-field">*</span>
         </Label>
-        <div className="relative flex gap-2">
-          <Input
-            id="date-start"
-            value={mydateStart}
-            placeholder="Select date"
-            className="bg-background pr-10 border"
-            readOnly={!isEditMode}
-            onChange={(e) => {
-              setMydateStart(e.target.value);
-              const date = parseDate(e.target.value);
-              if (date) {
-                setDateStart(date);
-                setMonthStart(date);
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowDown") {
-                e.preventDefault();
-                if (!isEditMode) return;
-                setOpenStart(true);
-              }
-            }}
-          />
-          <Popover open={openStart} onOpenChange={setOpenStart}>
-            <PopoverTrigger asChild>
-              <Button
-                id="date-picker-start"
-                variant="ghost"
-                className="absolute top-1/2 right-2 size-6 -translate-y-1/2"
-                disabled={!isEditMode}
-              >
-                <CalendarIcon className="size-3.5" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-auto overflow-hidden bg-white p-0"
-              align="end"
+        <Popover open={openStart} onOpenChange={isEditMode ? setOpenStart : undefined}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!isEditMode}
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !dateStart && "text-muted-foreground"
+              )}
             >
-              <Calendar
-                mode="single"
-                selected={dateStart}
-                captionLayout="dropdown"
-                month={monthStart}
-                onMonthChange={setMonthStart}
-                onSelect={(date) => {
-                  setDateStart(date);
-                  setMydateStart(formatDate(date));
-                  setOpenStart(false);
-                }}
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
+              <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+              {dateStart ? formatDate(dateStart) : "Pick a date"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto overflow-hidden bg-white p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={dateStart}
+              captionLayout="dropdown"
+              month={monthStart}
+              onMonthChange={setMonthStart}
+              disabled={(date) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return date < today;
+              }}
+              onSelect={(date) => {
+                setDateStart(date);
+                if (date) setMonthStart(date);
+                setOpenStart(false);
+              }}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {isCreating && (
