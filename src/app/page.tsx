@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { API_BASE_URL } from "@/lib/config";
 import { setAuthCookies } from "@/lib/auth";
-import VendorLogin from "@/components/VendorLogin";
+import UserAuth from "@/components/UserAuth";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -13,7 +13,7 @@ function HomeContent() {
   const searchParams = useSearchParams();
 
   const [loading, setLoading] = useState(false);
-  const [showVendorLogin, setShowVendorLogin] = useState(false);
+  const [showUserAuth, setShowUserAuth] = useState(false);
 
   useEffect(() => {
     const authenticateUser = async () => {
@@ -21,7 +21,7 @@ function HomeContent() {
       const bypass = searchParams?.get("bypass");
 
       if (!userId || !bypass) {
-        setShowVendorLogin(true);
+        setShowUserAuth(true);
         return;
       }
 
@@ -35,6 +35,13 @@ function HomeContent() {
           },
           body: JSON.stringify({ userId, bypass }),
         });
+
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json")) {
+          throw new Error(
+            `Authentication endpoint returned a non-JSON response (${response.status}). Check that NEXT_PUBLIC_API_BASE_URL points to the backend.`
+          );
+        }
 
         const data = await response.json();
 
@@ -61,19 +68,19 @@ function HomeContent() {
               router.replace("/pm");
               break;
             default:
-              setShowVendorLogin(true);
+              setShowUserAuth(true);
               setLoading(false);
           }
         } else {
           console.error("Authentication failed:", data);
           toast.error("Error authenticating");
-          setShowVendorLogin(true);
+          setShowUserAuth(true);
           setLoading(false);
         }
       } catch (error) {
         console.error("Authentication error:", error);
         toast.error("Error authenticating");
-        setShowVendorLogin(true);
+        setShowUserAuth(true);
         setLoading(false);
       }
     };
@@ -109,8 +116,8 @@ function HomeContent() {
     );
   }
 
-  if (showVendorLogin) {
-    return <VendorLogin />;
+  if (showUserAuth) {
+    return <UserAuth />;
   }
 
   return null;
