@@ -19,6 +19,7 @@ interface Notification {
   type: string;
   metadata: {
     title?: string;
+    notificationTitle?: string;
     message?: string;
     resourceNumber?: string;
     text?: string;
@@ -39,6 +40,19 @@ interface Notification {
 interface NotificationDropdownProps {
   notificationsPath: string;
 }
+
+const getNotificationDestination = (
+  notification: Notification,
+  notificationsPath: string,
+): string => {
+  if (notification.type === "requisition_status_changed" && notification.resource) {
+    const roleRoot = notificationsPath.replace(/\/notifications\/?$/, "");
+    return roleRoot === "/user"
+      ? `${roleRoot}/requisition/${notification.resource.id}`
+      : `${roleRoot}/requisitions/${notification.resource.id}`;
+  }
+  return `${notificationsPath}?id=${notification._id}`;
+};
 
 export default function NotificationDropdown({
   notificationsPath,
@@ -84,7 +98,10 @@ export default function NotificationDropdown({
           ) {
             for (const notification of fetchedNotifications) {
               if (seenNotificationIds.current.has(notification._id)) continue;
-              const title = notification.metadata?.title || "New notification";
+              const title =
+                notification.metadata?.notificationTitle ||
+                notification.metadata?.title ||
+                "New notification";
               const body =
                 notification.metadata?.message ||
                 notification.metadata?.text ||
@@ -96,7 +113,7 @@ export default function NotificationDropdown({
               });
               browserNotification.onclick = () => {
                 window.focus();
-                window.location.href = `${notificationsPath}?id=${notification._id}`;
+                router.push(getNotificationDestination(notification, notificationsPath));
               };
             }
           }
@@ -113,7 +130,7 @@ export default function NotificationDropdown({
     void fetchNotifications();
     const intervalId = window.setInterval(() => void fetchNotifications(), 30000);
     return () => window.clearInterval(intervalId);
-  }, [notificationsPath]);
+  }, [notificationsPath, router]);
 
   const enableBrowserNotifications = async () => {
     if (!("Notification" in window)) {
@@ -176,11 +193,7 @@ export default function NotificationDropdown({
   };
 
   const handleNotificationClick = (notification: Notification) => {
-    if (notification.type === "requisition_status_changed" && notification.resource) {
-      router.push(`/user/requisition/${notification.resource.id}`);
-    } else {
-      router.push(`${notificationsPath}?id=${notification._id}`);
-    }
+    router.push(getNotificationDestination(notification, notificationsPath));
   };
 
   const truncateText = (text: string, maxLength: number = 50) => {
@@ -244,7 +257,9 @@ export default function NotificationDropdown({
                   })()}
                 </div>
                 <p className="text-sm font-medium">
-                  {notification.metadata.title || "Notification"}
+                  {notification.metadata.title ||
+                    notification.metadata.notificationTitle ||
+                    "Notification"}
                 </p>
                 {notification.type === "comment_replied" ? (
                   <>

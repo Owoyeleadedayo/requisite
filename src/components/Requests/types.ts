@@ -35,10 +35,17 @@ export const WORK_TOOL_SUBCATEGORIES = [
 export type WorkToolSubcategory = typeof WORK_TOOL_SUBCATEGORIES[number];
 
 export const validateWorkToolItemCategories = (
-  items: Pick<Item, "itemType" | "isWorkTool" | "workToolSubcategory">[],
+  items: Pick<Item, "itemType" | "isWorkTool" | "workToolSubcategory" | "status">[],
 ): string | undefined => {
-  const categories = new Set<string>();
+  const departments = new Set<string>();
+  const departmentByCategory: Record<WorkToolSubcategory, string> = {
+    "Laptop Accessories": "it",
+    "Phone Accessories": "it",
+    "Office Equipment": "hr-office",
+    "Security Accessories": "security",
+  };
   for (const item of items) {
+    if (item.status === "cancelled") continue;
     const isWorkTool =
       item.itemType !== "service" &&
       (item.isWorkTool === true || item.isWorkTool === "true");
@@ -51,11 +58,11 @@ export const validateWorkToolItemCategories = (
     ) {
       return "Select exactly one valid category for every work tool item";
     }
-    categories.add(selection[0]);
+    departments.add(departmentByCategory[selection[0] as WorkToolSubcategory]);
   }
 
-  if (categories.size > 1) {
-    return "All work tool items in one requisition must use the same category";
+  if (departments.size > 1) {
+    return "All work tool items in one requisition must route to the same department";
   }
   return undefined;
 };

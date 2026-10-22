@@ -62,6 +62,7 @@ interface RequestData {
   deliveryLocation: string;
   priority: "low" | "medium" | "high";
   attachment?: string;
+  department?: { _id?: string; id?: string; name?: string };
   requester?: {
     _id: string;
     firstName: string;
@@ -854,15 +855,15 @@ export default function ViewEditRequest({
     };
 
     try {
-      const data = userType === "hof"
-        ? await requisitionService.hofRejectRequisition(requisitionId, body)
-        : userType === "hhra"
+      const data = userType === "hhra"
           ? await fetch(`${API_BASE_URL}/requisitions/${requisitionId}/hhra-approval`, {
             method: "PUT",
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
             body: JSON.stringify({ status: "rejected", comments: body.comments }),
           }).then((response) => response.json())
-          : await requisitionService.rejectRequisition(requisitionId, body);
+          : userType === "hof"
+            ? await requisitionService.hofRejectRequisition(requisitionId, body)
+            : await requisitionService.rejectRequisition(requisitionId, body);
       if (data.success) {
         toast.success(
           CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_SUCCESS,
@@ -894,7 +895,9 @@ export default function ViewEditRequest({
           ? "Approved by Head of Department"
           : userType === "hhra"
             ? "Approved by HR Administration"
-            : "Approved for procurement";
+            : userType === "hof"
+              ? "Approved by Head of Finance"
+              : "Approved for procurement";
 
       // Silently approve all selected items before approving the request
       if (selectedItems.length > 0) {
@@ -903,16 +906,17 @@ export default function ViewEditRequest({
           itemIds: selectedItems,
           comments: silentComment,
         };
-        await requisitionService.approveBulkRequisitionItems(requisitionId, body);
+        const bulkRes = await requisitionService.approveBulkRequisitionItems(requisitionId, body);
+        if (bulkRes && !bulkRes.success) {
+          toast.error(bulkRes.message || "Failed to approve selected items");
+          return;
+        }
       }
 
       const comment = approvalComment.trim() || genericApprovalComment;
 
       if (userType === "hof") {
-        const data = await requisitionService.hofApproveRequisition(
-          requisitionId,
-          { comments: comment },
-        );
+        const data = await requisitionService.hofApproveRequisition(requisitionId, { comments: comment });
         if (data.success) {
           toast.success("Request approved successfully");
           await refreshRequisitionState();
@@ -1042,7 +1046,7 @@ export default function ViewEditRequest({
         toast.error(data.message || "Failed to submit tool comment");
         return;
       }
-      toast.success("Tool comment submitted for Head of Finance review");
+      toast.success("Tool comment submitted for Procurement Manager review");
       await refreshRequisitionState();
       setApprovalComment("");
       setShowApprovalModal(false);
@@ -1053,6 +1057,109 @@ export default function ViewEditRequest({
       setApprovalLoading(false);
     }
   };
+
+  const canAddToolComment = (() => {
+    if (formData.status !== "hodToolComment") return false;
+
+    const isHodOrApprover =
+      userType === "hod" ||
+      user?.role === "departmentHead" ||
+      userType === "hof" ||
+      user?.role === "headOfFinance" ||
+      userType === "hhra" ||
+      user?.role === "headOfHr" ||
+      user?.role === "hhra";
+
+    if (!isHodOrApprover) return false;
+
+    const currentUserId = String(user?.id || (user as any)?._id || "").trim();
+
+    // 1. Check assignedApprover match
+    const assignedId = String(
+      (typeof formData.assignedApprover === "string"
+        ? formData.assignedApprover
+        : (formData.assignedApprover as any)?.id ||
+          (formData.assignedApprover as any)?._id) || "",
+    ).trim();
+
+    if (currentUserId && assignedId && currentUserId === assignedId) {
+      return true;
+    }
+
+    // 2. Check pending HOD_TOOL_COMMENT approval record
+    const toolApproval = formData.approvals?.find(
+      (a: any) =>
+        a.stage === "HOD_TOOL_COMMENT" || a.approverRole === "hodToolComment",
+    );
+    if (toolApproval) {
+      const approverId = String(
+        (typeof toolApproval.approver === "string"
+          ? toolApproval.approver
+          : (toolApproval.approver as any)?.id ||
+            (toolApproval.approver as any)?._id ||
+            (toolApproval as any)?.approverId) || "",
+      ).trim();
+      if (currentUserId && approverId && currentUserId === approverId) {
+        return true;
+      }
+    }
+
+    // 3. Check work tool category routing vs user's department
+    const activeTool = (formData.items || items)?.find(
+      (item: any) =>
+        item.itemType !== "service" &&
+        (item.isWorkTool === true || item.isWorkTool === "true") &&
+        item.status !== "cancelled",
+    );
+    if (activeTool) {
+      const rawCategory = Array.isArray(activeTool.workToolSubcategory)
+        ? activeTool.workToolSubcategory[0]
+        : activeTool.workToolSubcategory;
+      const category = typeof rawCategory === "string" ? rawCategory.trim() : "";
+      const userDeptName = String(user?.department?.name || "").toLowerCase();
+      const userDeptCode = String((user?.department as any)?.code || "").toUpperCase();
+      const userDeptId = String((user?.department as any)?.id || (user?.department as any)?._id || "").trim();
+      const isDeptHead = userType === "hod" || user?.role === "departmentHead";
+
+      if (isDeptHead) {
+        if (category === "Laptop Accessories" || category === "Phone Accessories") {
+          if (
+            userDeptId === "12" ||
+            userDeptCode === "IT" ||
+            userDeptCode === "ICT" ||
+            userDeptName.includes("information technology") ||
+            userDeptName.includes("it")
+          ) {
+            return true;
+          }
+        } else if (category === "Office Equipment") {
+          if (
+            userDeptCode === "4" ||
+            userDeptCode === "HR" ||
+            userDeptName.includes("human resources") ||
+            userDeptName.includes("office management")
+          ) {
+            return true;
+          }
+        } else if (category === "Security Accessories") {
+          if (
+            userDeptCode === "SEC" ||
+            userDeptCode === "SECURITY" ||
+            userDeptName.includes("security")
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+
+    // 4. Fallback: If assignedId is not specified and user is HoD, allow adding comment
+    if ((userType === "hod" || user?.role === "departmentHead") && !assignedId) {
+      return true;
+    }
+
+    return false;
+  })();
 
   const handleConfirmDelivery = async () => {
     // TODO: wire to POST /purchase-orders/:poId/grns/:grnId/confirm (or /jcfs/:jcfId/confirm)
@@ -1079,7 +1186,7 @@ export default function ViewEditRequest({
     });
     if (workToolsPendingReview) {
       toast.error(
-        "All work-tool items must complete HHR review before generating an RFQ.",
+        "All work-tool items must complete HHRA review before generating an RFQ.",
       );
       return;
     }
@@ -1193,6 +1300,7 @@ export default function ViewEditRequest({
               handleSubmit={handleSave}
               loading={loading}
               isEditMode={isEditMode}
+              overrideDepartmentName={formData.department?.name}
             />
 
             {/* B2: Approval history timestamps */}
@@ -1217,9 +1325,14 @@ export default function ViewEditRequest({
                     {(approval.approverName || approval.approver) && (
                       <p className="text-gray-600">
                         {approval.approverName ||
-                          (typeof approval.approver === "string"
-                            ? approval.approver
-                            : `${approval.approver?.firstName || ""} ${approval.approver?.lastName || ""}`.trim())}
+                          (typeof approval.approver === "object"
+                            ? (approval.approver as any)?.name ||
+                              `${approval.approver?.firstName || ""} ${approval.approver?.lastName || ""}`.trim()
+                            : typeof approval.approver === "string" &&
+                              !/^[0-9a-fA-F]{24}$/.test(approval.approver) &&
+                              isNaN(Number(approval.approver))
+                              ? approval.approver
+                              : "")}
                       </p>
                     )}
                     {approval.approvedAt && (
@@ -1235,7 +1348,8 @@ export default function ViewEditRequest({
               </div>
             )}
 
-            {formData.status === "hofApproved" &&
+            {(formData.status === "departmentApproved" ||
+              formData.status === "hofApproved") &&
               userType === "procurementManager" && (
                 <div className="flex flex-col sm:flex-row gap-3 pt-6">
                   <Button
@@ -1283,11 +1397,7 @@ export default function ViewEditRequest({
                         Edit
                       </Button>
                     )}
-                  {(userType === "hod" || user?.role === "headOfHr" || user?.role === "headOfFinance" || user?.role === "hhra") &&
-                    formData.status === "hodToolComment" &&
-                    (typeof formData.assignedApprover === "string"
-                      ? formData.assignedApprover === user?.id
-                      : formData.assignedApprover?._id === user?.id) && (
+                  {canAddToolComment && (
                     <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
                       <DialogTrigger asChild>
                         <Button className="bg-blue-600 hover:bg-blue-700 text-white flex-1 py-6">
@@ -1346,7 +1456,7 @@ export default function ViewEditRequest({
                                 <div className="space-y-4">
                                   <div>
                                     <Label>Approval Comment</Label>
-                                    {(userType === "hod" || userType === "hhra" || userType === "hof") && (
+                                    {(userType === "hod" || userType === "hhra") && (
                                       <span className="flex text-xs pt-2 leading-none text-gray-500">
                                         {selectedItems.length} of {items?.filter(i => i.status === "pending").length ?? 0} pending item(s) selected.
                                         {(items?.filter(i => i.status === "pending").length ?? 0) - selectedItems.length > 0 &&

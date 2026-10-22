@@ -1,33 +1,163 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Loader2, Clock } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
 import { setAuthCookies } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
-export default function VendorLogin() {
+export default function UserAuth() {
   const router = useRouter();
+  const googlePopupRef = useRef<Window | null>(null);
+  const googleCloseWatcherRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(5);
   const [showPassword, setShowPassword] = useState(false);
   const [showApprovalPending, setShowApprovalPending] = useState(false);
+
+  const finishLogin = useCallback((token: string, user: Record<string, unknown>) => {
+    localStorage.setItem("authData", JSON.stringify({ token, user }));
+    setAuthCookies(
+      token,
+      typeof user.role === "string" ? user.role : "",
+      typeof user.designation === "string" ? user.designation : "",
+    );
+
+    const role = typeof user.role === "string" ? user.role : "";
+    const designation =
+      typeof user.designation === "string" ? user.designation : "";
+    let route = "/";
+    switch (role) {
+      case "staff":
+        route = "/user";
+        break;
+      case "departmentHead":
+        route =
+          designation === "Head, Finance"
+            ? "/hof"
+            : designation === "Head, Human Resources & Admin"
+              ? "/hhra"
+              : "/hod";
+        break;
+      case "headOfFinance":
+      case "financeManager":
+      case "accountsApprover":
+        route = "/hof";
+        break;
+      case "headOfHr":
+      case "hrApprover":
+      case "hhra":
+        route = "/hhra";
+        break;
+      case "procurementManager":
+        route = "/pm";
+        break;
+      case "vendor":
+        route = "/vendor";
+        break;
+    }
+    if (route === "/") {
+      toast.error("Your account does not have access to a Requisite dashboard.");
+      return;
+    }
+    router.replace(route);
+  }, [router]);
+
+  useEffect(() => {
+    const handleGoogleAuthMessage = (event: MessageEvent) => {
+      if (
+        event.origin !== new URL(API_BASE_URL).origin ||
+        event.source !== googlePopupRef.current ||
+        event.data?.type !== "requisite:google-auth"
+      ) {
+        return;
+      }
+
+      if (googleCloseWatcherRef.current) {
+        clearInterval(googleCloseWatcherRef.current);
+        googleCloseWatcherRef.current = null;
+      }
+      googlePopupRef.current?.close();
+      googlePopupRef.current = null;
+      setGoogleLoading(false);
+
+      if (!event.data.success) {
+        toast.error(
+          typeof event.data.detail === "string"
+            ? event.data.detail
+            : "Google sign-in failed.",
+        );
+        return;
+      }
+
+      const authData = event.data.data;
+      if (
+        typeof authData?.token !== "string" ||
+        !authData.user ||
+        typeof authData.user !== "object"
+      ) {
+        toast.error("Google sign-in returned an invalid response.");
+        return;
+      }
+
+      toast.success("Login successful!");
+      finishLogin(authData.token, authData.user as Record<string, unknown>);
+    };
+
+    window.addEventListener("message", handleGoogleAuthMessage);
+    return () => {
+      window.removeEventListener("message", handleGoogleAuthMessage);
+      if (googleCloseWatcherRef.current) {
+        clearInterval(googleCloseWatcherRef.current);
+      }
+    };
+  }, [finishLogin]);
+
+  const handleGoogleLogin = () => {
+    const authUrl = new URL(`${API_BASE_URL}/auth/google`);
+    authUrl.searchParams.set("frontendOrigin", window.location.origin);
+    const popup = window.open(
+      authUrl.toString(),
+      "requisite-google-signin",
+      "popup,width=500,height=650",
+    );
+
+    if (!popup) {
+      toast.error("Allow pop-ups to sign in with Google.");
+      return;
+    }
+
+    googlePopupRef.current = popup;
+    setGoogleLoading(true);
+    googleCloseWatcherRef.current = setInterval(() => {
+      if (popup.closed) {
+        if (googleCloseWatcherRef.current) {
+          clearInterval(googleCloseWatcherRef.current);
+          googleCloseWatcherRef.current = null;
+        }
+        googlePopupRef.current = null;
+        setGoogleLoading(false);
+      }
+    }, 500);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/vendor-login`, {
+      const res = await fetch(`${API_BASE_URL}/auth/email-login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,22 +186,8 @@ export default function VendorLogin() {
         return;
       }
 
-      // Store auth data and redirect
-      localStorage.setItem(
-        "authData",
-        JSON.stringify({
-          token: data.token,
-          user: data.user,
-        }),
-      );
-      setAuthCookies(
-        data.token,
-        data.user?.role ?? "vendor",
-        data.user?.designation ?? "",
-      );
-
       toast.success("Login successful!");
-      router.push("/vendor");
+      finishLogin(data.token, data.user);
     } catch (err) {
       console.error("Login error:", err);
       toast.error("Something went wrong. Try again.");
@@ -138,6 +254,48 @@ export default function VendorLogin() {
               <div className="text-center mb-6">
                 <h1 className="text-2xl font-bold text-red-500 mb-2">Login</h1>
                 {/* <p className="text-gray-600">Sign in to your vendor account</p> */}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || googleLoading}
+                onClick={handleGoogleLogin}
+                className="mb-5 h-12 w-full border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+              >
+                {googleLoading ? (
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                ) : (
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 48 48"
+                    className="mr-2 h-5 w-5"
+                  >
+                    <path
+                      fill="#EA4335"
+                      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"
+                    />
+                    <path
+                      fill="#4285F4"
+                      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.73 7.18l7.65 5.93c4.47-4.13 7.12-10.2 7.12-17.58Z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M10.53 28.59a14.4 14.4 0 0 1 0-9.18l-7.98-6.19a24 24 0 0 0 0 21.56l7.98-6.19Z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M24 48c6.48 0 11.93-2.13 15.9-5.87l-7.65-5.93c-2.13 1.43-4.86 2.28-8.25 2.28-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"
+                    />
+                  </svg>
+                )}
+                {googleLoading ? "Connecting to Google..." : "Sign in with Google"}
+              </Button>
+
+              <div className="mb-5 flex items-center gap-3 text-xs text-gray-500">
+                <span className="h-px flex-1 bg-gray-200" />
+                <span>OR SIGN IN WITH EMAIL</span>
+                <span className="h-px flex-1 bg-gray-200" />
               </div>
 
               <div className="space-y-6">

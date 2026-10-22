@@ -347,8 +347,8 @@ const ViewRFQs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 md:px-16 py-4 md:py-8">
-      <div className="max-w-7xl">
+    <div className="min-h-screen w-full min-w-0 bg-gray-50 px-4 py-4 sm:px-6 lg:px-8 2xl:px-12 md:py-8">
+      <div className="mx-auto w-full min-w-0 max-w-7xl">
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F1E7A]"></div>
@@ -358,7 +358,12 @@ const ViewRFQs = () => {
           <>
             {/* Header */}
             <div className="mb-6">
-              <button className="flex items-center justify-center w-10 h-10 rounded-full border-2 border-blue-900 text-blue-900 hover:bg-blue-50 mb-4">
+              <button
+                type="button"
+                aria-label="Go back"
+                onClick={() => router.back()}
+                className="mb-4 flex h-10 w-10 items-center justify-center rounded-full border-2 border-blue-900 text-blue-900 hover:bg-blue-50"
+              >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <h1 className="text-xl md:text-2xl lg:text-3xl font-semibold text-blue-900">
@@ -387,14 +392,14 @@ const ViewRFQs = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-3">
               {/* Left Section - Vendor Cards */}
-              <div className="lg:col-span-2">
+              <div className="min-w-0 xl:col-span-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {vendors.map((vendor) => (
                     <div
                       key={vendor.id}
-                      className="bg-white rounded-lg border border-gray-200 p-6 relative shadow-sm cursor-pointer"
+                      className="relative min-w-0 cursor-pointer rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6"
                       onClick={() => toggleVendor(vendor.id)}
                     >
                       <div className="absolute top-4 right-4">
@@ -411,18 +416,18 @@ const ViewRFQs = () => {
                         ></div>
                       </div>
 
-                      <div className="space-y-2 pr-8">
+                      <div className="min-w-0 space-y-2 pr-8">
                         <div>
                           <span className="font-semibold text-sm">
                             Company Name:{" "}
                           </span>
-                          <span className="text-sm">{vendor.companyName}</span>
+                          <span className="break-words text-sm">{vendor.companyName}</span>
                         </div>
                         <div>
                           <span className="font-semibold text-sm">
                             Contact Person:{" "}
                           </span>
-                          <span className="text-sm">
+                          <span className="break-words text-sm">
                             {vendor.contactPerson}
                           </span>
                         </div>
@@ -430,24 +435,24 @@ const ViewRFQs = () => {
                           <span className="font-semibold text-sm">
                             Phone No.:{" "}
                           </span>
-                          <span className="text-sm">{vendor.phoneNo}</span>
+                          <span className="break-words text-sm">{vendor.phoneNo}</span>
                         </div>
                         <div>
                           <span className="font-semibold text-sm">
                             Email Address:{" "}
                           </span>
-                          <span className="text-sm">{vendor.emailAddress}</span>
+                          <span className="break-all text-sm">{vendor.emailAddress}</span>
                         </div>
                         <div>
                           <span className="font-semibold text-sm">
                             Address:{" "}
                           </span>
-                          <span className="text-sm">{vendor.address}</span>
+                          <span className="break-words text-sm">{vendor.address}</span>
                         </div>
                       </div>
 
                       <button
-                        className="mt-4 px-6 py-2 border-2 border-blue-900 text-blue-900 hover:text-white rounded-md font-semibold hover:bg-blue-900 transition-colors"
+                        className="mt-4 w-full rounded-md border-2 border-blue-900 px-4 py-2 font-semibold text-blue-900 transition-colors hover:bg-blue-900 hover:text-white sm:w-auto"
                         onClick={(e) => e.stopPropagation()}
                       >
                         Download RFQ
@@ -458,7 +463,7 @@ const ViewRFQs = () => {
               </div>
 
               {/* Right Section - Related Tab */}
-              <div className="lg:col-span-1">
+              <div className="min-w-0">
                 <Related
                   requests={relatedRequests}
                   rfqs={relatedRfqs}
@@ -470,28 +475,28 @@ const ViewRFQs = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mt-6">
+            <div className="mt-6 grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-2">
               {/* Request Details */}
-              <div className="lg:col-span-2 h-auto w-full bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+              <div className="h-auto w-full min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
                 <div>
                   <h2 className="text-xl font-bold mb-4">REQUEST DETAILS</h2>
 
                   <div className="space-y-3 text-sm text-gray-600 mb-6">
-                    <p>
+                    <p className="break-words">
                       <span className="font-semibold">RFQ Title:</span>{" "}
                       {rfqData?.title || "N/A"}
                     </p>
-                    <p>
+                    <p className="break-words">
                       <span className="font-semibold">Location:</span>{" "}
                       {rfqData?.deliveryLocation?.name || "N/A"}
                     </p>
-                    <p>
+                    <p className="break-words">
                       <span className="font-semibold">
                         Evaluation Criteria:
                       </span>{" "}
                       {rfqData?.evaluationCriteria || "N/A"}
                     </p>
-                    <p>
+                    <p className="break-words">
                       <span className="font-semibold">
                         Expected Delivery Date:
                       </span>{" "}
@@ -501,7 +506,7 @@ const ViewRFQs = () => {
                           ).toLocaleDateString()
                         : "N/A"}
                     </p>
-                    <p>
+                    <p className="break-words">
                       <span className="font-semibold">Terms of Service:</span>{" "}
                       {rfqData?.termsAndConditions || "N/A"}
                     </p>
@@ -510,23 +515,24 @@ const ViewRFQs = () => {
               </div>
 
               {/* Items Table */}
-              <div className="lg:col-span-2 w-full bg-white rounded-lg border border-gray-200 p-6 overflow-x-auto shadow-sm">
-                <div className="flex gap-2 justify-end mb-4">
+              <div className="w-full min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+                <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
                   <select
                     value={bulkAction}
                     onChange={(e) => setBulkAction(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm"
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm sm:w-auto"
                   >
                     <option value="">Bulk actions</option>
                     <option value="delete">Delete Selected</option>
                     <option value="edit">Edit Selected</option>
                   </select>
-                  <button className="px-6 py-2 bg-gray-400 text-white rounded-md font-medium hover:bg-gray-500">
+                  <button className="w-full rounded-md bg-gray-400 px-6 py-2 font-medium text-white hover:bg-gray-500 sm:w-auto">
                     Apply
                   </button>
                 </div>
 
-                <table className="w-full">
+                <div className="w-full overflow-x-auto">
+                <table className="w-full min-w-[520px]">
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-2">
@@ -565,7 +571,7 @@ const ViewRFQs = () => {
                             className="w-4 h-4 text-blue-900 rounded border-gray-300"
                           />
                         </td>
-                        <td className="py-4 px-4 text-sm">
+                        <td className="max-w-[280px] whitespace-normal break-words px-4 py-4 text-sm">
                           {item.itemDescription ||
                             item.detailedSpecification ||
                             "N/A"}
@@ -596,26 +602,39 @@ const ViewRFQs = () => {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
 
-            <button
-              onClick={generatePO}
-              disabled={
-                !canGeneratePurchaseOrder ||
-                !selectedVendor ||
-                selectedItems.length === 0
-              }
-              className={`my-6 w-full md:w-auto px-8 py-3 rounded-md font-semibold transition-colors ${
-                canGeneratePurchaseOrder &&
-                selectedVendor &&
-                selectedItems.length > 0
-                  ? "bg-blue-900 text-white hover:bg-blue-800"
-                  : "bg-gray-400 text-white cursor-not-allowed"
-              }`}
-            >
-              {canGeneratePurchaseOrder ? "Generate PO" : "Issue RFQ First"}
-            </button>
+            <div className="my-6 flex flex-col gap-2">
+              <button
+                onClick={generatePO}
+                disabled={
+                  !canGeneratePurchaseOrder ||
+                  !selectedVendor ||
+                  selectedItems.length === 0
+                }
+                className={`w-full md:w-auto px-8 py-3 rounded-md font-semibold transition-colors ${
+                  canGeneratePurchaseOrder &&
+                  selectedVendor &&
+                  selectedItems.length > 0
+                    ? "bg-blue-900 text-white hover:bg-blue-800"
+                    : "bg-gray-400 text-white cursor-not-allowed"
+                }`}
+              >
+                {canGeneratePurchaseOrder ? "Generate PO" : "Issue RFQ First"}
+              </button>
+              {canGeneratePurchaseOrder && (
+                <div className="flex flex-col gap-0.5 text-xs text-gray-500">
+                  {!selectedVendor && (
+                    <span>• Select a vendor from the cards above</span>
+                  )}
+                  {selectedItems.length === 0 && (
+                    <span>• Check at least one item from the items table</span>
+                  )}
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>
