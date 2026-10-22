@@ -39,6 +39,8 @@ body {
 }
 
 @theme inline {
+  --color-primary: var(--primary-color);
+  --color-primary-foreground: #ffffff;
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
