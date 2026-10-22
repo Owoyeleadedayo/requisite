@@ -214,7 +214,9 @@ export default function HDODashboard({
             if (
               req.status === "draft" ||
               req.status === "pending" ||
-              req.status === "submitted"
+              req.status === "submitted" ||
+              req.status === "hrReview" ||
+              req.status === "hodToolComment"
             )
               stats.pending++;
             else if (
