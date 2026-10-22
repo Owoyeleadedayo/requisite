@@ -36,9 +36,10 @@ export default function CreateNewRequest({
     pm: "/pm/my-requests",
     hhra: "/hhra/my-requests",
   }[page];
-  const authDepartment = getAuthData()?.user?.department;
-  const [departmentId, setDepartmentId] = useState(authDepartment?._id || "");
-  const effectiveDepartmentId = departmentId || authDepartment?._id || "";
+  const authDepartment = getAuthData()?.user?.department as ({ _id?: string; id?: string; name?: string } | null | undefined);
+  const authDeptId = authDepartment?._id || authDepartment?.id || "";
+  const [departmentId, setDepartmentId] = useState(authDeptId);
+  const effectiveDepartmentId = departmentId || authDeptId;
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
   const [urgency, setUrgency] = useState([1]);
@@ -288,7 +289,7 @@ export default function CreateNewRequest({
   }, [token]);
 
   useEffect(() => {
-    if (authDepartment?._id || !token) return;
+    if (authDeptId || !token) return;
 
     const fetchDepartments = async () => {
       setDepartmentsLoading(true);
@@ -314,7 +315,7 @@ export default function CreateNewRequest({
     };
 
     void fetchDepartments();
-  }, [authDepartment?._id, token]);
+  }, [authDeptId, token]);
 
   return (
     <div className="w-full lg:w-full flex flex-col px-4 py-8 pb-16">

@@ -861,7 +861,9 @@ export default function ViewEditRequest({
             headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
             body: JSON.stringify({ status: "rejected", comments: body.comments }),
           }).then((response) => response.json())
-          : await requisitionService.rejectRequisition(requisitionId, body);
+          : userType === "hof"
+            ? await requisitionService.hofRejectRequisition(requisitionId, body)
+            : await requisitionService.rejectRequisition(requisitionId, body);
       if (data.success) {
         toast.success(
           CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_SUCCESS,
@@ -893,7 +895,9 @@ export default function ViewEditRequest({
           ? "Approved by Head of Department"
           : userType === "hhra"
             ? "Approved by HR Administration"
-            : "Approved for procurement";
+            : userType === "hof"
+              ? "Approved by Head of Finance"
+              : "Approved for procurement";
 
       // Silently approve all selected items before approving the request
       if (selectedItems.length > 0) {
@@ -907,7 +911,16 @@ export default function ViewEditRequest({
 
       const comment = approvalComment.trim() || genericApprovalComment;
 
-      if (userType === "hhra") {
+      if (userType === "hof") {
+        const data = await requisitionService.hofApproveRequisition(requisitionId, { comments: comment });
+        if (data.success) {
+          toast.success("Request approved successfully");
+          await refreshRequisitionState();
+          setShowApprovalModal(false);
+        } else {
+          toast.error(data.message || "Failed to approve request");
+        }
+      } else if (userType === "hhra") {
         const workToolIds = items
           .filter(
             (item) =>
@@ -1297,13 +1310,15 @@ export default function ViewEditRequest({
                       </DialogContent>
                     </Dialog>
                   )}
-                  {(userType === "hod" || userType === "hhra") && formData.status !== "hodToolComment" && (
+                  {(userType === "hod" || userType === "hhra" || userType === "hof") && formData.status !== "hodToolComment" && (
                     <>
                       {(() => {
                         const canActOnRequest =
-                          userType === "hhra"
-                            ? formData.status === "hrReview"
-                            : formData.status === "submitted";
+                          userType === "hof"
+                            ? formData.status === "departmentApproved" || formData.status === "hrApproved"
+                            : userType === "hhra"
+                              ? formData.status === "hrReview"
+                              : formData.status === "submitted";
                         return (
                           <>
                             <Dialog
