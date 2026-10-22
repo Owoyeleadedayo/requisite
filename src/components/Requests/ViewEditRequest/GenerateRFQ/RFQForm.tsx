@@ -448,26 +448,28 @@ export default function RFQForm({
 
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">VENDOR INFORMATION</h2>
-        <div className="w-full flex flex-col lg:flex-row gap-10">
-          <div className="w-full lg:w-[50%] flex gap-4">
+        <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-1 flex items-center gap-3 min-w-0">
             <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
-              <PopoverTrigger className="!bg-white !w-[200px]" asChild>
+              <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={comboboxOpen}
-                  className="w-full justify-between bg-white hover:bg-white border border-[#9f9f9f]"
+                  className="flex-1 justify-between bg-white hover:bg-white border border-[#9f9f9f] min-w-0"
                 >
-                  {selectedVendor
-                    ? vendors.find((vendor) => vendor._id === selectedVendor)
-                        ?.name
-                    : vendorsLoading
-                    ? "Loading vendors..."
-                    : "Choose a vendor"}
+                  <span className="truncate">
+                    {selectedVendor
+                      ? vendors.find((vendor) => vendor._id === selectedVendor)
+                          ?.name
+                      : vendorsLoading
+                      ? "Loading vendors..."
+                      : "Choose a vendor"}
+                  </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[350px] p-0 bg-white">
+              <PopoverContent className="w-[calc(100vw-3rem)] sm:w-[350px] p-0 bg-white" align="start">
                 <Command>
                   <CommandInput placeholder="Search vendor..." />
                   <CommandList>
@@ -500,7 +502,7 @@ export default function RFQForm({
               </PopoverContent>
             </Popover>
             <Button
-              className="bg-[#0F1E7A] text-white cursor-pointer"
+              className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white cursor-pointer shrink-0 px-5"
               onClick={() => {
                 if (selectedVendor) {
                   const vendor = vendors.find((v) => v._id === selectedVendor);
@@ -526,12 +528,12 @@ export default function RFQForm({
             </Button>
           </div>
 
-          <div className="w-full lg:w-[50%] flex justify-center lg:justify-end items-center">
+          <div className="shrink-0 flex justify-end items-center">
             <AddVendorDialog
               onVendorAdded={handleVendorAdded}
               trigger={
-                <Button className="bg-[#0F1E7A] text-white cursor-pointer">
-                  <Plus size={22} /> New Vendor
+                <Button className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white cursor-pointer w-full sm:w-auto">
+                  <Plus size={22} className="mr-1" /> New Vendor
                 </Button>
               }
             />

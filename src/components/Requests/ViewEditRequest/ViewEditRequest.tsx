@@ -906,7 +906,11 @@ export default function ViewEditRequest({
           itemIds: selectedItems,
           comments: silentComment,
         };
-        await requisitionService.approveBulkRequisitionItems(requisitionId, body);
+        const bulkRes = await requisitionService.approveBulkRequisitionItems(requisitionId, body);
+        if (bulkRes && !bulkRes.success) {
+          toast.error(bulkRes.message || "Failed to approve selected items");
+          return;
+        }
       }
 
       const comment = approvalComment.trim() || genericApprovalComment;
@@ -1053,6 +1057,109 @@ export default function ViewEditRequest({
       setApprovalLoading(false);
     }
   };
+
+  const canAddToolComment = (() => {
+    if (formData.status !== "hodToolComment") return false;
+
+    const isHodOrApprover =
+      userType === "hod" ||
+      user?.role === "departmentHead" ||
+      userType === "hof" ||
+      user?.role === "headOfFinance" ||
+      userType === "hhra" ||
+      user?.role === "headOfHr" ||
+      user?.role === "hhra";
+
+    if (!isHodOrApprover) return false;
+
+    const currentUserId = String(user?.id || (user as any)?._id || "").trim();
+
+    // 1. Check assignedApprover match
+    const assignedId = String(
+      (typeof formData.assignedApprover === "string"
+        ? formData.assignedApprover
+        : (formData.assignedApprover as any)?.id ||
+          (formData.assignedApprover as any)?._id) || "",
+    ).trim();
+
+    if (currentUserId && assignedId && currentUserId === assignedId) {
+      return true;
+    }
+
+    // 2. Check pending HOD_TOOL_COMMENT approval record
+    const toolApproval = formData.approvals?.find(
+      (a: any) =>
+        a.stage === "HOD_TOOL_COMMENT" || a.approverRole === "hodToolComment",
+    );
+    if (toolApproval) {
+      const approverId = String(
+        (typeof toolApproval.approver === "string"
+          ? toolApproval.approver
+          : (toolApproval.approver as any)?.id ||
+            (toolApproval.approver as any)?._id ||
+            (toolApproval as any)?.approverId) || "",
+      ).trim();
+      if (currentUserId && approverId && currentUserId === approverId) {
+        return true;
+      }
+    }
+
+    // 3. Check work tool category routing vs user's department
+    const activeTool = (formData.items || items)?.find(
+      (item: any) =>
+        item.itemType !== "service" &&
+        (item.isWorkTool === true || item.isWorkTool === "true") &&
+        item.status !== "cancelled",
+    );
+    if (activeTool) {
+      const rawCategory = Array.isArray(activeTool.workToolSubcategory)
+        ? activeTool.workToolSubcategory[0]
+        : activeTool.workToolSubcategory;
+      const category = typeof rawCategory === "string" ? rawCategory.trim() : "";
+      const userDeptName = String(user?.department?.name || "").toLowerCase();
+      const userDeptCode = String((user?.department as any)?.code || "").toUpperCase();
+      const userDeptId = String((user?.department as any)?.id || (user?.department as any)?._id || "").trim();
+      const isDeptHead = userType === "hod" || user?.role === "departmentHead";
+
+      if (isDeptHead) {
+        if (category === "Laptop Accessories" || category === "Phone Accessories") {
+          if (
+            userDeptId === "12" ||
+            userDeptCode === "IT" ||
+            userDeptCode === "ICT" ||
+            userDeptName.includes("information technology") ||
+            userDeptName.includes("it")
+          ) {
+            return true;
+          }
+        } else if (category === "Office Equipment") {
+          if (
+            userDeptCode === "4" ||
+            userDeptCode === "HR" ||
+            userDeptName.includes("human resources") ||
+            userDeptName.includes("office management")
+          ) {
+            return true;
+          }
+        } else if (category === "Security Accessories") {
+          if (
+            userDeptCode === "SEC" ||
+            userDeptCode === "SECURITY" ||
+            userDeptName.includes("security")
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+
+    // 4. Fallback: If assignedId is not specified and user is HoD, allow adding comment
+    if ((userType === "hod" || user?.role === "departmentHead") && !assignedId) {
+      return true;
+    }
+
+    return false;
+  })();
 
   const handleConfirmDelivery = async () => {
     // TODO: wire to POST /purchase-orders/:poId/grns/:grnId/confirm (or /jcfs/:jcfId/confirm)
@@ -1218,9 +1325,14 @@ export default function ViewEditRequest({
                     {(approval.approverName || approval.approver) && (
                       <p className="text-gray-600">
                         {approval.approverName ||
-                          (typeof approval.approver === "string"
-                            ? approval.approver
-                            : `${approval.approver?.firstName || ""} ${approval.approver?.lastName || ""}`.trim())}
+                          (typeof approval.approver === "object"
+                            ? (approval.approver as any)?.name ||
+                              `${approval.approver?.firstName || ""} ${approval.approver?.lastName || ""}`.trim()
+                            : typeof approval.approver === "string" &&
+                              !/^[0-9a-fA-F]{24}$/.test(approval.approver) &&
+                              isNaN(Number(approval.approver))
+                              ? approval.approver
+                              : "")}
                       </p>
                     )}
                     {approval.approvedAt && (
@@ -1285,11 +1397,7 @@ export default function ViewEditRequest({
                         Edit
                       </Button>
                     )}
-                  {(userType === "hod" || userType === "hof" || user?.role === "headOfHr" || user?.role === "headOfFinance" || user?.role === "hhra") &&
-                    formData.status === "hodToolComment" &&
-                    (typeof formData.assignedApprover === "string"
-                      ? formData.assignedApprover === user?.id
-                      : formData.assignedApprover?._id === user?.id) && (
+                  {canAddToolComment && (
                     <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
                       <DialogTrigger asChild>
                         <Button className="bg-blue-600 hover:bg-blue-700 text-white flex-1 py-6">
