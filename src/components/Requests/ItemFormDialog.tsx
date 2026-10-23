@@ -281,9 +281,9 @@ export default function ItemFormDialog({
                 {WORK_TOOL_SUBCATEGORIES.map((option) => {
                   const checked = (currentItem.workToolSubcategory ?? []).includes(option);
                   return (
-                    <label
+                    <Label
                       key={option}
-                      className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors ${
+                      className={`flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors font-normal ${
                         isViewMode
                           ? "cursor-default opacity-70"
                           : "cursor-pointer"
@@ -302,7 +302,7 @@ export default function ItemFormDialog({
                         onChange={() => !isViewMode && handleSubcategoryToggle(option)}
                       />
                       {option}
-                    </label>
+                    </Label>
                   );
                 })}
               </div>

@@ -14,6 +14,17 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -483,25 +494,25 @@ const payload = {
             <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 mb-6 shadow-sm">
               <div className="flex gap-2 justify-between mb-4">
                 {/* H1: Add Line Item button */}
-                <button
+                <Button
                   onClick={() => setIsAddItemModalOpen(true)}
-                  className="px-4 py-2 bg-[#0F1E7A] text-white rounded-md text-sm font-medium hover:bg-blue-800"
+                  className="bg-[#0F1E7A] text-white hover:bg-blue-800"
                 >
                   + Add Line Item
-                </button>
+                </Button>
                 <div className="flex gap-2">
-                  <select
-                    value={bulkAction}
-                    onChange={(e) => setBulkAction(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm"
-                  >
-                    <option value="">Bulk actions</option>
-                    <option value="delete">Delete Selected</option>
-                    <option value="edit">Edit Selected</option>
-                  </select>
-                  <button className="px-6 py-2 bg-gray-400 text-white rounded-md font-medium hover:bg-gray-500">
+                  <Select value={bulkAction} onValueChange={setBulkAction}>
+                    <SelectTrigger className="w-40 bg-white">
+                      <SelectValue placeholder="Bulk actions" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      <SelectItem value="delete" className="focus:bg-[#0F1E7A]/10">Delete Selected</SelectItem>
+                      <SelectItem value="edit" className="focus:bg-[#0F1E7A]/10">Edit Selected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="secondary" className="bg-gray-400 text-white hover:bg-gray-500">
                     Apply
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -510,11 +521,10 @@ const payload = {
                   <thead>
                     <tr className="border-b border-gray-200">
                       <th className="text-left py-3 px-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.length === items.length}
-                          onChange={toggleAllItems}
-                          className="w-4 h-4 text-blue-900 rounded border-gray-300"
+                        <Checkbox
+                          checked={items.length > 0 && selectedItems.length === items.length}
+                          onCheckedChange={(checked) => checked ? setSelectedItems(items.map(i => i.id)) : setSelectedItems([])}
+                          className="data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:border-[#0F1E7A]"
                         />
                       </th>
                       <th className="text-left py-3 px-4 font-semibold text-sm">Item Description</th>
@@ -534,11 +544,10 @@ const payload = {
                       return (
                         <tr key={item.id} className="border-b border-gray-100">
                           <td className="py-4 px-2">
-                            <input
-                              type="checkbox"
+                            <Checkbox
                               checked={selectedItems.includes(item.id)}
-                              onChange={() => toggleItem(item.id)}
-                              className="w-4 h-4 text-blue-900 rounded border-gray-300"
+                              onCheckedChange={() => toggleItem(item.id)}
+                              className="data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:border-[#0F1E7A]"
                             />
                           </td>
                           <td className="py-4 px-4 text-sm">{item.itemDescription}</td>
@@ -557,23 +566,27 @@ const payload = {
                           <td className="py-4 px-4 text-sm">₦{item.total.toLocaleString()}</td>
                           <td className="py-4 px-4">
                             <div className="flex gap-2">
-                              <button
-                                className="p-1.5 hover:bg-gray-100 rounded"
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
                                 onClick={() => {
                                   setEditingItem(item);
                                   setIsEditModalOpen(true);
                                 }}
                               >
                                 <Edit2 className="w-4 h-4 text-blue-900" />
-                              </button>
-                              <button
-                                className="p-1.5 hover:bg-gray-100 rounded"
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
                                 onClick={() =>
                                   setItems((prev) => prev.filter((i) => i.id !== item.id))
                                 }
                               >
                                 <Trash2 className="w-4 h-4 text-red-600" />
-                              </button>
+                              </Button>
                             </div>
                           </td>
                         </tr>
@@ -589,62 +602,73 @@ const payload = {
               <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 shadow-sm">
                 <div className="space-y-4">
                   {/* PO Title */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
+                  <div className="space-y-2">
+                    <Label>
                       PO Title <span className="text-red-500">*</span>
-                    </label>
-                    <input
+                    </Label>
+                    <Input
                       type="text"
                       name="poTitle"
                       value={formData.poTitle}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                      className="bg-white"
                     />
                   </div>
 
                   {/* Delivery Location */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Delivery Location{" "}
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="deliveryLocation"
+                  <div className="space-y-2">
+                    <Label>
+                      Delivery Location <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
                       value={formData.deliveryLocation}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                      onValueChange={(value) => {
+                        const locName = locations.find((loc) => loc._id === value)?.name || "";
+                        setFormData((prev) => ({ ...prev, deliveryLocation: value, shipping: locName }));
+                      }}
                     >
-                      <option value="">Select Location</option>
-                      {/* H9: Show location name + address */}
-                      {locations.map((loc) => (
-                        <option key={loc._id} value={loc._id}>
-                          {loc.name}{loc.address ? ` — ${loc.address}` : ""}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full bg-white">
+                        <SelectValue placeholder="Select Location" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {/* H9: Show location name + address */}
+                        {locations.map((loc) => (
+                          <SelectItem
+                            key={loc._id}
+                            value={loc._id}
+                            className="data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:text-white focus:bg-[#0F1E7A]/10"
+                          >
+                            {loc.name}{loc.address ? ` — ${loc.address}` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Delivery Contact */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
+                  <div className="space-y-2">
+                    <Label>
                       Delivery Contact <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="deliveryContact"
+                    </Label>
+                    <Select
                       value={formData.deliveryContact}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                      onValueChange={(value) => setFormData((prev) => ({ ...prev, deliveryContact: value }))}
                     >
-                      <option value="">Select Delivery Contact</option>
-                      {locations.map((loc) => (
-                        <option
-                          key={loc._id}
-                          value={`${loc.contactPerson[0].toUpperCase() + loc.contactPerson.slice(1)} - ${loc.phoneNumber}`}
-                        >
-                          {loc.contactPerson} - {loc.phoneNumber || "N/A"}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full bg-white">
+                        <SelectValue placeholder="Select Delivery Contact" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white">
+                        {locations.map((loc) => (
+                          <SelectItem
+                            key={loc._id}
+                            value={`${loc.contactPerson[0].toUpperCase() + loc.contactPerson.slice(1)} - ${loc.phoneNumber}`}
+                            className="data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:text-white focus:bg-[#0F1E7A]/10"
+                          >
+                            {loc.contactPerson} - {loc.phoneNumber || "N/A"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* H3: Evaluation Criteria commented out — not applicable at PO stage
@@ -663,11 +687,11 @@ const payload = {
                   */}
 
                   {/* Expected Delivery Date */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
+                  <div className="space-y-2">
+                    <Label>
                       Expected Delivery Date{" "}
                       <span className="text-red-500">*</span>
-                    </label>
+                    </Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -704,39 +728,35 @@ const payload = {
                   </div>
 
                   {/* Terms of Service */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Terms of Service
-                    </label>
-                    <textarea
+                  <div className="space-y-2">
+                    <Label>Terms of Service</Label>
+                    <Textarea
                       name="termsOfService"
                       value={formData.termsOfService}
                       onChange={handleInputChange}
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                      className="bg-white"
                     />
                   </div>
 
                   {/* Payment Terms */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
-                      Payment Terms
-                    </label>
-                    <textarea
+                  <div className="space-y-2">
+                    <Label>Payment Terms</Label>
+                    <Textarea
                       name="paymentTerms"
                       value={formData.paymentTerms}
                       onChange={handleInputChange}
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                      className="bg-white"
                     />
                   </div>
 
                   {/* H5: Multi-file vendor quote upload */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-2">
+                  <div className="space-y-2">
+                    <Label>
                       Upload Vendor&apos;s Quote(s){" "}
                       <span className="text-red-500">*</span>
-                    </label>
+                    </Label>
                     <div className="relative border border-gray-300 rounded-md px-4 py-2 bg-white">
                       <div className="flex items-center gap-2">
                         <Upload className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -781,30 +801,26 @@ const payload = {
 
                   {/* H2: Discount and VAT fields */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        Discount (%)
-                      </label>
-                      <input
+                    <div className="space-y-2">
+                      <Label>Discount (%)</Label>
+                      <Input
                         type="number"
                         min={0}
                         max={100}
                         value={discountPct}
                         onChange={(e) => setDiscountPct(parseFloat(e.target.value) || 0)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                        className="bg-white"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        VAT (%)
-                      </label>
-                      <input
+                    <div className="space-y-2">
+                      <Label>VAT (%)</Label>
+                      <Input
                         type="number"
                         min={0}
                         max={100}
                         value={vatPct}
                         onChange={(e) => setVatPct(parseFloat(e.target.value) || 0)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                        className="bg-white"
                       />
                     </div>
                   </div>
@@ -875,19 +891,20 @@ const payload = {
 
             {/* Action Buttons */}
             <div className="w-full md:max-w-md flex flex-col sm:flex-row gap-3 pt-4">
-              <button
+              <Button
                 onClick={handleCompletePO}
                 disabled={submitting}
-                className="flex-1 px-6 py-3 bg-[#0F1E7A] text-white rounded-md font-semibold hover:bg-blue-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex-1 py-6 bg-[#0F1E7A] text-white hover:bg-blue-800 disabled:opacity-60"
               >
                 {submitting ? "Submitting..." : "Complete PO"}
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleCancel}
-                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-md font-semibold hover:bg-red-700 transition-colors"
+                variant="destructive"
+                className="flex-1 py-6"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </>
         )}
