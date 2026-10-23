@@ -56,13 +56,13 @@ export const validateWorkToolItemCategories = (
       selection.length !== 1 ||
       !WORK_TOOL_SUBCATEGORIES.includes(selection[0] as WorkToolSubcategory)
     ) {
-      return "Select exactly one valid category for every work tool item";
+      return "Select exactly one valid category for every personal work tool item";
     }
     departments.add(departmentByCategory[selection[0] as WorkToolSubcategory]);
   }
 
   if (departments.size > 1) {
-    return "All work tool items in one requisition must route to the same department";
+    return "All personal work tool items in one requisition must route to the same department";
   }
   return undefined;
 };

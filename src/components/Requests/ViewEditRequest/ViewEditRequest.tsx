@@ -446,7 +446,7 @@ export default function ViewEditRequest({
       currentItem.itemType !== "service" &&
       (!currentItem.workToolSubcategory || currentItem.workToolSubcategory.length === 0)
     ) {
-      toast.error("Please select a work tool category");
+      toast.error("Please select a personal work tool category");
       return;
     }
 
@@ -1407,7 +1407,7 @@ export default function ViewEditRequest({
                       <DialogContent className="max-w-2xl bg-white">
                         <DialogHeader><DialogTitle>Required Tool Comment</DialogTitle></DialogHeader>
                         <div className="space-y-4">
-                          <Textarea value={approvalComment} onChange={(e) => setApprovalComment(e.target.value)} placeholder="Add your comment for the work tool" />
+                          <Textarea value={approvalComment} onChange={(e) => setApprovalComment(e.target.value)} placeholder="Add your comment for the personal work tool" />
                           <div className="flex justify-end gap-2">
                             <Button variant="outline" onClick={() => setShowApprovalModal(false)}>Cancel</Button>
                             <Button onClick={submitHodToolComment} disabled={approvalLoading} className="bg-blue-600 hover:bg-blue-700 text-white">

@@ -15,8 +15,8 @@ const TEMPLATE_HEADERS = [
   "Detailed Specification",
   "Units",
   "UOM",
-  "Is Work Tool (yes/no)",
-  "Work Tool Category",
+  "Is Personal Work Tool (yes/no)",
+  "Personal Work Tool Category",
 ];
 
 const VALID_ITEM_TYPES = ["product", "service"];
@@ -140,8 +140,8 @@ export default function BatchItemUpload({
         const itemDescription = get("Detailed Specification");
         const unitsRaw = get("Units");
         const UOM = get("UOM");
-        const isWorkToolRaw = get("Is Work Tool (yes/no)").toLowerCase();
-        const subcategoryRaw = get("Work Tool Category");
+        const isWorkToolRaw = get("Is Personal Work Tool (yes/no)").toLowerCase();
+        const subcategoryRaw = get("Personal Work Tool Category");
 
         // Required field checks
         if (!itemName)
@@ -165,7 +165,7 @@ export default function BatchItemUpload({
         if (!VALID_WORK_TOOL.includes(isWorkToolRaw))
           errors.push({
             row: rowNum,
-            field: "Is Work Tool",
+            field: "Is Personal Work Tool",
             message: `Must be "yes" or "no", got "${isWorkToolRaw}"`,
           });
         if (itemType === "product" && !unitsRaw)
@@ -182,7 +182,7 @@ export default function BatchItemUpload({
         if (isWorkTool && workToolSubcategory.length !== 1) {
           errors.push({
             row: rowNum,
-            field: "Work Tool Category",
+            field: "Personal Work Tool Category",
             message: "Select exactly one valid category",
           });
         }

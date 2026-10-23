@@ -232,7 +232,7 @@ export default function CreateNewRequest({
       currentItem.itemType !== "service" &&
       (!currentItem.workToolSubcategory || currentItem.workToolSubcategory.length === 0)
     ) {
-      toast.error("Please select a work tool category");
+      toast.error("Please select a personal work tool category");
       return;
     }
 

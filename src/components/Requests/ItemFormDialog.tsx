@@ -251,7 +251,7 @@ export default function ItemFormDialog({
             </div>
             */}
             <div className="w-full space-y-2">
-              <Label>Is this a worktool? (e.g. computers and accessories, phones and accessories) {!isViewMode && <span className="compulsory-field">*</span>}</Label>
+              <Label>Is this a personal work tool? (e.g. computers and accessories, phones and accessories) {!isViewMode && <span className="compulsory-field">*</span>}</Label>
               <Select
                 value={
                   typeof currentItem.isWorkTool === "boolean"
@@ -276,7 +276,7 @@ export default function ItemFormDialog({
           </div>}
           {!isService && isWorkTool && (
             <div className="space-y-2">
-              <Label>Work Tool Category {!isViewMode && <span className="compulsory-field">*</span>}</Label>
+              <Label>Personal Work Tool Category {!isViewMode && <span className="compulsory-field">*</span>}</Label>
               <div className="grid grid-cols-2 gap-2">
                 {WORK_TOOL_SUBCATEGORIES.map((option) => {
                   const checked = (currentItem.workToolSubcategory ?? []).includes(option);
