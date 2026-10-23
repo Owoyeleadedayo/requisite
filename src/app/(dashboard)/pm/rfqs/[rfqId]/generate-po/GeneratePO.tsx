@@ -280,10 +280,12 @@ const GeneratePO = () => {
     >,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === "deliveryLocation") {
+      const locName = locations.find((loc) => loc._id === value)?.name || "";
+      setFormData((prev) => ({ ...prev, deliveryLocation: value, shipping: locName }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const visibleItems =
@@ -600,47 +602,26 @@ const payload = {
                     />
                   </div>
 
-                  {/* Delivery Location and Shipping */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        Delivery Location{" "}
-                        <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        name="deliveryLocation"
-                        value={formData.deliveryLocation}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
-                      >
-                        <option value="">Select Location</option>
-                        {/* H9: Show location name + address */}
-                        {locations.map((loc) => (
-                          <option key={loc._id} value={loc._id}>
-                            {loc.name}{loc.address ? ` — ${loc.address}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        Shipping <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        name="shipping"
-                        value={formData.shipping}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
-                      >
-                        <option value="">Select Location</option>
-                        {locations.map((loc) => (
-                          <option key={loc._id} value={loc.name}>
-                            {loc.name}{loc.address ? ` — ${loc.address}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                  {/* Delivery Location */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">
+                      Delivery Location{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="deliveryLocation"
+                      value={formData.deliveryLocation}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-900"
+                    >
+                      <option value="">Select Location</option>
+                      {/* H9: Show location name + address */}
+                      {locations.map((loc) => (
+                        <option key={loc._id} value={loc._id}>
+                          {loc.name}{loc.address ? ` — ${loc.address}` : ""}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Delivery Contact */}
