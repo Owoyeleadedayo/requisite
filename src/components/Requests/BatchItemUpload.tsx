@@ -2,7 +2,7 @@
 
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Item, WORK_TOOL_SUBCATEGORIES } from "./types";
@@ -15,8 +15,8 @@ const TEMPLATE_HEADERS = [
   "Detailed Specification",
   "Units",
   "UOM",
-  "Is Work Tool (yes/no)",
-  "Work Tool Category",
+  "Is Personal Work Tool (yes/no)",
+  "Personal Work Tool Category",
 ];
 
 const VALID_ITEM_TYPES = ["product", "service"];
@@ -140,8 +140,8 @@ export default function BatchItemUpload({
         const itemDescription = get("Detailed Specification");
         const unitsRaw = get("Units");
         const UOM = get("UOM");
-        const isWorkToolRaw = get("Is Work Tool (yes/no)").toLowerCase();
-        const subcategoryRaw = get("Work Tool Category");
+        const isWorkToolRaw = get("Is Personal Work Tool (yes/no)").toLowerCase();
+        const subcategoryRaw = get("Personal Work Tool Category");
 
         // Required field checks
         if (!itemName)
@@ -165,7 +165,7 @@ export default function BatchItemUpload({
         if (!VALID_WORK_TOOL.includes(isWorkToolRaw))
           errors.push({
             row: rowNum,
-            field: "Is Work Tool",
+            field: "Is Personal Work Tool",
             message: `Must be "yes" or "no", got "${isWorkToolRaw}"`,
           });
         if (itemType === "product" && !unitsRaw)
@@ -182,7 +182,7 @@ export default function BatchItemUpload({
         if (isWorkTool && workToolSubcategory.length !== 1) {
           errors.push({
             row: rowNum,
-            field: "Work Tool Category",
+            field: "Personal Work Tool Category",
             message: "Select exactly one valid category",
           });
         }
@@ -231,13 +231,15 @@ export default function BatchItemUpload({
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={generateTemplate}
-        className="text-sm text-[#0F1E7A] underline underline-offset-2 hover:text-[#0b154b] bg-transparent border-none cursor-pointer p-0"
+        className="flex items-center gap-2 border-[#0F1E7A] text-[#0F1E7A] hover:bg-blue-50"
       >
+        <Download size={16} />
         Download Template
-      </button>
+      </Button>
       <Button
         type="button"
         variant="outline"

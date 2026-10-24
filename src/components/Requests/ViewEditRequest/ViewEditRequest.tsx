@@ -40,7 +40,12 @@ import ItemsList from "../ItemsList";
 import ItemViewDialog from "../ItemViewDialog";
 import { Textarea } from "@/components/ui/textarea";
 import RequestForm from "../RequestForm";
-import { Item, UserTypes, Vendor, validateWorkToolItemCategories } from "../types";
+import {
+  Item,
+  UserTypes,
+  Vendor,
+  validateWorkToolItemCategories,
+} from "../types";
 import { formatStatus } from "@/lib/statusFormatter";
 import PMItemsList from "../PMItemsList";
 import Related from "./Related";
@@ -175,10 +180,24 @@ export default function ViewEditRequest({
     useState<ConfirmDeliveryData | null>(null);
   const [isConfirmDeliveryOpen, setIsConfirmDeliveryOpen] = useState(false);
 
+  /* Guard against ?mode=edit URL bypass: force view mode if status doesn't allow editing */
+  useEffect(() => {
+    if (
+      isEditMode &&
+      formData.status &&
+      !["submitted", "rejected", "draft"].includes(formData.status)
+    ) {
+      onEditModeChange(false);
+    }
+  }, [formData.status, isEditMode, onEditModeChange]);
+
   const refreshRequisitionState = async () => {
-    const response = await fetch(`${API_BASE_URL}/requisitions/${requisitionId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/requisitions/${requisitionId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
     const data = await response.json();
     if (!data.success) return;
 
@@ -420,10 +439,15 @@ export default function ViewEditRequest({
   ) => {
     setCurrentItem((prev) =>
       field === "itemType" && value === "service"
-        ? { ...prev, itemType: "service", isWorkTool: false, workToolSubcategory: [] }
+        ? {
+            ...prev,
+            itemType: "service",
+            isWorkTool: false,
+            workToolSubcategory: [],
+          }
         : field === "isWorkTool" && value === false
           ? { ...prev, isWorkTool: false, workToolSubcategory: [] }
-        : { ...prev, [field]: value },
+          : { ...prev, [field]: value },
     );
   };
 
@@ -444,15 +468,17 @@ export default function ViewEditRequest({
     if (
       currentItem.isWorkTool === true &&
       currentItem.itemType !== "service" &&
-      (!currentItem.workToolSubcategory || currentItem.workToolSubcategory.length === 0)
+      (!currentItem.workToolSubcategory ||
+        currentItem.workToolSubcategory.length === 0)
     ) {
-      toast.error("Please select a work tool category");
+      toast.error("Please select a personal work tool category");
       return;
     }
 
-    const updatedItems = editingItemId !== null
-      ? items.map((item) => (item._id === editingItemId ? currentItem : item))
-      : [...items, { ...currentItem, _id: Date.now().toString() }];
+    const updatedItems =
+      editingItemId !== null
+        ? items.map((item) => (item._id === editingItemId ? currentItem : item))
+        : [...items, { ...currentItem, _id: Date.now().toString() }];
     const categoryError = validateWorkToolItemCategories(updatedItems);
     if (categoryError) {
       toast.error(categoryError);
@@ -476,6 +502,49 @@ export default function ViewEditRequest({
     toast.success("Item removed.");
   };
 
+  /* canEdit: request is still with the requester (hasn't entered the approval chain) */
+  const canEdit =
+    !formData.status ||
+    ["submitted", "rejected", "draft"].includes(formData.status);
+
+  const handleResubmit = async () => {
+    const categoryError = validateWorkToolItemCategories(items);
+    if (categoryError) {
+      toast.error(categoryError);
+      return;
+    }
+    setLoading(true);
+    try {
+      const formattedDate = dateStart
+        ? new Date(dateStart.getTime() - dateStart.getTimezoneOffset() * 60000)
+            .toISOString()
+            .split("T")[0]
+        : undefined;
+
+      const requestBody = buildRequisitionFormData(formattedDate);
+      requestBody.append("status", "submitted");
+
+      const res = await fetch(`${API_BASE_URL}/requisitions/${requisitionId}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+        body: requestBody,
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Request resubmitted successfully!");
+        onEditModeChange(false);
+        await refreshRequisitionState();
+      } else {
+        toast.error(data.message || "Failed to resubmit request");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("An error occurred while resubmitting");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSave = async () => {
     const categoryError = validateWorkToolItemCategories(items);
     if (categoryError) {
@@ -486,8 +555,8 @@ export default function ViewEditRequest({
     try {
       const formattedDate = dateStart
         ? new Date(dateStart.getTime() - dateStart.getTimezoneOffset() * 60000)
-          .toISOString()
-          .split("T")[0]
+            .toISOString()
+            .split("T")[0]
         : undefined;
 
       const requestBody = buildRequisitionFormData(formattedDate);
@@ -619,7 +688,7 @@ export default function ViewEditRequest({
       } else {
         throw toast.error(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -660,7 +729,7 @@ export default function ViewEditRequest({
       } else {
         throw toast.error(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -695,14 +764,14 @@ export default function ViewEditRequest({
       if (data.success) {
         toast.success(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
       } else {
         throw toast.error(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -737,14 +806,14 @@ export default function ViewEditRequest({
       if (data.success) {
         toast.success(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items);
         setViewingItem(data.data.item);
       } else {
         throw toast.error(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
+            CONSTANTS.REQUISITION.NOTIFICATION.APPROVE_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -780,14 +849,14 @@ export default function ViewEditRequest({
       if (data.success) {
         toast.success(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items); // update state on items table
         setViewingItem(data.data.item); // update state on item view dialog
       } else {
         throw toast.error(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -823,14 +892,14 @@ export default function ViewEditRequest({
       if (data.success) {
         toast.success(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_SUCCESS,
         );
         setItems(data.data.requisition.items);
         setViewingItem(data.data.item);
       } else {
         throw toast.error(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_ITEM_FAIL,
         );
       }
     } catch (error) {
@@ -855,12 +924,22 @@ export default function ViewEditRequest({
     };
 
     try {
-      const data = userType === "hhra"
-          ? await fetch(`${API_BASE_URL}/requisitions/${requisitionId}/hhra-approval`, {
-            method: "PUT",
-            headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "rejected", comments: body.comments }),
-          }).then((response) => response.json())
+      const data =
+        userType === "hhra"
+          ? await fetch(
+              `${API_BASE_URL}/requisitions/${requisitionId}/hhra-approval`,
+              {
+                method: "PUT",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  status: "rejected",
+                  comments: body.comments,
+                }),
+              },
+            ).then((response) => response.json())
           : userType === "hof"
             ? await requisitionService.hofRejectRequisition(requisitionId, body)
             : await requisitionService.rejectRequisition(requisitionId, body);
@@ -873,7 +952,7 @@ export default function ViewEditRequest({
       } else {
         toast.error(
           data.message ||
-          CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_FAIL,
+            CONSTANTS.REQUISITION.NOTIFICATION.REJECT_REQUISITION_FAIL,
         );
       }
     } catch (error) {
@@ -906,7 +985,10 @@ export default function ViewEditRequest({
           itemIds: selectedItems,
           comments: silentComment,
         };
-        const bulkRes = await requisitionService.approveBulkRequisitionItems(requisitionId, body);
+        const bulkRes = await requisitionService.approveBulkRequisitionItems(
+          requisitionId,
+          body,
+        );
         if (bulkRes && !bulkRes.success) {
           toast.error(bulkRes.message || "Failed to approve selected items");
           return;
@@ -916,7 +998,10 @@ export default function ViewEditRequest({
       const comment = approvalComment.trim() || genericApprovalComment;
 
       if (userType === "hof") {
-        const data = await requisitionService.hofApproveRequisition(requisitionId, { comments: comment });
+        const data = await requisitionService.hofApproveRequisition(
+          requisitionId,
+          { comments: comment },
+        );
         if (data.success) {
           toast.success("Request approved successfully");
           await refreshRequisitionState();
@@ -929,7 +1014,8 @@ export default function ViewEditRequest({
           .filter(
             (item) =>
               item.itemType !== "service" &&
-              (item.isWorkTool === true || (item.isWorkTool as unknown) === "true") &&
+              (item.isWorkTool === true ||
+                (item.isWorkTool as unknown) === "true") &&
               item.status === "hrReview",
           )
           .map((item) => item._id);
@@ -942,19 +1028,24 @@ export default function ViewEditRequest({
         // The API retains per-item HR approval. Keep it invisible to HHRA by
         // approving every eligible tool item as part of the request action.
         for (const itemId of workToolIds) {
-          const itemResponse = await requisitionService.approveHrRequisitionItem(
-            requisitionId,
-            itemId,
-            { comments: comment },
-          );
+          const itemResponse =
+            await requisitionService.approveHrRequisitionItem(
+              requisitionId,
+              itemId,
+              { comments: comment },
+            );
           if (!itemResponse.success) {
-            toast.error(itemResponse.message || "Failed to approve work-tool items");
+            toast.error(
+              itemResponse.message || "Failed to approve work-tool items",
+            );
             return;
           }
         }
 
         await refreshRequisitionState();
-        toast.success("Work-tool items approved; requisition is awaiting the HoD tool comment");
+        toast.success(
+          "Work-tool items approved; requisition is awaiting the HoD tool comment",
+        );
         setShowApprovalModal(false);
       } else {
         const res = await fetch(
@@ -1036,11 +1127,17 @@ export default function ViewEditRequest({
     }
     setApprovalLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/requisitions/${requisitionId}/hod-tool-comment`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ comments }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/requisitions/${requisitionId}/hod-tool-comment`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ comments }),
+        },
+      );
       const data = await response.json();
       if (!data.success) {
         toast.error(data.message || "Failed to submit tool comment");
@@ -1115,14 +1212,22 @@ export default function ViewEditRequest({
       const rawCategory = Array.isArray(activeTool.workToolSubcategory)
         ? activeTool.workToolSubcategory[0]
         : activeTool.workToolSubcategory;
-      const category = typeof rawCategory === "string" ? rawCategory.trim() : "";
+      const category =
+        typeof rawCategory === "string" ? rawCategory.trim() : "";
       const userDeptName = String(user?.department?.name || "").toLowerCase();
-      const userDeptCode = String((user?.department as any)?.code || "").toUpperCase();
-      const userDeptId = String((user?.department as any)?.id || (user?.department as any)?._id || "").trim();
+      const userDeptCode = String(
+        (user?.department as any)?.code || "",
+      ).toUpperCase();
+      const userDeptId = String(
+        (user?.department as any)?.id || (user?.department as any)?._id || "",
+      ).trim();
       const isDeptHead = userType === "hod" || user?.role === "departmentHead";
 
       if (isDeptHead) {
-        if (category === "Laptop Accessories" || category === "Phone Accessories") {
+        if (
+          category === "Laptop Accessories" ||
+          category === "Phone Accessories"
+        ) {
           if (
             userDeptId === "12" ||
             userDeptCode === "IT" ||
@@ -1154,7 +1259,10 @@ export default function ViewEditRequest({
     }
 
     // 4. Fallback: If assignedId is not specified and user is HoD, allow adding comment
-    if ((userType === "hod" || user?.role === "departmentHead") && !assignedId) {
+    if (
+      (userType === "hod" || user?.role === "departmentHead") &&
+      !assignedId
+    ) {
       return true;
     }
 
@@ -1180,7 +1288,8 @@ export default function ViewEditRequest({
       const item = items.find((i) => i._id === id || (i as any).id === id);
       return (
         item?.itemType !== "service" &&
-        (item?.isWorkTool === true || (item?.isWorkTool as unknown) === "true") &&
+        (item?.isWorkTool === true ||
+          (item?.isWorkTool as unknown) === "true") &&
         item?.status !== "hrApproved"
       );
     });
@@ -1243,7 +1352,9 @@ export default function ViewEditRequest({
           {formData.requisitionNumber}{" "}
         </h1>
         {formData.status && (
-          <span className="status-badge ml-4">{formatStatus(formData.status)}</span>
+          <span className="status-badge ml-4">
+            {formatStatus(formData.status)}
+          </span>
         )}
       </div>
 
@@ -1304,49 +1415,58 @@ export default function ViewEditRequest({
             />
 
             {/* B2: Approval history timestamps */}
-            {!isEditMode && formData.approvals && formData.approvals.length > 0 && (
-              <div className="w-full bg-white border rounded-xl p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-[#0F1E7A] uppercase tracking-wide">
-                  Approval History
-                </h3>
-                {formData.approvals.map((approval, i) => (
-                  <div key={i} className="flex flex-col gap-1 border-l-2 border-green-400 pl-3 text-sm">
-                    <p className="font-semibold text-gray-800">
-                      {approval.approverRole === "hodToolComment"
-                        ? "Head of Department Tool Comment"
-                        : approval.approverRole === "hod"
-                          ? "Head of Department"
-                          : approval.approverRole === "hof"
-                            ? "Head of Finance"
-                            : approval.approverRole === "hhr"
-                              ? "Head of Human Resources"
-                              : approval.approverRole || "Approver"}
-                    </p>
-                    {(approval.approverName || approval.approver) && (
-                      <p className="text-gray-600">
-                        {approval.approverName ||
-                          (typeof approval.approver === "object"
-                            ? (approval.approver as any)?.name ||
-                              `${approval.approver?.firstName || ""} ${approval.approver?.lastName || ""}`.trim()
-                            : typeof approval.approver === "string" &&
-                              !/^[0-9a-fA-F]{24}$/.test(approval.approver) &&
-                              isNaN(Number(approval.approver))
-                              ? approval.approver
-                              : "")}
+            {!isEditMode &&
+              formData.approvals &&
+              formData.approvals.length > 0 && (
+                <div className="w-full bg-white border rounded-xl p-4 space-y-3">
+                  <h3 className="text-sm font-semibold text-[#0F1E7A] uppercase tracking-wide">
+                    Approval History
+                  </h3>
+                  {formData.approvals.map((approval, i) => (
+                    <div
+                      key={i}
+                      className="flex flex-col gap-1 border-l-2 border-green-400 pl-3 text-sm"
+                    >
+                      <p className="font-semibold text-gray-800">
+                        {approval.approverRole === "hodToolComment"
+                          ? "Head of Department Tool Comment"
+                          : approval.approverRole === "hod"
+                            ? "Head of Department"
+                            : approval.approverRole === "hof"
+                              ? "Head of Finance"
+                              : approval.approverRole === "hhr"
+                                ? "Head of Human Resources"
+                                : approval.approverRole || "Approver"}
                       </p>
-                    )}
-                    {approval.approvedAt && (
-                      <p className="text-gray-500 text-xs">
-                        {new Date(approval.approvedAt).toLocaleString()}
-                      </p>
-                    )}
-                    {approval.comments && (
-                      <p className="text-gray-600 italic text-xs">{approval.comments}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+                      {(approval.approverName || approval.approver) && (
+                        <p className="text-gray-600">
+                          {approval.approverName ||
+                            (typeof approval.approver === "object"
+                              ? (approval.approver as any)?.name ||
+                                `${approval.approver?.firstName || ""} ${approval.approver?.lastName || ""}`.trim()
+                              : typeof approval.approver === "string" &&
+                                  !/^[0-9a-fA-F]{24}$/.test(
+                                    approval.approver,
+                                  ) &&
+                                  isNaN(Number(approval.approver))
+                                ? approval.approver
+                                : "")}
+                        </p>
+                      )}
+                      {approval.approvedAt && (
+                        <p className="text-gray-500 text-xs">
+                          {new Date(approval.approvedAt).toLocaleString()}
+                        </p>
+                      )}
+                      {approval.comments && (
+                        <p className="text-gray-600 italic text-xs">
+                          {approval.comments}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
             {(formData.status === "departmentApproved" ||
               formData.status === "hofApproved") &&
@@ -1374,22 +1494,33 @@ export default function ViewEditRequest({
                 <>
                   <Button
                     onClick={() => onEditModeChange(false)}
-                    className="border border-red-600 text-red-600 hover:bg-red-500 flex-1 py-6"
+                    className="border border-red-600 text-red-600 bg-transparent! hover:bg-red-500! hover:text-white! flex-1 py-6"
                   >
                     Cancel Edit
                   </Button>
-                  <Button
-                    disabled={loading}
-                    onClick={handleSave}
-                    className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
-                  >
-                    {loading ? "Saving..." : "Save Changes"}
-                  </Button>
+                  {formData.status === "rejected" ? (
+                    <Button
+                      disabled={loading}
+                      onClick={handleResubmit}
+                      className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
+                    >
+                      {loading ? "Resubmitting..." : "Resubmit"}
+                    </Button>
+                  ) : (
+                    <Button
+                      disabled={loading}
+                      onClick={handleSave}
+                      className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
+                    >
+                      {loading ? "Saving..." : "Save Changes"}
+                    </Button>
+                  )}
                 </>
               ) : (
                 <>
                   {(userType === "user" ||
-                    user?.id === formData.requester?._id) && (
+                    user?.id === formData.requester?._id) &&
+                    canEdit && (
                       <Button
                         onClick={() => onEditModeChange(true)}
                         className="bg-[#0F1E7A] hover:bg-[#0b154b] text-white flex-1 py-6 w-full"
@@ -1397,157 +1528,220 @@ export default function ViewEditRequest({
                         Edit
                       </Button>
                     )}
+                  {(userType === "user" ||
+                    user?.id === formData.requester?._id) &&
+                    formData.status === "rejected" && (
+                      <Button
+                        disabled={loading}
+                        onClick={handleResubmit}
+                        className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6"
+                      >
+                        {loading ? "Resubmitting..." : "Resubmit"}
+                      </Button>
+                    )}
                   {canAddToolComment && (
-                    <Dialog open={showApprovalModal} onOpenChange={setShowApprovalModal}>
+                    <Dialog
+                      open={showApprovalModal}
+                      onOpenChange={setShowApprovalModal}
+                    >
                       <DialogTrigger asChild>
                         <Button className="bg-blue-600 hover:bg-blue-700 text-white flex-1 py-6">
                           Add Tool Comment
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl bg-white">
-                        <DialogHeader><DialogTitle>Required Tool Comment</DialogTitle></DialogHeader>
+                        <DialogHeader>
+                          <DialogTitle>Required Tool Comment</DialogTitle>
+                        </DialogHeader>
                         <div className="space-y-4">
-                          <Textarea value={approvalComment} onChange={(e) => setApprovalComment(e.target.value)} placeholder="Add your comment for the work tool" />
+                          <Textarea
+                            value={approvalComment}
+                            onChange={(e) => setApprovalComment(e.target.value)}
+                            placeholder="Add your comment for the personal work tool"
+                          />
                           <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setShowApprovalModal(false)}>Cancel</Button>
-                            <Button onClick={submitHodToolComment} disabled={approvalLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                              {approvalLoading ? "Submitting..." : "Submit Comment"}
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowApprovalModal(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={submitHodToolComment}
+                              disabled={approvalLoading}
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              {approvalLoading
+                                ? "Submitting..."
+                                : "Submit Comment"}
                             </Button>
                           </div>
                         </div>
                       </DialogContent>
                     </Dialog>
                   )}
-                  {(userType === "hod" || userType === "hhra" || userType === "hof") && formData.status !== "hodToolComment" && (
-                    <>
-                      {(() => {
-                        const canActOnRequest =
-                          userType === "hof"
-                            ? formData.status === "departmentApproved" || formData.status === "hrApproved"
-                            : userType === "hhra"
-                              ? formData.status === "hrReview"
-                              : formData.status === "submitted";
-                        return (
-                          <>
-                            <Dialog
-                              open={showApprovalModal}
-                              onOpenChange={(open) => {
-                                if (userType !== "hod" || selectedItems.length > 0) {
-                                  setShowApprovalModal(open);
-                                } else {
-                                  toast.error(
-                                    "Select at least one item to approve before proceeding",
-                                  );
-                                }
-                              }}
-                            >
-                              <DialogTrigger asChild>
-                                <Button
-                                  disabled={!canActOnRequest || (userType === "hod" && selectedItems.length === 0)}
-                                  className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  Approve
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl bg-white">
-                                <DialogHeader>
-                                  <DialogTitle>Approve Request</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label>Approval Comment</Label>
-                                    {(userType === "hod" || userType === "hhra") && (
-                                      <span className="flex text-xs pt-2 leading-none text-gray-500">
-                                        {selectedItems.length} of {items?.filter(i => i.status === "pending").length ?? 0} pending item(s) selected.
-                                        {(items?.filter(i => i.status === "pending").length ?? 0) - selectedItems.length > 0 &&
-                                          ` ${(items?.filter(i => i.status === "pending").length ?? 0) - selectedItems.length} item(s) will remain pending.`}
-                                      </span>
-                                    )}
-                                    <Textarea
-                                      value={approvalComment}
-                                      onChange={(e) =>
-                                        setApprovalComment(e.target.value)
-                                      }
-                                      placeholder="Add a comment for approval"
-                                      className="mt-2"
-                                    />
+                  {(userType === "hod" ||
+                    userType === "hhra" ||
+                    userType === "hof") &&
+                    formData.status !== "hodToolComment" && (
+                      <>
+                        {(() => {
+                          const canActOnRequest =
+                            userType === "hof"
+                              ? formData.status === "departmentApproved" ||
+                                formData.status === "hrApproved"
+                              : userType === "hhra"
+                                ? formData.status === "hrReview"
+                                : formData.status === "submitted";
+                          return (
+                            <>
+                              <Dialog
+                                open={showApprovalModal}
+                                onOpenChange={(open) => {
+                                  if (
+                                    userType !== "hod" ||
+                                    selectedItems.length > 0
+                                  ) {
+                                    setShowApprovalModal(open);
+                                  } else {
+                                    toast.error(
+                                      "Select at least one item to approve before proceeding",
+                                    );
+                                  }
+                                }}
+                              >
+                                <DialogTrigger asChild>
+                                  <Button
+                                    disabled={
+                                      !canActOnRequest ||
+                                      (userType === "hod" &&
+                                        selectedItems.length === 0)
+                                    }
+                                    className="bg-green-600 hover:bg-green-700 text-white flex-1 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    Approve
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl bg-white">
+                                  <DialogHeader>
+                                    <DialogTitle>Approve Request</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <Label>Approval Comment</Label>
+                                      {(userType === "hod" ||
+                                        userType === "hhra") && (
+                                        <span className="flex text-xs pt-2 leading-none text-gray-500">
+                                          {selectedItems.length} of{" "}
+                                          {items?.filter(
+                                            (i) => i.status === "pending",
+                                          ).length ?? 0}{" "}
+                                          pending item(s) selected.
+                                          {(items?.filter(
+                                            (i) => i.status === "pending",
+                                          ).length ?? 0) -
+                                            selectedItems.length >
+                                            0 &&
+                                            ` ${(items?.filter((i) => i.status === "pending").length ?? 0) - selectedItems.length} item(s) will remain pending.`}
+                                        </span>
+                                      )}
+                                      <Textarea
+                                        value={approvalComment}
+                                        onChange={(e) =>
+                                          setApprovalComment(e.target.value)
+                                        }
+                                        placeholder="Add a comment for approval"
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                      <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                          setShowApprovalModal(false)
+                                        }
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button
+                                        onClick={handleApproval}
+                                        disabled={approvalLoading}
+                                        className="bg-green-600 hover:bg-green-700 text-white"
+                                      >
+                                        {approvalLoading
+                                          ? "Approving..."
+                                          : "Approve"}
+                                      </Button>
+                                    </div>
                                   </div>
-                                  <div className="flex gap-2 justify-end">
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => setShowApprovalModal(false)}
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      onClick={handleApproval}
-                                      disabled={approvalLoading}
-                                      className="bg-green-600 hover:bg-green-700 text-white"
-                                    >
-                                      {approvalLoading ? "Approving..." : "Approve"}
-                                    </Button>
+                                </DialogContent>
+                              </Dialog>
+                              <Dialog
+                                open={showDenialModal}
+                                onOpenChange={setShowDenialModal}
+                              >
+                                <DialogTrigger asChild>
+                                  <Button
+                                    disabled={!canActOnRequest}
+                                    className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
+                                  >
+                                    Deny
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl bg-white">
+                                  <DialogHeader>
+                                    <DialogTitle>Deny Request</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <Label>
+                                        Reason for Denial{" "}
+                                        <span className="text-red-500">*</span>
+                                      </Label>
+                                      <Textarea
+                                        value={denialReason}
+                                        onChange={(e) =>
+                                          setDenialReason(e.target.value)
+                                        }
+                                        placeholder="A reason is required before denying this request"
+                                        className="mt-2"
+                                      />
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                      <Button
+                                        variant="outline"
+                                        onClick={() =>
+                                          setShowDenialModal(false)
+                                        }
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button
+                                        onClick={rejectRequisition}
+                                        disabled={
+                                          approvalLoading ||
+                                          !denialReason.trim()
+                                        }
+                                        className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                      >
+                                        {approvalLoading
+                                          ? "Denying..."
+                                          : "Deny"}
+                                      </Button>
+                                    </div>
                                   </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                            <Dialog
-                              open={showDenialModal}
-                              onOpenChange={setShowDenialModal}
-                            >
-                              <DialogTrigger asChild>
-                                <Button
-                                  disabled={!canActOnRequest}
-                                  className="bg-red-600 hover:bg-red-700 text-white flex-1 py-6"
-                                >
-                                  Deny
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-2xl bg-white">
-                                <DialogHeader>
-                                  <DialogTitle>Deny Request</DialogTitle>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label>
-                                      Reason for Denial{" "}
-                                      <span className="text-red-500">*</span>
-                                    </Label>
-                                    <Textarea
-                                      value={denialReason}
-                                      onChange={(e) =>
-                                        setDenialReason(e.target.value)
-                                      }
-                                      placeholder="A reason is required before denying this request"
-                                      className="mt-2"
-                                    />
-                                  </div>
-                                  <div className="flex gap-2 justify-end">
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => setShowDenialModal(false)}
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      onClick={rejectRequisition}
-                                      disabled={approvalLoading || !denialReason.trim()}
-                                      className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                      {approvalLoading ? "Denying..." : "Deny"}
-                                    </Button>
-                                  </div>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-                          </>
-                        );
-                      })()}
-                    </>
-                  )}
+                                </DialogContent>
+                              </Dialog>
+                            </>
+                          );
+                        })()}
+                      </>
+                    )}
                 </>
               )}
-              {(userType === "user" ||
-                user?.id === formData.requester?._id) && (
+              {(userType === "user" || user?.id === formData.requester?._id) &&
+                canEdit &&
+                formData.status !== "cancelled" && (
                   <Dialog
                     open={showCancelModal}
                     onOpenChange={setShowCancelModal}
@@ -1606,9 +1800,11 @@ export default function ViewEditRequest({
                   items={
                     userType === "hhra"
                       ? items.filter(
-                        (item) =>
-                          item.itemType !== "service" && (item.isWorkTool === true || (item.isWorkTool as unknown) === "true"),
-                      )
+                          (item) =>
+                            item.itemType !== "service" &&
+                            (item.isWorkTool === true ||
+                              (item.isWorkTool as unknown) === "true"),
+                        )
                       : items
                   }
                   selectedItems={selectedItems}
@@ -1703,10 +1899,14 @@ export default function ViewEditRequest({
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-lg px-4">
           <div className="flex items-center justify-between gap-4 bg-[#0F1E7A] text-white px-5 py-4 rounded-xl shadow-2xl">
             <div className="flex flex-col">
-              <p className="font-semibold text-sm">Delivery awaiting your confirmation</p>
+              <p className="font-semibold text-sm">
+                Delivery awaiting your confirmation
+              </p>
               <p className="text-xs text-blue-200 mt-0.5">
                 {pendingDeliveryConfirmation.poNumber} ·{" "}
-                {pendingDeliveryConfirmation.type === "grn" ? "Goods received" : "Service completed"}
+                {pendingDeliveryConfirmation.type === "grn"
+                  ? "Goods received"
+                  : "Service completed"}
               </p>
             </div>
             <Button

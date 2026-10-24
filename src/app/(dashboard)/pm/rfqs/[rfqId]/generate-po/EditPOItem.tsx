@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import React, { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface POItemData {
   itemDescription: string;
@@ -121,20 +128,23 @@ const EditPOItem: React.FC<EditPOItemProps> = ({
             {/* H7: Item Type override — PM can classify as product or service */}
             <div className="space-y-2">
               <Label>Item Type</Label>
-              <select
-                name="itemType"
+              <Select
                 value={formData.itemType}
-                onChange={(e) =>
+                onValueChange={(value) =>
                   setFormData((prev) => ({
                     ...prev,
-                    itemType: e.target.value as "product" | "service",
+                    itemType: value as "product" | "service",
                   }))
                 }
-                className="w-full !p-4 rounded-xl border border-[#9f9f9f] shadow-sm text-sm"
               >
-                <option value="product">Product</option>
-                <option value="service">Service</option>
-              </select>
+                <SelectTrigger className="w-full bg-white">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  <SelectItem value="product" className="data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:text-white focus:bg-[#0F1E7A]/10">Product</SelectItem>
+                  <SelectItem value="service" className="data-[state=checked]:bg-[#0F1E7A] data-[state=checked]:text-white focus:bg-[#0F1E7A]/10">Service</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Item Description */}

@@ -227,7 +227,7 @@ export default function AddItemDialog({
               </div>
 
               <div className="space-y-2">
-                <Label>Is this a worktool?</Label>
+                <Label>Is this a personal work tool?</Label>
                 <Input
                   value={viewingItem.isWorkTool ? "Yes" : "No"}
                   readOnly
