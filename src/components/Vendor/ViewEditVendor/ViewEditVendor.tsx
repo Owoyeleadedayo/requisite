@@ -306,7 +306,8 @@ export default function ViewEditVendor({ vendorId }: ViewEditVendorProps) {
               <>
                 <Button
                   onClick={() => setIsEditMode(false)}
-                  className="border border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
+                  // className="border border-red-600 text-red-600 hover:bg-red-50 flex-1 py-6"
+                  className="border border-red-600 text-red-600 bg-transparent! hover:bg-red-500! hover:text-white! flex-1 py-6"
                 >
                   Cancel Edit
                 </Button>

@@ -167,7 +167,7 @@ export default function ItemViewDialog({
             Array.isArray(currentItem.workToolSubcategory) &&
             currentItem.workToolSubcategory.length > 0 && (
               <div className="space-y-2">
-                <Label className="font-bold">Work Tool Category</Label>
+                <Label className="font-bold">Personal Work Tool Category</Label>
                 <div className="p-4 rounded-md text-gray-700">
                   {currentItem.workToolSubcategory.join(", ")}
                 </div>

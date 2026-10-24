@@ -76,7 +76,8 @@ export default function HDODashboard({
             <Link href={`${routePrefix}/requisitions/${row._id}`}>View</Link>
           </Button>
 
-          {(page === "hodRequests" || row.requester._id === userId) && (
+          {(page === "hodRequests" || row.requester._id === userId) &&
+            ["submitted", "rejected", "draft"].includes(row.status) && (
             <Button
               asChild
               className="bg-blue-900 hover:bg-blue-800 text-white px-4"
@@ -305,7 +306,7 @@ export default function HDODashboard({
         {page !== "hodRequisitions" && page !== "hofRequisitions" && page !== "hhraRequisitions" && (
           <Button
             asChild
-            className="px-4 md:px-6 py-4 bg-[#0F1E7A] text-base md:text-md text-white cursor-pointer"
+            className="px-4 md:px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-base md:text-md text-white cursor-pointer"
           >
             <Link href={`${routePrefix}/my-requests/create-new` as any}>
               <Plus size={22} />{" "}

@@ -27,6 +27,9 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type PopulatedUser = {
   _id: string;
@@ -885,33 +888,33 @@ export default function PurchaseOrderDetails() {
             <p className="text-sm text-gray-600">
               Please provide a reason for rejecting this purchase order.
             </p>
-            <textarea
+            <Textarea
               value={rejectionFeedback}
               onChange={(e) => setRejectionFeedback(e.target.value)}
               placeholder="Reason for rejection..."
               rows={3}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="bg-white"
             />
             <DialogFooter className="gap-2">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => {
                   setPendingRejection(null);
                   setRejectionFeedback("");
                 }}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="destructive"
                 disabled={rejecting}
                 onClick={async () => {
                   if (!pendingRejection) return;
                   await handleReject(pendingRejection);
                 }}
-                className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
               >
                 {rejecting ? "Rejecting..." : "Confirm Reject"}
-              </button>
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -1007,7 +1010,7 @@ export default function PurchaseOrderDetails() {
                       className="border-b border-gray-100"
                     >
                       <td className="py-3 pr-4">
-                        <input
+                        <Input
                           type="text"
                           value={item.itemDescription}
                           onChange={(e) => {
@@ -1018,11 +1021,11 @@ export default function PurchaseOrderDetails() {
                             };
                             setEditedItems(updated);
                           }}
-                          className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
+                          className="w-full bg-white text-sm h-8"
                         />
                       </td>
                       <td className="py-3 pr-4">
-                        <input
+                        <Input
                           type="number"
                           value={item.quantity}
                           onChange={(e) => {
@@ -1035,11 +1038,11 @@ export default function PurchaseOrderDetails() {
                             };
                             setEditedItems(updated);
                           }}
-                          className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                          className="w-20 bg-white text-sm h-8"
                         />
                       </td>
                       <td className="py-3 pr-4">
-                        <input
+                        <Input
                           type="text"
                           value={item.uom}
                           onChange={(e) => {
@@ -1050,11 +1053,11 @@ export default function PurchaseOrderDetails() {
                             };
                             setEditedItems(updated);
                           }}
-                          className="w-24 border border-gray-300 rounded px-2 py-1 text-sm"
+                          className="w-24 bg-white text-sm h-8"
                         />
                       </td>
                       <td className="py-3 pr-4">
-                        <input
+                        <Input
                           type="number"
                           value={item.unitPrice}
                           onChange={(e) => {
@@ -1067,7 +1070,7 @@ export default function PurchaseOrderDetails() {
                             };
                             setEditedItems(updated);
                           }}
-                          className="w-28 border border-gray-300 rounded px-2 py-1 text-sm"
+                          className="w-28 bg-white text-sm h-8"
                         />
                       </td>
                       <td className="py-3 text-gray-700">
@@ -1082,19 +1085,19 @@ export default function PurchaseOrderDetails() {
               </table>
             </div>
             <div className="flex flex-wrap gap-3 mt-4">
-              <button
+              <Button
                 onClick={handleSaveEdit}
                 disabled={savingEdit}
-                className="rounded-md bg-blue-900 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+                className="bg-blue-900 hover:bg-blue-800 text-white"
               >
                 {savingEdit ? "Saving..." : "Save Changes"}
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => setIsEditMode(false)}
-                className="rounded-md border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         )}

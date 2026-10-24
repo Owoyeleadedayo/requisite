@@ -40,7 +40,8 @@ export default function RequestActions({
         <>
           <Button
             variant="outline"
-            className="flex-1 py-6"
+            // className="flex-1 py-6"
+            className="border border-red-600 text-red-600 bg-transparent! hover:bg-red-500! hover:text-white! flex-1 py-6"
             onClick={() => onEditModeChange(false)}
           >
             Cancel Edit
