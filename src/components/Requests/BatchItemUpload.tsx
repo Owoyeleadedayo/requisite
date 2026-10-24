@@ -2,7 +2,7 @@
 
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
+import { Upload, Download } from "lucide-react";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Item, WORK_TOOL_SUBCATEGORIES } from "./types";
@@ -231,13 +231,15 @@ export default function BatchItemUpload({
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={generateTemplate}
-        className="text-sm text-[#0F1E7A] underline underline-offset-2 hover:text-[#0b154b] bg-transparent border-none cursor-pointer p-0"
+        className="flex items-center gap-2 border-[#0F1E7A] text-[#0F1E7A] hover:bg-blue-50"
       >
+        <Download size={16} />
         Download Template
-      </button>
+      </Button>
       <Button
         type="button"
         variant="outline"
