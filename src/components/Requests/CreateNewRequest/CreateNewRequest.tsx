@@ -50,6 +50,7 @@ export default function CreateNewRequest({
   const [vendorsLoading, setVendorsLoading] = useState(true);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [isViewMode, setIsViewMode] = useState(false);
+  const [showItemsError, setShowItemsError] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -110,6 +111,8 @@ export default function CreateNewRequest({
     e.preventDefault();
     if (items.length === 0) {
       toast.error("Please add at least one item before proceeding.");
+      setShowItemsError(true);
+      setTimeout(() => setShowItemsError(false), 10000);
       return;
     }
     if (!effectiveDepartmentId) {
@@ -369,6 +372,7 @@ export default function CreateNewRequest({
 
           <ItemsList
             items={items}
+            showError={showItemsError}
             onDeleteItem={handleDeleteItem}
             onAddNewItem={() => {
               resetCurrentItem();
