@@ -99,6 +99,10 @@ type PurchaseOrder = {
   generalTerms?: string;
   evaluationCriteria?: string;
   termsOfService?: string;
+  sla?: {
+    title?: string;
+    content?: string;
+  };
   paymentTerms?: string;
   totalAmount?: number;
   items?: PurchaseOrderItem[];

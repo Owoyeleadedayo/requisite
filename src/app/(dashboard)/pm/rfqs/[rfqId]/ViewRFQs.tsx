@@ -102,6 +102,7 @@ const ViewRFQs = () => {
   const [relatedRequests, setRelatedRequests] = useState<RelatedItem[]>([]);
   const [relatedRfqs, setRelatedRfqs] = useState<RelatedItem[]>([]);
   const [relatedPos, setRelatedPos] = useState<RelatedItem[]>([]);
+  const [downloadingVendorId, setDownloadingVendorId] = useState<string | null>(null);
   const [issuing, setIssuing] = useState(false);
 
   useEffect(() => {
@@ -122,6 +123,11 @@ const ViewRFQs = () => {
         const data = await response.json();
         if (data.success) {
           setRfqData(data.data);
+          if (data.data.related) {
+            setRelatedRequests(data.data.related.requests || []);
+            setRelatedRfqs(data.data.related.rfqs || []);
+            setRelatedPos(data.data.related.pos || []);
+          }
 
           const rawVendors = Array.isArray(data.data.vendors)
             ? data.data.vendors
@@ -277,6 +283,51 @@ const ViewRFQs = () => {
 
     fetchRelatedItems();
   }, [rfqData]);
+
+  const handleDownloadRFQ = async (vendorId?: string, vendorName?: string) => {
+    const targetRfqId = rfqData?._id || rfqId;
+    if (!targetRfqId) return;
+
+    try {
+      setDownloadingVendorId(vendorId || "all");
+      const token = getToken();
+      const query = vendorId ? `?vendorIds=${encodeURIComponent(vendorId)}` : "";
+      const res = await fetch(`${API_BASE_URL}/rfqs/${targetRfqId}/download${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.message || "Failed to download RFQ");
+        return;
+      }
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("Content-Disposition");
+      let filename = `RFQ_${rfqData?.rfqNumber || targetRfqId}${vendorName ? `_${vendorName.replace(/[^a-zA-Z0-9_-]/g, "_")}` : ""}.pdf`;
+      if (disposition && disposition.includes("filename=")) {
+        const match = disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("RFQ downloaded successfully");
+    } catch (error) {
+      console.error("Download RFQ error:", error);
+      toast.error("An error occurred while downloading the RFQ");
+    } finally {
+      setDownloadingVendorId(null);
+    }
+  };
 
   const handleIssueRFQ = async () => {
     if (!rfqData || rfqData.status !== "draft") {
