@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import { getAuthData, getToken } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/config";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Edit2, Trash2 } from "lucide-react";
 import Related from "@/components/Requests/ViewEditRequest/Related";
@@ -104,6 +104,7 @@ const ViewRFQs = () => {
   const [relatedPos, setRelatedPos] = useState<RelatedItem[]>([]);
   const [downloadingVendorId, setDownloadingVendorId] = useState<string | null>(null);
   const [issuing, setIssuing] = useState(false);
+  const downloadInProgressRef = useRef(false);
 
   useEffect(() => {
     if (!rfqId) {
@@ -292,8 +293,10 @@ const ViewRFQs = () => {
 
   const handleDownloadRFQ = async (vendorId?: string, vendorName?: string) => {
     const targetRfqId = rfqData?._id || rfqId;
-    if (!targetRfqId) return;
+    if (!targetRfqId || downloadInProgressRef.current) return;
 
+    downloadInProgressRef.current = true;
+    let downloadStage = "request";
     try {
       setDownloadingVendorId(vendorId || "all");
       const token = getToken();
@@ -303,12 +306,30 @@ const ViewRFQs = () => {
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.message || "Failed to download RFQ");
+        const contentType = res.headers.get("content-type") || "";
+        const errorBody = contentType.includes("application/json")
+          ? await res.json().catch(() => ({}))
+          : { message: await res.text().catch(() => "") };
+        toast.error(
+          errorBody.message || `RFQ download failed (HTTP ${res.status})`,
+        );
         return;
       }
 
+      downloadStage = "response body";
+      const contentType = res.headers.get("content-type") || "";
+      if (
+        !contentType.includes("application/pdf") &&
+        !contentType.includes("application/zip")
+      ) {
+        throw new Error(`Unexpected download content type: ${contentType || "unknown"}`);
+      }
+
       const blob = await res.blob();
+      if (blob.size === 0) {
+        throw new Error("The RFQ download response was empty");
+      }
+
       const disposition = res.headers.get("Content-Disposition");
       let filename = `RFQ_${rfqData?.rfqNumber || targetRfqId}${vendorName ? `_${vendorName.replace(/[^a-zA-Z0-9_-]/g, "_")}` : ""}.pdf`;
       if (disposition && disposition.includes("filename=")) {
@@ -323,14 +344,20 @@ const ViewRFQs = () => {
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
+      downloadStage = "save file";
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
       toast.success("RFQ downloaded successfully");
     } catch (error) {
-      console.error("Download RFQ error:", error);
-      toast.error("An error occurred while downloading the RFQ");
+      console.error(`Download RFQ error during ${downloadStage}:`, error);
+      toast.error(
+        error instanceof Error
+          ? `RFQ download failed during ${downloadStage}: ${error.message}`
+          : `RFQ download failed during ${downloadStage}.`,
+      );
     } finally {
+      downloadInProgressRef.current = false;
       setDownloadingVendorId(null);
     }
   };
