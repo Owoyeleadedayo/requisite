@@ -3,7 +3,7 @@
 import { toast } from "sonner";
 import { getAuthData, getToken } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/config";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Edit2, Trash2 } from "lucide-react";
 import Related from "@/components/Requests/ViewEditRequest/Related";
@@ -102,7 +102,9 @@ const ViewRFQs = () => {
   const [relatedRequests, setRelatedRequests] = useState<RelatedItem[]>([]);
   const [relatedRfqs, setRelatedRfqs] = useState<RelatedItem[]>([]);
   const [relatedPos, setRelatedPos] = useState<RelatedItem[]>([]);
+  const [downloadingVendorId, setDownloadingVendorId] = useState<string | null>(null);
   const [issuing, setIssuing] = useState(false);
+  const downloadInProgressRef = useRef(false);
 
   useEffect(() => {
     if (!rfqId) {
@@ -122,6 +124,16 @@ const ViewRFQs = () => {
         const data = await response.json();
         if (data.success) {
           setRfqData(data.data);
+          if (data.data?.related) {
+            setRelatedRequests(data.data.related.requests || []);
+            setRelatedRfqs(data.data.related.rfqs || []);
+            setRelatedPos(data.data.related.pos || []);
+          }
+          if (data.data.related) {
+            setRelatedRequests(data.data.related.requests || []);
+            setRelatedRfqs(data.data.related.rfqs || []);
+            setRelatedPos(data.data.related.pos || []);
+          }
 
           const rawVendors = Array.isArray(data.data.vendors)
             ? data.data.vendors
@@ -251,21 +263,22 @@ const ViewRFQs = () => {
 
   useEffect(() => {
     const fetchRelatedItems = async () => {
-      if (!rfqData?.requisition?._id) {
+      const targetId = rfqData?._id || rfqId;
+      if (!targetId) {
         return;
       }
 
       try {
         const token = getToken();
         const response = await fetch(
-          `${API_BASE_URL}/rfqs/${rfqData._id}/related`,
+          `${API_BASE_URL}/rfqs/${targetId}/related`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
 
         const data = await response.json();
-        if (data.success) {
+        if (data.success && data.data) {
           setRelatedRequests(data.data.requests || []);
           setRelatedRfqs(data.data.rfqs || []);
           setRelatedPos(data.data.pos || []);
@@ -276,7 +289,78 @@ const ViewRFQs = () => {
     };
 
     fetchRelatedItems();
-  }, [rfqData]);
+  }, [rfqData?._id, rfqId]);
+
+  const handleDownloadRFQ = async (vendorId?: string, vendorName?: string) => {
+    const targetRfqId = rfqData?._id || rfqId;
+    if (!targetRfqId || downloadInProgressRef.current) return;
+
+    downloadInProgressRef.current = true;
+    let downloadStage = "request";
+    try {
+      setDownloadingVendorId(vendorId || "all");
+      const token = getToken();
+      const query = vendorId ? `?vendorIds=${encodeURIComponent(vendorId)}` : "";
+      const res = await fetch(`${API_BASE_URL}/rfqs/${targetRfqId}/download${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const contentType = res.headers.get("content-type") || "";
+        const errorBody = contentType.includes("application/json")
+          ? await res.json().catch(() => ({}))
+          : { message: await res.text().catch(() => "") };
+        toast.error(
+          errorBody.message || `RFQ download failed (HTTP ${res.status})`,
+        );
+        return;
+      }
+
+      downloadStage = "response body";
+      const contentType = res.headers.get("content-type") || "";
+      if (
+        !contentType.includes("application/pdf") &&
+        !contentType.includes("application/zip")
+      ) {
+        throw new Error(`Unexpected download content type: ${contentType || "unknown"}`);
+      }
+
+      const blob = await res.blob();
+      if (blob.size === 0) {
+        throw new Error("The RFQ download response was empty");
+      }
+
+      const disposition = res.headers.get("Content-Disposition");
+      let filename = `RFQ_${rfqData?.rfqNumber || targetRfqId}${vendorName ? `_${vendorName.replace(/[^a-zA-Z0-9_-]/g, "_")}` : ""}.pdf`;
+      if (disposition && disposition.includes("filename=")) {
+        const match = disposition.match(/filename="?([^";]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      downloadStage = "save file";
+      link.click();
+      document.body.removeChild(link);
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+      toast.success("RFQ downloaded successfully");
+    } catch (error) {
+      console.error(`Download RFQ error during ${downloadStage}:`, error);
+      toast.error(
+        error instanceof Error
+          ? `RFQ download failed during ${downloadStage}: ${error.message}`
+          : `RFQ download failed during ${downloadStage}.`,
+      );
+    } finally {
+      downloadInProgressRef.current = false;
+      setDownloadingVendorId(null);
+    }
+  };
 
   const handleIssueRFQ = async () => {
     if (!rfqData || rfqData.status !== "draft") {
@@ -452,10 +536,14 @@ const ViewRFQs = () => {
                       </div>
 
                       <button
-                        className="mt-4 w-full rounded-md border-2 border-blue-900 px-4 py-2 font-semibold text-blue-900 transition-colors hover:bg-blue-900 hover:text-white sm:w-auto"
-                        onClick={(e) => e.stopPropagation()}
+                        className="mt-4 w-full rounded-md border-2 border-blue-900 px-4 py-2 font-semibold text-blue-900 transition-colors hover:bg-blue-900 hover:text-white sm:w-auto disabled:opacity-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadRFQ(vendor.id, vendor.companyName);
+                        }}
+                        disabled={downloadingVendorId === vendor.id}
                       >
-                        Download RFQ
+                        {downloadingVendorId === vendor.id ? "Downloading..." : "Download RFQ"}
                       </button>
                     </div>
                   ))}
@@ -469,7 +557,13 @@ const ViewRFQs = () => {
                   rfqs={relatedRfqs}
                   pos={relatedPos}
                   onViewItem={(item, type) => {
-                    console.log("View", type, item);
+                    if (type === "request") {
+                      router.push(`/pm/requisitions/${item._id}`);
+                    } else if (type === "rfq") {
+                      router.push(`/pm/rfqs/${item._id}`);
+                    } else if (type === "po") {
+                      router.push(`/pm/purchase-orders/${item._id}`);
+                    }
                   }}
                 />
               </div>
