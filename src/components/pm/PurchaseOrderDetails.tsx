@@ -6,7 +6,7 @@ import { API_BASE_URL } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { getAuthData, getToken } from "@/lib/auth";
 import { useParams, useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, Download, FileText, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, FileText, ShieldCheck } from "lucide-react";
 import Related, {
   GRNRecord,
   JCFRecord,
@@ -104,6 +104,10 @@ type PurchaseOrder = {
     content?: string;
   };
   paymentTerms?: string;
+  quoteUrl?: string;
+  vendorQuote?: string;
+  vendorQuotes?: any[];
+  attachments?: any[];
   totalAmount?: number;
   items?: PurchaseOrderItem[];
   approvals?: PurchaseOrderApproval[];
@@ -323,16 +327,45 @@ export default function PurchaseOrderDetails() {
   };
 
   const handleDownloadVendorQuote = async () => {
-    if (!purchaseOrder?.rfq?._id || !purchaseOrder?.vendor?._id) return;
+    if (!purchaseOrder) return;
+
+    // 1. If direct S3 quote or attachment exists, open it in a new tab
+    const directUrl =
+      purchaseOrder.quoteUrl ||
+      purchaseOrder.vendorQuote ||
+      purchaseOrder.vendorQuotes?.[0]?.url ||
+      purchaseOrder.attachments?.[0]?.url;
+
+    if (directUrl) {
+      window.open(directUrl, "_blank", "noopener,noreferrer");
+      toast.success("Opening vendor quote");
+      return;
+    }
+
+    // 2. Fall back to RFQ download endpoint via GET
+    const rfqId =
+      typeof purchaseOrder.rfq === "object"
+        ? purchaseOrder.rfq?._id || (purchaseOrder.rfq as any)?.id
+        : purchaseOrder.rfq;
+    const vendorId =
+      typeof purchaseOrder.vendor === "object"
+        ? purchaseOrder.vendor?._id || (purchaseOrder.vendor as any)?.id
+        : purchaseOrder.vendor;
+
+    if (!rfqId) {
+      toast.error("No quote document or RFQ attached to this purchase order");
+      return;
+    }
+
     setDownloadingQuote(true);
     try {
+      const query = vendorId ? `?vendorIds=${vendorId}` : "";
       const response = await fetch(
-        `${API_BASE_URL}/rfqs/${purchaseOrder.rfq._id}/download?vendorIds=${purchaseOrder.vendor._id}`,
+        `${API_BASE_URL}/rfqs/${rfqId}/download${query}`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         },
       );
@@ -341,7 +374,7 @@ export default function PurchaseOrderDetails() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `vendor-quote-${purchaseOrder.rfq?.rfqNumber || purchaseOrder.rfq._id}.pdf`;
+      a.download = `vendor-quote-${purchaseOrder.poNumber || "doc"}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Vendor quote downloaded successfully");
@@ -667,6 +700,64 @@ export default function PurchaseOrderDetails() {
                 <span className="font-semibold">Evaluation Criteria:</span>{" "}
                 {purchaseOrder.evaluationCriteria || "N/A"}
               </p>
+              {purchaseOrder.sla && (purchaseOrder.sla.title || purchaseOrder.sla.content) && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <span className="font-semibold block text-sm mb-1 text-gray-900">
+                    SLA: {purchaseOrder.sla.title || "Service Level Agreement"}
+                  </span>
+                  <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded border border-gray-200 whitespace-pre-line">
+                    {purchaseOrder.sla.content}
+                  </p>
+                </div>
+              )}
+              {((purchaseOrder.vendorQuotes && purchaseOrder.vendorQuotes.length > 0) ||
+                (purchaseOrder.attachments && purchaseOrder.attachments.length > 0) ||
+                purchaseOrder.quoteUrl) && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <span className="font-semibold block text-sm mb-2 text-gray-900">
+                    Uploaded Vendor Quote(s) & Attachments:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {purchaseOrder.quoteUrl &&
+                      !purchaseOrder.vendorQuotes?.length &&
+                      !purchaseOrder.attachments?.length && (
+                        <a
+                          href={purchaseOrder.quoteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 text-xs font-medium rounded border border-blue-200 hover:bg-blue-100 transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Vendor Quote
+                        </a>
+                      )}
+                    {purchaseOrder.vendorQuotes?.map((quote: any, idx: number) => (
+                      <a
+                        key={`vq-${idx}`}
+                        href={quote.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 text-xs font-medium rounded border border-blue-200 hover:bg-blue-100 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        {quote.filename || `Quote ${idx + 1}`}
+                      </a>
+                    ))}
+                    {purchaseOrder.attachments?.map((att: any, idx: number) => (
+                      <a
+                        key={`att-${idx}`}
+                        href={att.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 text-xs font-medium rounded border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        {att.name || att.filename || `Attachment ${idx + 1}`}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -941,11 +1032,7 @@ export default function PurchaseOrderDetails() {
             )}
             <button
               onClick={handleDownloadVendorQuote}
-              disabled={
-                downloadingQuote ||
-                !purchaseOrder?.rfq?._id ||
-                !purchaseOrder?.vendor?._id
-              }
+              disabled={downloadingQuote}
               className="rounded-md border border-blue-900 px-5 py-3 text-sm font-semibold text-blue-900 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {downloadingQuote ? "Downloading..." : "Download Vendor Quote"}

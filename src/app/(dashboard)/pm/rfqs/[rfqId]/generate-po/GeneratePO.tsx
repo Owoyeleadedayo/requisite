@@ -413,7 +413,7 @@ const payload = {
       );
       const data = await response.json();
       if (data.success) {
-        const newPoId = data.data?._id;
+        const newPoId = data.data?._id || data.data?.id;
         if (newPoId && vendorQuoteFiles.length > 0) {
           for (const file of vendorQuoteFiles) {
             const formData = new FormData();

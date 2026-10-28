@@ -123,6 +123,11 @@ const ViewRFQs = () => {
         const data = await response.json();
         if (data.success) {
           setRfqData(data.data);
+          if (data.data?.related) {
+            setRelatedRequests(data.data.related.requests || []);
+            setRelatedRfqs(data.data.related.rfqs || []);
+            setRelatedPos(data.data.related.pos || []);
+          }
           if (data.data.related) {
             setRelatedRequests(data.data.related.requests || []);
             setRelatedRfqs(data.data.related.rfqs || []);
@@ -257,21 +262,22 @@ const ViewRFQs = () => {
 
   useEffect(() => {
     const fetchRelatedItems = async () => {
-      if (!rfqData?.requisition?._id) {
+      const targetId = rfqData?._id || rfqId;
+      if (!targetId) {
         return;
       }
 
       try {
         const token = getToken();
         const response = await fetch(
-          `${API_BASE_URL}/rfqs/${rfqData._id}/related`,
+          `${API_BASE_URL}/rfqs/${targetId}/related`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
 
         const data = await response.json();
-        if (data.success) {
+        if (data.success && data.data) {
           setRelatedRequests(data.data.requests || []);
           setRelatedRfqs(data.data.rfqs || []);
           setRelatedPos(data.data.pos || []);
@@ -282,7 +288,7 @@ const ViewRFQs = () => {
     };
 
     fetchRelatedItems();
-  }, [rfqData]);
+  }, [rfqData?._id, rfqId]);
 
   const handleDownloadRFQ = async (vendorId?: string, vendorName?: string) => {
     const targetRfqId = rfqData?._id || rfqId;
@@ -503,10 +509,14 @@ const ViewRFQs = () => {
                       </div>
 
                       <button
-                        className="mt-4 w-full rounded-md border-2 border-blue-900 px-4 py-2 font-semibold text-blue-900 transition-colors hover:bg-blue-900 hover:text-white sm:w-auto"
-                        onClick={(e) => e.stopPropagation()}
+                        className="mt-4 w-full rounded-md border-2 border-blue-900 px-4 py-2 font-semibold text-blue-900 transition-colors hover:bg-blue-900 hover:text-white sm:w-auto disabled:opacity-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownloadRFQ(vendor.id, vendor.companyName);
+                        }}
+                        disabled={downloadingVendorId === vendor.id}
                       >
-                        Download RFQ
+                        {downloadingVendorId === vendor.id ? "Downloading..." : "Download RFQ"}
                       </button>
                     </div>
                   ))}
@@ -520,7 +530,13 @@ const ViewRFQs = () => {
                   rfqs={relatedRfqs}
                   pos={relatedPos}
                   onViewItem={(item, type) => {
-                    console.log("View", type, item);
+                    if (type === "request") {
+                      router.push(`/pm/requisitions/${item._id}`);
+                    } else if (type === "rfq") {
+                      router.push(`/pm/rfqs/${item._id}`);
+                    } else if (type === "po") {
+                      router.push(`/pm/purchase-orders/${item._id}`);
+                    }
                   }}
                 />
               </div>
