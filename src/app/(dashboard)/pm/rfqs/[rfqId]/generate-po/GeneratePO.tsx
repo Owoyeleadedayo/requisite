@@ -771,17 +771,7 @@ const payload = {
                     </Popover>
                   </div>
 
-                  {/* Terms of Service */}
-                  <div className="space-y-2">
-                    <Label>Terms of Service</Label>
-                    <Textarea
-                      name="termsOfService"
-                      value={formData.termsOfService}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="bg-white"
-                    />
-                  </div>
+                  {/* Terms of Service removed — ToS is collected on the RFQ generation page, not the PO */}
 
                   {/* Payment Terms */}
                   <div className="space-y-2">
@@ -810,7 +800,7 @@ const payload = {
                         value={selectedSlaId}
                         onValueChange={handleSLASelect}
                       >
-                        <SelectTrigger className="bg-white">
+                        <SelectTrigger className="w-full bg-white">
                           <SelectValue placeholder="Choose a predefined SLA template..." />
                         </SelectTrigger>
                         <SelectContent className="bg-white">

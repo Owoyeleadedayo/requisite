@@ -142,13 +142,13 @@ export default function SLAsManagementPage() {
           <SLAsFormDialog
             mode="create"
             currentSLA={currentSLA}
-            handleSLAFormChange={handleSLAFormChange}
             submit={handleCreateSLA}
             isLoading={isSubmitting}
+            handleSLAFormChange={handleSLAFormChange}
           >
             <Button
               onClick={() => setCurrentSLA({ title: "", content: "" })}
-              className="bg-[#0F1E7A] hover:bg-[#0a1555] text-white flex items-center gap-2"
+              className="px-4 md:px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-base md:text-md text-white cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               Add SLA Template
@@ -180,7 +180,7 @@ export default function SLAsManagementPage() {
             <div className="py-16 text-center text-gray-500">
               {searchQuery
                 ? "No SLA templates match your search."
-                : "No predefined SLA templates found. Click 'Add SLA Template' to create one."}
+                : "No predefined SLA templates found. Click 'Add SLA Templates' to create one."}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -188,16 +188,25 @@ export default function SLAsManagementPage() {
                 <TableHeader className="bg-gray-50">
                   <TableRow>
                     <TableHead className="w-16 font-semibold">S/N</TableHead>
-                    <TableHead className="font-semibold min-w-[200px]">Title</TableHead>
-                    <TableHead className="font-semibold min-w-[320px]">Content Preview</TableHead>
-                    <TableHead className="font-semibold w-40 text-right">Actions</TableHead>
+                    <TableHead className="font-semibold min-w-[200px]">
+                      Title
+                    </TableHead>
+                    <TableHead className="font-semibold min-w-[320px]">
+                      Content Preview
+                    </TableHead>
+                    <TableHead className="font-semibold w-40 text-right">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSLAs.map((sla, idx) => {
                     const id = sla._id || sla.id || String(idx);
                     return (
-                      <TableRow key={id} className="hover:bg-gray-50 transition-colors">
+                      <TableRow
+                        key={id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
                         <TableCell className="font-medium text-gray-500">
                           {idx + 1}
                         </TableCell>

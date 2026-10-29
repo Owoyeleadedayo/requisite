@@ -1,0 +1,22 @@
+[
+  {
+    "_id": "tos-sample-1",
+    "title": "Standard Goods Purchase ToS",
+    "content": "1. The vendor agrees to deliver goods in accordance with the specifications outlined in this Purchase Order.\n2. All goods must be delivered within the agreed timeframe. Late deliveries may attract penalties as stipulated in the SLA.\n3. The vendor warrants that all goods supplied are free from defects in material and workmanship.\n4. Payment shall be made within 30 days of receipt of a valid invoice and satisfactory delivery.\n5. The vendor shall not assign or subcontract any part of this order without prior written consent.\n6. All disputes arising from this agreement shall be resolved through negotiation, and if unresolved, through arbitration under applicable law."
+  },
+  {
+    "_id": "tos-sample-2",
+    "title": "IT Equipment & Accessories ToS",
+    "content": "1. All IT equipment supplied must meet the technical specifications as described in the requisition.\n2. The vendor must provide warranty certificates for all hardware items, with a minimum warranty period of 12 months.\n3. The vendor is responsible for delivery, installation, and basic configuration where applicable.\n4. Any defective equipment must be replaced or repaired within 5 business days of a formal complaint.\n5. The organisation reserves the right to return any equipment that does not meet the agreed specifications, at the vendor's cost.\n6. Intellectual property and licensing rights for any software supplied must be clearly documented and transferred to the organisation."
+  },
+  {
+    "_id": "tos-sample-3",
+    "title": "Professional Services ToS",
+    "content": "1. The service provider agrees to render services as described in the scope of work attached to this Purchase Order.\n2. Services must be performed by qualified personnel with relevant experience and certifications.\n3. The service provider shall maintain confidentiality of all proprietary and sensitive information encountered during service delivery.\n4. Any deliverables produced under this engagement shall be the intellectual property of the organisation upon full payment.\n5. The service provider shall not engage in any conflict of interest activities during the term of this agreement.\n6. Payment milestones shall be tied to delivery of agreed outputs as specified in the scope of work."
+  },
+  {
+    "_id": "tos-sample-4",
+    "title": "Office Supplies & Consumables ToS",
+    "content": "1. All consumables and office supplies must be of the brand and specification requested, or an approved equivalent.\n2. The vendor guarantees that all items supplied are genuine products and not counterfeit.\n3. Delivery must be made to the designated delivery location during official working hours.\n4. Damaged or incorrect items must be exchanged within 3 business days of notification.\n5. Bulk orders may be subject to a phased delivery schedule as agreed with the procurement team.\n6. The vendor must provide a delivery note signed by an authorised recipient for every delivery made."
+  }
+]
