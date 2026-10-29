@@ -41,6 +41,7 @@ interface BaseItemsListProps {
   onAddNewItem: () => void;
   onViewItem: (item: Item) => void;
   isEditMode?: boolean;
+  showError?: boolean;
 }
 
 interface ViewItemsListProps extends BaseItemsListProps {
@@ -80,6 +81,7 @@ export default function ItemsList({
   onViewItem,
   userType,
   isEditMode = true,
+  showError = false,
 }: ItemsListProps) {
   const [bulkAction, setBulkAction] = useState("");
   const [bulkItemModalOpen, setBulkItemModalOpen] = useState(false);
@@ -87,30 +89,29 @@ export default function ItemsList({
   const pendingItems = items.filter((item) => item.status === "pending");
   const showSelection = userType === "hod" && !isEditMode;
 
-  if (items.length === 0) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="flex flex-col items-center mt-20 lg:mt-0">
-          <Folder size={80} />
-          <p className="text-center max-w-sm">
-            Your item list is empty. Click the button below to create an item.
-          </p>
-          <div>
-            <Button
-              disabled={!isEditMode}
-              onClick={onAddNewItem}
-              className="flex flex-row border border-[#0F1E7A] mt-5 cursor-pointer bg-white text-[#0F1E7A] hover:bg-gray-100"
-            >
-              <Plus /> Add New Item
-            </Button>
+  return (
+    <div className={`w-full bg-white border-2 rounded-xl shadow-xl p-3 sm:p-5 transition-all duration-[3000ms] ease-in-out ${showError ? "border-red-500" : "border-[#e5e5e5e5]"}`}>
+      {items.length === 0 && (
+        <div className="flex items-center justify-center">
+          <div className="flex flex-col items-center mt-20 lg:mt-0">
+            <Folder size={80} />
+            <p className="text-center max-w-sm">
+              Your item list is empty. Click the button below to create an item.
+            </p>
+            <div>
+              <Button
+                disabled={!isEditMode}
+                onClick={onAddNewItem}
+                className="flex flex-row border border-[#0F1E7A] mt-5 cursor-pointer bg-white text-[#0F1E7A] hover:bg-gray-100"
+              >
+                <Plus /> Add New Item
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full bg-white border-2 border-[#e5e5e5e5] rounded-xl shadow-xl p-3 sm:p-5">
+      )}
+      {items.length > 0 && (
+        <>
       {showSelection && (
         <div className="flex flex-wrap gap-2 sm:w-8/25 mb-2">
           <Select
@@ -371,6 +372,8 @@ export default function ItemsList({
       >
         <Plus /> Add Another Item
       </Button>
+        </>
+      )}
     </div>
   );
 }

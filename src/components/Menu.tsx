@@ -16,6 +16,8 @@ import {
   CircleDollarSign,
   FileSpreadsheet,
   Store,
+  FileCheck,
+  ScrollText,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -57,6 +59,8 @@ const menuItems: Record<string, MenuItem[]> = {
     { icon: FileSpreadsheet, label: "POs", href: "/pm/pos" },
     { icon: Store, label: "Vendors", href: "/pm/vendors" },
     { icon: MapPin, label: "Locations", href: "/pm/locations" },
+    { icon: FileCheck, label: "SLAs", href: "/pm/slas" },
+    { icon: ScrollText, label: "ToS", href: "/pm/tos" },
     // { icon: ShoppingCart, label: "Vendors", href: "/pm/vendors" },
     // { icon: Gavel, label: "Bids", href: "/pm/bids" },
   ],

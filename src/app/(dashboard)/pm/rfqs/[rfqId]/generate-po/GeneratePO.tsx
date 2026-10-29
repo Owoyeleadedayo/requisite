@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { SLA, slaService } from "@/services/slaService";
 
 interface POItem {
   id: string;
@@ -158,6 +159,8 @@ const GeneratePO = () => {
   const [editingItem, setEditingItem] = useState<POItem | null>(null);
   const [vendorInfo, setVendorInfo] = useState<VendorInfo | null>(null);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [slas, setSlas] = useState<SLA[]>([]);
+  const [selectedSlaId, setSelectedSlaId] = useState<string>("");
   const [date, setDate] = useState<Date | undefined>();
   // H5: Multi-file vendor quote upload
   const [vendorQuoteFiles, setVendorQuoteFiles] = useState<File[]>([]);
@@ -173,6 +176,8 @@ const GeneratePO = () => {
     evaluationCriteria: "",
     termsOfService: "",
     paymentTerms: "",
+    slaTitle: "",
+    slaContent: "",
   });
 
   const [items, setItems] = useState<POItem[]>([]);
@@ -195,6 +200,16 @@ const GeneratePO = () => {
       }
     };
     fetchLocations();
+    const fetchSLAs = async () => {
+      try {
+        const data = await slaService.fetchSLAs();
+        setSlas(data);
+      } catch (err) {
+        console.error("Failed to load SLAs:", err);
+      }
+    };
+    fetchSLAs();
+
   }, []);
 
   useEffect(() => {
@@ -251,7 +266,8 @@ const GeneratePO = () => {
             item.lineType === "service",
         }));
       setItems(selectedItemDetails);
-      setFormData({
+      setFormData((prev) => ({
+        ...prev,
         poTitle: rfqData.title,
         deliveryLocation: rfqData.deliveryLocation?._id || "",
         shipping: rfqData.deliveryLocation?.name || "",
@@ -259,7 +275,9 @@ const GeneratePO = () => {
         evaluationCriteria: rfqData.evaluationCriteria || "",
         termsOfService: rfqData.termsAndConditions || "",
         paymentTerms: "",
-      });
+        slaTitle: prev.slaTitle || "",
+        slaContent: prev.slaContent || "",
+      }));
       if (rfqData.expectedDeliveryDate) {
         setDate(new Date(rfqData.expectedDeliveryDate));
       }
@@ -282,6 +300,26 @@ const GeneratePO = () => {
       setSelectedItems([]);
     } else {
       setSelectedItems(items.map((item) => item.id));
+    }
+  };
+
+  const handleSLASelect = (slaId: string) => {
+    setSelectedSlaId(slaId);
+    if (!slaId || slaId === "none") {
+      setFormData((prev) => ({
+        ...prev,
+        slaTitle: "",
+        slaContent: "",
+      }));
+      return;
+    }
+    const found = slas.find((s) => (s._id || s.id) === slaId);
+    if (found) {
+      setFormData((prev) => ({
+        ...prev,
+        slaTitle: found.title || "",
+        slaContent: found.content || "",
+      }));
     }
   };
 
@@ -352,6 +390,12 @@ const payload = {
   discount: discountPct,
   vat: vatPct,
   paymentTerms: formData.paymentTerms,
+  sla: formData.slaContent?.trim()
+    ? {
+        title: formData.slaTitle?.trim() || "Service Level Agreement",
+        content: formData.slaContent.trim(),
+      }
+    : undefined,
   items: submissionItems,
   totalAmount,
 };
@@ -369,7 +413,7 @@ const payload = {
       );
       const data = await response.json();
       if (data.success) {
-        const newPoId = data.data?._id;
+        const newPoId = data.data?._id || data.data?.id;
         if (newPoId && vendorQuoteFiles.length > 0) {
           for (const file of vendorQuoteFiles) {
             const formData = new FormData();
@@ -727,17 +771,7 @@ const payload = {
                     </Popover>
                   </div>
 
-                  {/* Terms of Service */}
-                  <div className="space-y-2">
-                    <Label>Terms of Service</Label>
-                    <Textarea
-                      name="termsOfService"
-                      value={formData.termsOfService}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="bg-white"
-                    />
-                  </div>
+                  {/* Terms of Service removed — ToS is collected on the RFQ generation page, not the PO */}
 
                   {/* Payment Terms */}
                   <div className="space-y-2">
@@ -749,6 +783,51 @@ const payload = {
                       rows={3}
                       className="bg-white"
                     />
+                  </div>
+
+                  {/* Service Level Agreement (SLA) */}
+                  <div className="space-y-3 rounded-lg border border-gray-200 bg-gray-50/60 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <Label className="text-base font-semibold text-[#0F1E7A]">
+                        Service Level Agreement (SLA)
+                      </Label>
+                      <span className="text-xs text-gray-500">Optional</span>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs text-gray-600 font-medium">Predefined SLA Template</Label>
+                      <Select
+                        value={selectedSlaId}
+                        onValueChange={handleSLASelect}
+                      >
+                        <SelectTrigger className="w-full bg-white">
+                          <SelectValue placeholder="Choose a predefined SLA template..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="none">-- Custom / None --</SelectItem>
+                          {slas.map((s) => (
+                            <SelectItem key={s._id || s.id} value={s._id || s.id || ""}>
+                              {s.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs text-gray-600 font-medium">Agreement Terms & Conditions</Label>
+                      <Textarea
+                        name="slaContent"
+                        value={formData.slaContent}
+                        onChange={handleInputChange}
+                        rows={4}
+                        placeholder="Enter or modify the Service Level Agreement (SLA)..."
+                        className="bg-white"
+                      />
+                      <p className="text-xs text-gray-500 italic">
+                        Note: Selecting an SLA template populates this field. Modifications made here apply only to this Purchase Order and do not alter the saved template in the database.
+                      </p>
+                    </div>
                   </div>
 
                   {/* H5: Multi-file vendor quote upload */}

@@ -1,22 +1,34 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"; // Keep for HOD/PM actions if needed
-import { ArrowLeft, Loader2, Upload } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import Related from "./Related";
+import ItemsList from "../ItemsList";
+import Comments from "./CommentsSection";
+import PMItemsList from "../PMItemsList";
+import RequestForm from "../RequestForm";
+import { CONSTANTS } from "@/lib/constants";
+import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/config";
+import { useEffect, useState } from "react";
+import { Label } from "@/components/ui/label";
+import ItemFormDialog from "../ItemFormDialog";
+import ItemViewDialog from "../ItemViewDialog";
 import { getToken, getUser } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { formatStatus } from "@/lib/statusFormatter";
+import { requisitionService } from "@/services/requisitionService";
+import ConfirmDeliveryDialog, {
+  ConfirmDeliveryData,
+} from "@/components/GRN/ConfirmDeliveryDialog";
+import {
+  Item,
+  UserTypes,
+  Vendor,
+  validateWorkToolItemCategories,
+} from "../types";
 import {
   Dialog,
   DialogContent,
@@ -24,36 +36,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import Image from "next/image";
-import Comments from "./CommentsSection";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import ItemFormDialog from "../ItemFormDialog";
-import ItemsList from "../ItemsList";
-import ItemViewDialog from "../ItemViewDialog";
-import { Textarea } from "@/components/ui/textarea";
-import RequestForm from "../RequestForm";
-import {
-  Item,
-  UserTypes,
-  Vendor,
-  validateWorkToolItemCategories,
-} from "../types";
-import { formatStatus } from "@/lib/statusFormatter";
-import PMItemsList from "../PMItemsList";
-import Related from "./Related";
-import { requisitionService } from "@/services/requisitionService";
-import { CONSTANTS } from "@/lib/constants";
-import ConfirmDeliveryDialog, {
-  ConfirmDeliveryData,
-} from "@/components/GRN/ConfirmDeliveryDialog";
 
 interface RequestData {
   _id: string;
