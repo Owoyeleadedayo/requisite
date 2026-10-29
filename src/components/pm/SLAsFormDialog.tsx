@@ -1,5 +1,11 @@
 "use client";
 
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Textarea } from "../ui/textarea";
+import { ReactNode, useState } from "react";
+import { SLA } from "@/services/slaService";
 import {
   Dialog,
   DialogClose,
@@ -9,12 +15,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import { Button } from "../ui/button";
-import React, { ReactNode, useState } from "react";
-import { SLA } from "@/services/slaService";
 
 type SLAsFormDialogProps = {
   children: ReactNode;
@@ -40,7 +40,7 @@ export default function SLAsFormDialog({
   switch (mode) {
     case "create":
       title = "New";
-      submitButtonText = "Create";
+      submitButtonText = "Add Template";
       break;
     case "edit":
       title = "Edit";
@@ -76,7 +76,8 @@ export default function SLAsFormDialog({
 
           {mode === "delete" ? (
             <div className="py-4 text-center text-sm text-gray-700">
-              Are you sure you want to delete this Service Level Agreement (SLA) template:{" "}
+              Are you sure you want to delete this Service Level Agreement (SLA)
+              template:{" "}
               <span className="font-semibold">{currentSLA.title}</span>?
             </div>
           ) : (
@@ -105,7 +106,9 @@ export default function SLAsFormDialog({
                   placeholder="Enter the detailed terms of the service level agreement..."
                   rows={8}
                   value={currentSLA.content}
-                  onChange={(e) => handleSLAFormChange("content", e.target.value)}
+                  onChange={(e) =>
+                    handleSLAFormChange("content", e.target.value)
+                  }
                 />
               </div>
             </fieldset>

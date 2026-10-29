@@ -41,12 +41,13 @@ import {
 } from "@/components/ui/command";
 import { parseDate } from "@/lib/parseDate";
 import { Vendor } from "../../types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AddVendorDialog from "@/components/Vendor/AddVendorDialog";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getToken } from "@/lib/auth";
 import { API_BASE_URL } from "@/lib/config";
+import { ToS, tosService } from "@/services/tosService";
 
 interface Location {
   _id: string;
@@ -149,6 +150,25 @@ export default function RFQForm({
   const [evaluationCriteria, setEvaluationCriteria] = useState("");
   const [termsOfService, setTermsOfService] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /* ToS template dropdown — DEMO: loaded from local sample JSON via tosService */
+  const [tosList, setTosList] = useState<ToS[]>([]);
+  const [selectedTosId, setSelectedTosId] = useState<string>("");
+
+  useEffect(() => {
+    /* DEMO: tosService.fetchToSList() reads from local sample JSON — no real API call */
+    tosService.fetchToSList().then(setTosList).catch(console.error);
+  }, []);
+
+  const handleTosSelect = (tosId: string) => {
+    setSelectedTosId(tosId);
+    if (!tosId || tosId === "none") {
+      setTermsOfService("");
+      return;
+    }
+    const found = tosList.find((t) => (t._id || t.id) === tosId);
+    if (found) setTermsOfService(found.content);
+  };
 
   // Convert recommended vendors to suggested vendors format, filtering out selected ones
   const suggestedVendors: SuggestedVendor[] = recommendedVendors
@@ -434,16 +454,33 @@ export default function RFQForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="itemDescription">
+        <Label>
           Terms of Service <span className="text-red-500 -ml-1">*</span>
         </Label>
+        <Label className="text-xs text-gray-600 font-medium">Predefined ToS Template</Label>
+        {/* DEMO: dropdown populated from local sample JSON via tosService */}
+        <Select value={selectedTosId} onValueChange={handleTosSelect}>
+          <SelectTrigger className="w-full bg-white rounded-xl border border-[#9f9f9f] shadow-sm">
+            <SelectValue placeholder="Choose a predefined ToS template..." />
+          </SelectTrigger>
+          <SelectContent className="bg-white">
+            <SelectItem value="none">None — type manually below</SelectItem>
+            {tosList.map((t) => (
+              <SelectItem key={t._id || t.id} value={(t._id || t.id) as string}>
+                {t.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Textarea
-          id="itemDescription"
-          name="itemDescription"
           value={termsOfService}
           onChange={(e) => setTermsOfService(e.target.value)}
           className="min-h-[100px] rounded-xl border border-[#9f9f9f] shadow-sm"
+          placeholder="Enter or modify the Terms of Service..."
         />
+        <p className="text-xs text-gray-500">
+          Note: Selecting a ToS template populates this field. Modifications made here apply only to this RFQ and do not alter the saved template.
+        </p>
       </div>
 
       <div className="flex flex-col gap-2">
