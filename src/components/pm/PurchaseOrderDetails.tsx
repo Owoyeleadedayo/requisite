@@ -68,7 +68,7 @@ type PurchaseOrderItem = {
 };
 
 type PurchaseOrderApproval = {
-  approver?: PopulatedUser;
+  approver?: PopulatedUser | string;
   approverRole: "hof" | "hhr";
   approvedAt?: string;
   feedback?: string;
@@ -87,10 +87,11 @@ type PurchaseOrder = {
   rfq?: {
     _id: string;
     rfqNumber?: string;
+    evaluationCriteria?: string;
   };
   vendor?: PopulatedVendor;
   deliveryLocation?: PopulatedLocation;
-  deliveryContact?: PopulatedUser;
+  deliveryContact?: PopulatedUser | string;
   createdBy?: PopulatedUser;
   submittedBy?: PopulatedUser;
   submittedAt?: string;
@@ -108,7 +109,7 @@ type PurchaseOrder = {
   vendorQuote?: string;
   vendorQuotes?: any[];
   attachments?: any[];
-  totalAmount?: number;
+  totalAmount?: number | string;
   items?: PurchaseOrderItem[];
   approvals?: PurchaseOrderApproval[];
   pdfUrl?: string;
@@ -528,13 +529,14 @@ export default function PurchaseOrderDetails() {
     router.push(`${basePath}/pos/${item._id}`);
   };
 
-  const formatMoney = (value?: number) => {
-    if (typeof value !== "number") return "N/A";
+  const formatMoney = (value?: number | string) => {
+    const num = typeof value === "string" ? parseFloat(value) : value;
+    if (typeof num !== "number" || isNaN(num)) return "N/A";
     return new Intl.NumberFormat("en-NG", {
       style: "currency",
       currency: "NGN",
       maximumFractionDigits: 2,
-    }).format(value);
+    }).format(num);
   };
 
   const formatDate = (value?: string) => {
@@ -606,7 +608,7 @@ export default function PurchaseOrderDetails() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <p className="text-xs uppercase tracking-[0.3em] text-gray-500">
               Overview
@@ -664,7 +666,7 @@ export default function PurchaseOrderDetails() {
               {purchaseOrder.vendor?.email && (
                 <p>
                   <span className="font-semibold">Vendor Email:</span>{" "}
-                  {purchaseOrder.vendor.email}
+                  <span className="break-all">{purchaseOrder.vendor.email}</span>
                 </p>
               )}
               {purchaseOrder.vendor?.address && (
@@ -687,10 +689,11 @@ export default function PurchaseOrderDetails() {
               </p>
               <p>
                 <span className="font-semibold">Delivery Contact:</span>{" "}
-                {purchaseOrder.deliveryContact
-                  ? `${purchaseOrder.deliveryContact.firstName || ""} ${purchaseOrder.deliveryContact.lastName || ""
-                    }`.trim()
-                  : "N/A"}
+                {typeof purchaseOrder.deliveryContact === "string"
+                  ? purchaseOrder.deliveryContact
+                  : purchaseOrder.deliveryContact
+                    ? `${purchaseOrder.deliveryContact.firstName || ""} ${purchaseOrder.deliveryContact.lastName || ""}`.trim() || "N/A"
+                    : "N/A"}
               </p>
             </div>
           </div>
@@ -708,13 +711,21 @@ export default function PurchaseOrderDetails() {
                 <span className="font-semibold">Payment Terms:</span>{" "}
                 {purchaseOrder.paymentTerms || "N/A"}
               </p>
-              <p>
-                <span className="font-semibold">Terms of Service:</span>{" "}
-                {purchaseOrder.termsOfService || "N/A"}
-              </p>
+              {purchaseOrder.termsOfService ? (
+                <div className="pt-1">
+                  <span className="font-semibold block mb-1">Terms of Service:</span>
+                  <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded border border-gray-200 whitespace-pre-line max-h-36 overflow-y-auto">
+                    {purchaseOrder.termsOfService}
+                  </p>
+                </div>
+              ) : (
+                <p>
+                  <span className="font-semibold">Terms of Service:</span> N/A
+                </p>
+              )}
               <p>
                 <span className="font-semibold">Evaluation Criteria:</span>{" "}
-                {purchaseOrder.evaluationCriteria || "N/A"}
+                {purchaseOrder.evaluationCriteria || purchaseOrder.rfq?.evaluationCriteria || "N/A"}
               </p>
               {purchaseOrder.sla && (purchaseOrder.sla.title || purchaseOrder.sla.content) && (
                 <div className="mt-3 pt-3 border-t border-gray-100">
@@ -731,7 +742,7 @@ export default function PurchaseOrderDetails() {
                 purchaseOrder.quoteUrl) && (
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <span className="font-semibold block text-sm mb-2 text-gray-900">
-                      Uploaded Vendor Quote(s) & Attachments:
+                      Vendor Quotes & Attachments:
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {purchaseOrder.quoteUrl &&
@@ -870,8 +881,8 @@ export default function PurchaseOrderDetails() {
                         : "Head of Human Resources"}
                     </div>
                     <p className="mt-2 text-sm text-gray-700">
-                      {approval.approver
-                        ? `${approval.approver.firstName || ""} ${approval.approver.lastName || ""}`.trim()
+                      {typeof approval.approver === "object" && approval.approver
+                        ? `${approval.approver.firstName || ""} ${approval.approver.lastName || ""}`.trim() || "Approver"
                         : "Approver"}
                     </p>
                     <p className="text-xs text-gray-500">
