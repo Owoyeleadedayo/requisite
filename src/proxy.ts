@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const ROLE_ROUTES = ["/user", "/hod", "/hof", "/hhra", "/pm", "/vendor"];
+const ROLE_ROUTES = ["/user", "/hod", "/hof", "/hhra", "/pm", "/vendor", "/sm"];
 
 function isTokenExpired(token: string): boolean {
   try {
@@ -34,6 +34,8 @@ function getUserRoot(role: string, designation: string): string {
       return "/hhra";
     case "procurementManager":
       return "/pm";
+    case "storeManager":
+      return "/sm";
     case "vendor":
       return "/vendor";
     default:

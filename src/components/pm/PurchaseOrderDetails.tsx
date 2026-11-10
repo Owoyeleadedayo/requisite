@@ -155,7 +155,7 @@ export default function PurchaseOrderDetails() {
         userDepartmentName.includes("accounts")));
   const isPm = authData?.user?.role === "procurementManager";
   // TODO: update role key once backend defines the Warehouse Manager role
-  const isWm = authData?.user?.role === "warehouseManager";
+  const isWm = authData?.user?.role === "storeManager";
 
   const [loading, setLoading] = useState(true);
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(

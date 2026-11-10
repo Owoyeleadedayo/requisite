@@ -67,6 +67,9 @@ function HomeContent() {
             case "procurementManager":
               router.replace("/pm");
               break;
+            case "storeManager":
+              router.replace("/sm");
+              break;
             default:
               setShowUserAuth(true);
               setLoading(false);
