@@ -3,3 +3,7 @@
 // export default function WMViewPO() {
 //   return <PurchaseOrderDetails />;
 // }
+import { redirect } from "next/navigation";
+export default function WMViewPO() {
+  redirect("/sm/pos");
+}
