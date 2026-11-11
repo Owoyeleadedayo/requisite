@@ -63,6 +63,9 @@ export default function UserAuth() {
       case "procurementManager":
         route = "/pm";
         break;
+      case "storeManager":
+        route = "/sm";
+        break;
       case "vendor":
         route = "/vendor";
         break;
