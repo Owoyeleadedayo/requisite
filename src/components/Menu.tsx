@@ -67,10 +67,12 @@ const menuItems: Record<string, MenuItem[]> = {
   sm: [
     { icon: LayoutGrid, label: "Dashboard", href: "/sm" },
     { icon: FileSpreadsheet, label: "POs", href: "/sm/pos" },
+    { icon: Package, label: "My Requests", href: "/sm/my-requests" },
   ],
   storeManager: [
     { icon: LayoutGrid, label: "Dashboard", href: "/sm" },
     { icon: FileSpreadsheet, label: "POs", href: "/sm/pos" },
+    { icon: Package, label: "My Requests", href: "/sm/my-requests" },
   ],
   hhra: [
     { icon: LayoutGrid, label: "Dashboard", href: "/hhra" },

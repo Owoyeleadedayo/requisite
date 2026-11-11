@@ -6,7 +6,13 @@ import { API_BASE_URL } from "@/lib/config";
 import { useEffect, useState } from "react";
 import { getAuthData, getToken } from "@/lib/auth";
 import { useParams, useRouter, usePathname } from "next/navigation";
-import { ArrowLeft, Download, ExternalLink, FileText, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  ExternalLink,
+  FileText,
+  ShieldCheck,
+} from "lucide-react";
 import Related, {
   GRNRecord,
   JCFRecord,
@@ -83,6 +89,7 @@ type PurchaseOrder = {
     _id: string;
     title?: string;
     requisitionNumber?: string;
+    requesterId?: string;
   };
   rfq?: {
     _id: string;
@@ -131,7 +138,8 @@ export default function PurchaseOrderDetails() {
   const basePath = `/${pathname.split("/")[1]}`;
   const userRole = authData?.user?.role || "";
   const userDesignation = authData?.user?.designation?.toLowerCase() || "";
-  const userDepartmentName = authData?.user?.department?.name?.toLowerCase() || "";
+  const userDepartmentName =
+    authData?.user?.department?.name?.toLowerCase() || "";
 
   const isHhra =
     userRole === "headOfHr" ||
@@ -156,6 +164,7 @@ export default function PurchaseOrderDetails() {
   const isPm = authData?.user?.role === "procurementManager";
   // TODO: update role key once backend defines the Warehouse Manager role
   const isWm = authData?.user?.role === "storeManager";
+  const userId = authData?.user?.id || "";
 
   const [loading, setLoading] = useState(true);
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder | null>(
@@ -266,9 +275,65 @@ export default function PurchaseOrderDetails() {
   };
 
   const handleDownloadGRN = async (grn: GRNRecord) => {
-    // TODO: wire to GET /grns/:id/download once endpoint exists
-    toast.info("GRN download will be available once the endpoint is ready.");
-    console.log("Download GRN:", grn._id);
+    try {
+      const response = await fetch(`${API_BASE_URL}/grns/${grn._id}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Failed to download GRN");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `GRN-${grn.grnNumber || grn._id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("GRN downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading GRN:", error);
+      toast.error("Failed to download GRN");
+    }
+  };
+
+  const handleApproveGRN = async (grn: GRNRecord): Promise<void> => {
+    let endpoint: string;
+    if (userRole === "procurementManager") endpoint = "pm-approve";
+    else if (userRole === "departmentHead") endpoint = "hod-approve";
+    else endpoint = "requester-approve";
+    const res = await fetch(`${API_BASE_URL}/grns/${grn._id}/${endpoint}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || "Failed to approve GRN");
+    toast.success(data.message || "GRN approved successfully");
+    await fetchGRNs();
+  };
+
+  const handleRejectGRN = async (
+    grn: GRNRecord,
+    comments: string,
+  ): Promise<void> => {
+    let endpoint: string;
+    if (userRole === "procurementManager") endpoint = "pm-reject";
+    else if (userRole === "departmentHead") endpoint = "hod-reject";
+    else endpoint = "requester-reject";
+    const res = await fetch(`${API_BASE_URL}/grns/${grn._id}/${endpoint}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ comments }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || "Failed to reject GRN");
+    toast.success(data.message || "GRN rejected");
+    await fetchGRNs();
   };
 
   // TODO: replace with real endpoint once backend defines GET /purchase-orders/:id/jcfs
@@ -314,9 +379,62 @@ export default function PurchaseOrderDetails() {
   };
 
   const handleDownloadJCF = async (jcf: JCFRecord) => {
-    // TODO: wire to GET /jcfs/:id/download once endpoint exists
-    toast.info("JCF download will be available once the endpoint is ready.");
-    console.log("Download JCF:", jcf._id);
+    try {
+      const response = await fetch(`${API_BASE_URL}/jcfs/${jcf._id}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Failed to download JCF");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `JCF-${jcf.jcfNumber || jcf._id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("JCF downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading JCF:", error);
+      toast.error("Failed to download JCF");
+    }
+  };
+
+  const handleApproveJCF = async (
+    jcf: JCFRecord,
+    rating: number,
+    comments: string,
+  ): Promise<void> => {
+    const res = await fetch(`${API_BASE_URL}/jcfs/${jcf._id}/approve`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ rating, comments }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || "Failed to approve JCF");
+    toast.success(data.message || "JCF approved successfully");
+    await fetchJCFs();
+  };
+
+  const handleRejectJCF = async (
+    jcf: JCFRecord,
+    comments: string,
+  ): Promise<void> => {
+    const res = await fetch(`${API_BASE_URL}/jcfs/${jcf._id}/reject`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ comments }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || "Failed to reject JCF");
+    toast.success(data.message || "JCF rejected");
+    await fetchJCFs();
   };
 
   const handleDownloadPO = async () => {
@@ -427,11 +545,11 @@ export default function PurchaseOrderDetails() {
         setPurchaseOrder((prev) =>
           prev
             ? {
-              ...prev,
-              status:
-                data.data?.status ??
-                (approvalType === "hof" ? "hofApproved" : "approved"),
-            }
+                ...prev,
+                status:
+                  data.data?.status ??
+                  (approvalType === "hof" ? "hofApproved" : "approved"),
+              }
             : prev,
         );
       } else {
@@ -631,7 +749,8 @@ export default function PurchaseOrderDetails() {
               <p>
                 <span className="font-semibold">Created By:</span>{" "}
                 {purchaseOrder.createdBy
-                  ? `${purchaseOrder.createdBy.firstName || ""} ${purchaseOrder.createdBy.lastName || ""
+                  ? `${purchaseOrder.createdBy.firstName || ""} ${
+                      purchaseOrder.createdBy.lastName || ""
                     }`.trim()
                   : "N/A"}
               </p>
@@ -666,7 +785,9 @@ export default function PurchaseOrderDetails() {
               {purchaseOrder.vendor?.email && (
                 <p>
                   <span className="font-semibold">Vendor Email:</span>{" "}
-                  <span className="break-all">{purchaseOrder.vendor.email}</span>
+                  <span className="break-all">
+                    {purchaseOrder.vendor.email}
+                  </span>
                 </p>
               )}
               {purchaseOrder.vendor?.address && (
@@ -692,7 +813,8 @@ export default function PurchaseOrderDetails() {
                 {typeof purchaseOrder.deliveryContact === "string"
                   ? purchaseOrder.deliveryContact
                   : purchaseOrder.deliveryContact
-                    ? `${purchaseOrder.deliveryContact.firstName || ""} ${purchaseOrder.deliveryContact.lastName || ""}`.trim() || "N/A"
+                    ? `${purchaseOrder.deliveryContact.firstName || ""} ${purchaseOrder.deliveryContact.lastName || ""}`.trim() ||
+                      "N/A"
                     : "N/A"}
               </p>
             </div>
@@ -713,7 +835,9 @@ export default function PurchaseOrderDetails() {
               </p>
               {purchaseOrder.termsOfService ? (
                 <div className="pt-1">
-                  <span className="font-semibold block mb-1">Terms of Service:</span>
+                  <span className="font-semibold block mb-1">
+                    Terms of Service:
+                  </span>
                   <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded border border-gray-200 whitespace-pre-line max-h-36 overflow-y-auto">
                     {purchaseOrder.termsOfService}
                   </p>
@@ -725,40 +849,46 @@ export default function PurchaseOrderDetails() {
               )}
               <p>
                 <span className="font-semibold">Evaluation Criteria:</span>{" "}
-                {purchaseOrder.evaluationCriteria || purchaseOrder.rfq?.evaluationCriteria || "N/A"}
+                {purchaseOrder.evaluationCriteria ||
+                  purchaseOrder.rfq?.evaluationCriteria ||
+                  "N/A"}
               </p>
-              {purchaseOrder.sla && (purchaseOrder.sla.title || purchaseOrder.sla.content) && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <span className="font-semibold block text-sm mb-1 text-gray-900">
-                    SLA: {purchaseOrder.sla.title || "Service Level Agreement"}
-                  </span>
-                  <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded border border-gray-200 whitespace-pre-line">
-                    {purchaseOrder.sla.content}
-                  </p>
-                </div>
-              )}
-              {((purchaseOrder.vendorQuotes && purchaseOrder.vendorQuotes.length > 0) ||
-                (purchaseOrder.attachments && purchaseOrder.attachments.length > 0) ||
-                purchaseOrder.quoteUrl) && (
+              {purchaseOrder.sla &&
+                (purchaseOrder.sla.title || purchaseOrder.sla.content) && (
                   <div className="mt-3 pt-3 border-t border-gray-100">
-                    <span className="font-semibold block text-sm mb-2 text-gray-900">
-                      Vendor Quotes & Attachments:
+                    <span className="font-semibold block text-sm mb-1 text-gray-900">
+                      SLA:{" "}
+                      {purchaseOrder.sla.title || "Service Level Agreement"}
                     </span>
-                    <div className="flex flex-wrap gap-2">
-                      {purchaseOrder.quoteUrl &&
-                        !purchaseOrder.vendorQuotes?.length &&
-                        !purchaseOrder.attachments?.length && (
-                          <a
-                            href={purchaseOrder.quoteUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 text-xs font-medium rounded border border-blue-200 hover:bg-blue-100 transition-colors"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                            Vendor Quote
-                          </a>
-                        )}
-                      {/* {purchaseOrder.vendorQuotes?.map((quote: any, idx: number) => (
+                    <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded border border-gray-200 whitespace-pre-line">
+                      {purchaseOrder.sla.content}
+                    </p>
+                  </div>
+                )}
+              {((purchaseOrder.vendorQuotes &&
+                purchaseOrder.vendorQuotes.length > 0) ||
+                (purchaseOrder.attachments &&
+                  purchaseOrder.attachments.length > 0) ||
+                purchaseOrder.quoteUrl) && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <span className="font-semibold block text-sm mb-2 text-gray-900">
+                    Vendor Quotes & Attachments:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {purchaseOrder.quoteUrl &&
+                      !purchaseOrder.vendorQuotes?.length &&
+                      !purchaseOrder.attachments?.length && (
+                        <a
+                          href={purchaseOrder.quoteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 text-xs font-medium rounded border border-blue-200 hover:bg-blue-100 transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          Vendor Quote
+                        </a>
+                      )}
+                    {/* {purchaseOrder.vendorQuotes?.map((quote: any, idx: number) => (
                         <a
                           key={`vq-${idx}`}
                           href={quote.url}
@@ -770,21 +900,21 @@ export default function PurchaseOrderDetails() {
                           {quote.filename || `Quote ${idx + 1}`}
                         </a>
                       ))} */}
-                      {purchaseOrder.attachments?.map((att: any, idx: number) => (
-                        <a
-                          key={`att-${idx}`}
-                          href={att.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 text-xs font-medium rounded border border-emerald-200 hover:bg-emerald-100 transition-colors"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          {att.name || att.filename || `Attachment ${idx + 1}`}
-                        </a>
-                      ))}
-                    </div>
+                    {purchaseOrder.attachments?.map((att: any, idx: number) => (
+                      <a
+                        key={`att-${idx}`}
+                        href={att.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 text-xs font-medium rounded border border-emerald-200 hover:bg-emerald-100 transition-colors"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        {att.name || att.filename || `Attachment ${idx + 1}`}
+                      </a>
+                    ))}
                   </div>
-                )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -881,8 +1011,10 @@ export default function PurchaseOrderDetails() {
                         : "Head of Human Resources"}
                     </div>
                     <p className="mt-2 text-sm text-gray-700">
-                      {typeof approval.approver === "object" && approval.approver
-                        ? `${approval.approver.firstName || ""} ${approval.approver.lastName || ""}`.trim() || "Approver"
+                      {typeof approval.approver === "object" &&
+                      approval.approver
+                        ? `${approval.approver.firstName || ""} ${approval.approver.lastName || ""}`.trim() ||
+                          "Approver"
                         : "Approver"}
                     </p>
                     <p className="text-xs text-gray-500">
@@ -915,6 +1047,13 @@ export default function PurchaseOrderDetails() {
           onViewItem={handleRelatedView}
           onDownloadGRN={handleDownloadGRN}
           onDownloadJCF={handleDownloadJCF}
+          userRole={userRole}
+          userId={userId}
+          requesterId={purchaseOrder.requisition?.requesterId}
+          onApproveGRN={handleApproveGRN}
+          onRejectGRN={handleRejectGRN}
+          onApproveJCF={handleApproveJCF}
+          onRejectJCF={handleRejectJCF}
         />
 
         {/* C6: HOF Approve + Reject buttons */}
@@ -956,14 +1095,20 @@ export default function PurchaseOrderDetails() {
           </div>
         )}
         {/* Sequential approval status notices */}
-        {isHhra && (purchaseOrder.status === "submitted" || purchaseOrder.status === "issued") && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            <strong>Awaiting Head of Finance (HoF) Approval:</strong> This purchase order must first be approved by the Head of Finance before HHRA can grant final approval.
-          </div>
-        )}
+        {isHhra &&
+          (purchaseOrder.status === "submitted" ||
+            purchaseOrder.status === "issued") && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <strong>Awaiting Head of Finance (HoF) Approval:</strong> This
+              purchase order must first be approved by the Head of Finance
+              before HHRA can grant final approval.
+            </div>
+          )}
         {isHof && purchaseOrder.status === "hofApproved" && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
-            <strong>Head of Finance Approval Completed:</strong> This purchase order has received Finance approval and is currently awaiting final approval from the Head of HR & Admin (HHRA).
+            <strong>Head of Finance Approval Completed:</strong> This purchase
+            order has received Finance approval and is currently awaiting final
+            approval from the Head of HR & Admin (HHRA).
           </div>
         )}
 
@@ -1069,8 +1214,8 @@ export default function PurchaseOrderDetails() {
               </button>
             )}
             <button
-              onClick={handleDownloadVendorQuote}
               disabled={downloadingQuote}
+              onClick={handleDownloadVendorQuote}
               className="rounded-md border border-blue-900 px-5 py-3 text-sm font-semibold text-blue-900 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {downloadingQuote ? "Downloading..." : "Download Vendor Quote"}
@@ -1078,9 +1223,10 @@ export default function PurchaseOrderDetails() {
             {/* C6: Gate Download PO button — only available after full approval */}
             {purchaseOrder.status === "approved" && (
               <button
-                onClick={handleDownloadPO}
                 disabled={downloading}
-                className="rounded-md bg-blue-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handleDownloadPO}
+                className="rounded-md border border-blue-900 px-5 py-3 text-sm font-semibold text-blue-900 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                // className="rounded-md bg-blue-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {downloading ? "Downloading..." : "Download PO"}
               </button>
@@ -1205,7 +1351,7 @@ export default function PurchaseOrderDetails() {
                       <td className="py-3 text-gray-700">
                         {formatMoney(
                           editedItems[index].quantity *
-                          editedItems[index].unitPrice,
+                            editedItems[index].unitPrice,
                         )}
                       </td>
                     </tr>
@@ -1221,10 +1367,7 @@ export default function PurchaseOrderDetails() {
               >
                 {savingEdit ? "Saving..." : "Save Changes"}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsEditMode(false)}
-              >
+              <Button variant="outline" onClick={() => setIsEditMode(false)}>
                 Cancel
               </Button>
             </div>

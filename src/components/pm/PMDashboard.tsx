@@ -33,6 +33,7 @@ interface ProcurementManagerDashboardProps {
     | "locations"
     | "rfqs"
     | "pos";
+  routePrefix?: string;
 }
 
 interface RFQShape {
@@ -189,6 +190,7 @@ const newLocation: Location = {
 
 export default function PMDashboard({
   page = "procurementDashboard",
+  routePrefix = "/pm",
 }: ProcurementManagerDashboardProps = {}) {
   const [loading, setLoading] = useState(false);
   const [isLocationLoading, setIsLocationLoading] = useState(false);
@@ -367,7 +369,7 @@ export default function PMDashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/pm/requisitions/${row._id}`}>View</Link>
+            <Link href={`${routePrefix}/requisitions/${row._id}`}>View</Link>
           </Button>
         </div>
       ),
@@ -423,7 +425,7 @@ export default function PMDashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/pm/rfqs/${row._id}`}>View</Link>
+            <Link href={`${routePrefix}/rfqs/${row._id}`}>View</Link>
           </Button>
         </div>
       ),
@@ -486,7 +488,7 @@ export default function PMDashboard({
             asChild
             className="bg-blue-900 hover:bg-blue-800 text-white px-4"
           >
-            <Link href={`/pm/pos/${row._id}`}>View</Link>
+            <Link href={`${routePrefix}/pos/${row._id}`}>View</Link>
             {/* <Link href={`/pm/pos/${row._id}`}>View</Link> */}
           </Button>
         </div>
@@ -776,7 +778,7 @@ export default function PMDashboard({
               asChild
               className="px-4 md:px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-base md:text-md text-white cursor-pointer"
             >
-              <Link href={"/pm/my-requests/create-new" as any}>
+              <Link href={`${routePrefix}/my-requests/create-new` as any}>
                 <Plus size={22} />{" "}
                 <span className="hidden lg:flex">New Request</span>
               </Link>
