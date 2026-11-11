@@ -5,3 +5,7 @@
 // export default function WMPOsPage() {
 //   return <PMDashboard page="pos" />;
 // }
+import { redirect } from "next/navigation";
+export default function WMPOsPage() {
+  redirect("/sm/pos");
+}
