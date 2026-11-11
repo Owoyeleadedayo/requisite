@@ -435,7 +435,7 @@ export default function GenerateGRNDialog({
                   onChange={(e) => {
                     const val = e.target.value;
                     setEmployeeQuery(val);
-                    setReceivingEmployee("");
+                    setReceivingEmployee(val);
                   }}
                   onFocus={() => {
                     if (suggestions.length > 0) setShowSuggestions(true);
