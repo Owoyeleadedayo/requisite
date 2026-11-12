@@ -86,7 +86,7 @@ function employeeName(
 }
 
 function totalDelivered(grn: GRNRecord): number {
-  return grn.items.reduce((sum, i) => sum + (i.deliveredQty ?? 0), 0);
+  return (grn.items || []).reduce((sum, i) => sum + (i?.deliveredQty ?? 0), 0);
 }
 
 function StarRating({
@@ -200,26 +200,58 @@ export default function Related({
   };
 
   // ── Role-based action eligibility ────────────────────────────────────────────
-  const isPM = userRole === "procurementManager";
-  const isHOD = userRole === "departmentHead";
-  const isRequester = !!userId && !!requesterId && userId === requesterId;
+  const isPM =
+    userRole === "procurementManager" ||
+    userRole === "admin" ||
+    userRole === "superAdmin";
+  const isHOD =
+    userRole === "departmentHead" ||
+    userRole === "admin" ||
+    userRole === "superAdmin";
+  const isRequester =
+    !userId || !requesterId
+      ? userRole === "admin" || userRole === "superAdmin"
+      : userId === requesterId ||
+        userRole === "admin" ||
+        userRole === "superAdmin";
 
-  function grnActionsForRole(grn: GRNRecord): { canApprove: boolean; canReject: boolean; approveLabel: string } {
-    if (isPM && grn.status === "pending") {
+  function grnActionsForRole(grn: GRNRecord): {
+    canApprove: boolean;
+    canReject: boolean;
+    approveLabel: string;
+  } {
+    if (
+      isPM &&
+      (grn.status === "pending" || grn.status === "pendingPmApproval")
+    ) {
       return { canApprove: true, canReject: true, approveLabel: "Approve" };
     }
-    if (isHOD && grn.status === "pmApproved") {
+    if (
+      isHOD &&
+      (grn.status === "pmApproved" || grn.status === "pendingHodApproval")
+    ) {
       return { canApprove: true, canReject: true, approveLabel: "Approve" };
     }
-    if (isRequester && grn.status === "hodApproved") {
-      return { canApprove: true, canReject: true, approveLabel: "Confirm Receipt" };
+    if (
+      isRequester &&
+      (grn.status === "hodApproved" ||
+        grn.status === "pendingRequesterApproval")
+    ) {
+      return {
+        canApprove: true,
+        canReject: true,
+        approveLabel: "Confirm Receipt",
+      };
     }
     return { canApprove: false, canReject: false, approveLabel: "Approve" };
   }
 
   function jcfActionsForRole(jcf: JCFRecord): boolean {
-    const actionable = jcf.status === "pending" || jcf.status === "submitted";
-    return actionable && (isRequester || isHOD);
+    const actionable =
+      jcf.status === "pending" ||
+      jcf.status === "submitted" ||
+      jcf.status === "pendingApproval";
+    return actionable && (isRequester || isHOD || isPM);
   }
 
   // ── Dialog config ────────────────────────────────────────────────────────────
@@ -412,7 +444,7 @@ export default function Related({
                           {formatDate(jcf.createdAt)}
                         </TableCell>
                         <TableCell className="text-base">
-                          {jcf.items.length} item{jcf.items.length !== 1 ? "s" : ""}
+                          {(jcf.items || []).length} item{(jcf.items || []).length !== 1 ? "s" : ""}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">

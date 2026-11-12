@@ -133,7 +133,9 @@ export default function GenerateGRNDialog({
     setRows(
       items.map((item) => {
         const itemId = item._id ?? item.itemDescription;
-        const previouslyDelivered = prevMap[itemId] ?? 0;
+        const previouslyDelivered =
+          prevMap[itemId] ??
+          (item.itemDescription ? prevMap[item.itemDescription] ?? 0 : 0);
         const remainingQty = Math.max(0, item.quantity - previouslyDelivered);
         return {
           itemId,

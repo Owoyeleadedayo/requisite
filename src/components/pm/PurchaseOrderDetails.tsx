@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/lib/config";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getAuthData, getToken } from "@/lib/auth";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import {
@@ -161,9 +161,16 @@ export default function PurchaseOrderDetails() {
       (userDesignation.includes("head, finance") ||
         userDepartmentName.includes("finance") ||
         userDepartmentName.includes("accounts")));
-  const isPm = authData?.user?.role === "procurementManager";
-  // TODO: update role key once backend defines the Warehouse Manager role
-  const isWm = authData?.user?.role === "storeManager";
+  const isPm =
+    authData?.user?.role === "procurementManager" ||
+    authData?.user?.role === "admin" ||
+    authData?.user?.role === "superAdmin";
+  // Store Manager / Warehouse Manager or Admin
+  const isWm =
+    authData?.user?.role === "storeManager" ||
+    authData?.user?.role === "warehouseManager" ||
+    authData?.user?.role === "admin" ||
+    authData?.user?.role === "superAdmin";
   const userId = authData?.user?.id || "";
 
   const [loading, setLoading] = useState(true);
@@ -191,6 +198,46 @@ export default function PurchaseOrderDetails() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedItems, setEditedItems] = useState<PurchaseOrderItem[]>([]);
   const [savingEdit, setSavingEdit] = useState(false);
+
+  const fetchGRNs = useCallback(async () => {
+    if (!poId) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/grns`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        const list = Array.isArray(data.data)
+          ? data.data
+          : data.data
+            ? [data.data]
+            : [];
+        setGrns(list);
+      }
+    } catch {
+      // silently ignore — GRN list is non-critical
+    }
+  }, [poId, token]);
+
+  const fetchJCFs = useCallback(async () => {
+    if (!poId) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/jcfs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) {
+        const list = Array.isArray(data.data)
+          ? data.data
+          : data.data
+            ? [data.data]
+            : [];
+        setJcfs(list);
+      }
+    } catch {
+      // silently ignore — JCF list is non-critical
+    }
+  }, [poId, token]);
 
   useEffect(() => {
     const fetchPurchaseOrder = async () => {
@@ -227,20 +274,9 @@ export default function PurchaseOrderDetails() {
     };
 
     fetchPurchaseOrder();
-  }, [poId, router]);
-
-  // TODO: replace with real endpoint once backend defines GET /purchase-orders/:id/grns
-  const fetchGRNs = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/grns`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.success) setGrns(data.data ?? []);
-    } catch {
-      // silently ignore — GRN list is non-critical
-    }
-  };
+    fetchGRNs();
+    fetchJCFs();
+  }, [poId, router, fetchGRNs, fetchJCFs, token]);
 
   // TODO: replace stub with real API call once endpoint is ready
   const handleGRNSubmit = async (
@@ -334,19 +370,6 @@ export default function PurchaseOrderDetails() {
     if (!data.success) throw new Error(data.message || "Failed to reject GRN");
     toast.success(data.message || "GRN rejected");
     await fetchGRNs();
-  };
-
-  // TODO: replace with real endpoint once backend defines GET /purchase-orders/:id/jcfs
-  const fetchJCFs = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/purchase-orders/${poId}/jcfs`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      if (data.success) setJcfs(data.data ?? []);
-    } catch {
-      // silently ignore — JCF list is non-critical
-    }
   };
 
   // TODO: replace stub with real API call once endpoint is ready
@@ -683,15 +706,21 @@ export default function PurchaseOrderDetails() {
     purchaseOrder.status === "issued" || purchaseOrder.status === "submitted";
   const canHhraApprove = purchaseOrder.status === "hofApproved";
 
-  // A PO is treated as a service PO when all items lack a meaningful brand.
-  // TODO: replace with an explicit `type` field once backend provides it.
-  const isServicePO = !!(
-    purchaseOrder.items?.length &&
-    purchaseOrder.items.every(
-      (item) =>
-        !item.brand || ["", "n/a"].includes(item.brand.trim().toLowerCase()),
-    )
-  );
+  const isServicePO =
+    (purchaseOrder as any)?.canCreateJcf
+      ? true
+      : (purchaseOrder as any)?.canCreateGrn
+      ? false
+      : (purchaseOrder as any)?.isService !== undefined
+      ? Boolean((purchaseOrder as any)?.isService)
+      : !!(
+          purchaseOrder.items?.length &&
+          purchaseOrder.items.every(
+            (item: any) =>
+              item.lineType === "service_charge" ||
+              item.lineType === "service",
+          )
+        );
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 md:px-16 py-6 md:py-8">
@@ -1041,15 +1070,19 @@ export default function PurchaseOrderDetails() {
           requests={purchaseOrder.related?.requests || []}
           rfqs={purchaseOrder.related?.rfqs || []}
           pos={purchaseOrder.related?.pos || []}
-          grns={isServicePO ? undefined : grns}
-          jcfs={isServicePO ? jcfs : undefined}
+          grns={grns}
+          jcfs={jcfs}
           defaultTab={isServicePO ? "jcf" : "grn"}
           onViewItem={handleRelatedView}
           onDownloadGRN={handleDownloadGRN}
           onDownloadJCF={handleDownloadJCF}
           userRole={userRole}
           userId={userId}
-          requesterId={purchaseOrder.requisition?.requesterId}
+          requesterId={
+            purchaseOrder.requisition?.requesterId ||
+            (purchaseOrder.requisition as any)?.requester?._id ||
+            (purchaseOrder.requisition as any)?.requester
+          }
           onApproveGRN={handleApproveGRN}
           onRejectGRN={handleRejectGRN}
           onApproveJCF={handleApproveJCF}
@@ -1197,10 +1230,10 @@ export default function PurchaseOrderDetails() {
           </DialogContent>
         </Dialog>
 
-        {isPm && (
+        {(isPm || isWm) && (
           <div className="flex flex-wrap gap-3">
             {/* H4: Edit PO button for PM when status is submitted */}
-            {purchaseOrder.status === "submitted" && (
+            {isPm && purchaseOrder.status === "submitted" && (
               <button
                 onClick={() => {
                   setEditedItems(
@@ -1226,12 +1259,11 @@ export default function PurchaseOrderDetails() {
                 disabled={downloading}
                 onClick={handleDownloadPO}
                 className="rounded-md border border-blue-900 px-5 py-3 text-sm font-semibold text-blue-900 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
-                // className="rounded-md bg-blue-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {downloading ? "Downloading..." : "Download PO"}
               </button>
             )}
-            {/* GRN: product POs — PM path */}
+            {/* GRN: product POs — PM / Store Manager path */}
             {!isServicePO && purchaseOrder.status === "approved" && (
               <button
                 onClick={() => setIsGRNDialogOpen(true)}
@@ -1240,7 +1272,7 @@ export default function PurchaseOrderDetails() {
                 Generate GRN
               </button>
             )}
-            {/* JCF: service POs — available to PM once approved */}
+            {/* JCF: service POs — available once approved */}
             {isServicePO && purchaseOrder.status === "approved" && (
               <button
                 onClick={() => setIsJCFDialogOpen(true)}
@@ -1250,15 +1282,6 @@ export default function PurchaseOrderDetails() {
               </button>
             )}
           </div>
-        )}
-        {/* GRN: product POs — Warehouse Manager path */}
-        {isWm && !isServicePO && purchaseOrder.status === "approved" && (
-          <button
-            onClick={() => setIsGRNDialogOpen(true)}
-            className="rounded-md bg-[#0F1E7A] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0a1555]"
-          >
-            Generate GRN
-          </button>
         )}
 
         {/* H4: Inline edit mode panel for PM */}
@@ -1381,14 +1404,14 @@ export default function PurchaseOrderDetails() {
             onClose={() => setIsGRNDialogOpen(false)}
             poNumber={purchaseOrder.poNumber ?? ""}
             items={(purchaseOrder.items ?? []).map((item) => ({
-              _id: item._id,
+              _id: (item as any).itemId || item._id || (item as any).id,
               itemDescription: item.itemDescription,
               brand: item.brand,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
             }))}
             existingGRNs={grns.map<GRNExistingRecord>((grn) => ({
-              items: grn.items.map((i) => ({
+              items: (grn.items || []).map((i) => ({
                 itemId:
                   (i as { itemId?: string; deliveredQty: number }).itemId ?? "",
                 deliveredQty: i.deliveredQty,
@@ -1398,15 +1421,15 @@ export default function PurchaseOrderDetails() {
           />
         )}
 
-        {/* JCF Dialog — service POs, PM only */}
-        {isPm && purchaseOrder && isServicePO && (
+        {/* JCF Dialog — service POs */}
+        {(isPm || isWm) && purchaseOrder && isServicePO && (
           <GenerateJCFDialog
             isOpen={isJCFDialogOpen}
             onClose={() => setIsJCFDialogOpen(false)}
             poNumber={purchaseOrder.poNumber ?? ""}
             rfqNumber={purchaseOrder.rfq?.rfqNumber}
             items={(purchaseOrder.items ?? []).map((item) => ({
-              _id: item._id,
+              _id: (item as any).itemId || item._id || (item as any).id,
               itemDescription: item.itemDescription,
               vendor: purchaseOrder.vendor?.name ?? "—",
               quantity: item.quantity,
